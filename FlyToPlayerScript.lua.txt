@@ -1,0 +1,543 @@
+-- FlyToPlayerScript.lua
+-- A script that allows flying to designated players with various options
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- GUI Creation
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FlyToPlayerGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.Size = UDim2.new(1, -10, 1, 0)
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "Fly To Player"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextSize = 18
+TitleText.Font = Enum.Font.GothamSemibold
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Parent = TitleBar
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundTransparency = 1
+CloseButton.Text = "✕"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+CloseButton.Font = Enum.Font.GothamSemibold
+CloseButton.Parent = TitleBar
+
+-- Content Frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -20, 1, -40)
+ContentFrame.Position = UDim2.new(0, 10, 0, 35)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+-- Fly Toggle
+local FlyToggle = Instance.new("Frame")
+FlyToggle.Name = "FlyToggle"
+FlyToggle.Size = UDim2.new(1, 0, 0, 30)
+FlyToggle.BackgroundTransparency = 1
+FlyToggle.Parent = ContentFrame
+
+local FlyLabel = Instance.new("TextLabel")
+FlyLabel.Name = "FlyLabel"
+FlyLabel.Size = UDim2.new(0.7, 0, 1, 0)
+FlyLabel.BackgroundTransparency = 1
+FlyLabel.Text = "Enable Flying"
+FlyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyLabel.TextSize = 16
+FlyLabel.Font = Enum.Font.Gotham
+FlyLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlyLabel.Parent = FlyToggle
+
+local FlyButton = Instance.new("TextButton")
+FlyButton.Name = "FlyButton"
+FlyButton.Size = UDim2.new(0.3, -10, 1, -10)
+FlyButton.Position = UDim2.new(0.7, 0, 0, 5)
+FlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+FlyButton.BorderSizePixel = 0
+FlyButton.Text = "OFF"
+FlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyButton.TextSize = 14
+FlyButton.Font = Enum.Font.GothamSemibold
+FlyButton.Parent = FlyToggle
+
+-- Speed Slider
+local SpeedFrame = Instance.new("Frame")
+SpeedFrame.Name = "SpeedFrame"
+SpeedFrame.Size = UDim2.new(1, 0, 0, 50)
+SpeedFrame.Position = UDim2.new(0, 0, 0, 40)
+SpeedFrame.BackgroundTransparency = 1
+SpeedFrame.Parent = ContentFrame
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Name = "SpeedLabel"
+SpeedLabel.Size = UDim2.new(1, 0, 0, 20)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Flight Speed: 50"
+SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedLabel.TextSize = 16
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = SpeedFrame
+
+local SpeedSlider = Instance.new("Frame")
+SpeedSlider.Name = "SpeedSlider"
+SpeedSlider.Size = UDim2.new(1, 0, 0, 10)
+SpeedSlider.Position = UDim2.new(0, 0, 0, 30)
+SpeedSlider.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SpeedSlider.BorderSizePixel = 0
+SpeedSlider.Parent = SpeedFrame
+
+local SpeedIndicator = Instance.new("Frame")
+SpeedIndicator.Name = "SpeedIndicator"
+SpeedIndicator.Size = UDim2.new(0.5, 0, 1, 0)
+SpeedIndicator.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+SpeedIndicator.BorderSizePixel = 0
+SpeedIndicator.Parent = SpeedSlider
+
+local SpeedButton = Instance.new("TextButton")
+SpeedButton.Name = "SpeedButton"
+SpeedButton.Size = UDim2.new(0, 20, 0, 20)
+SpeedButton.Position = UDim2.new(0.5, -10, 0, -5)
+SpeedButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+SpeedButton.BorderSizePixel = 0
+SpeedButton.Text = ""
+SpeedButton.Parent = SpeedSlider
+
+-- Noclip Toggle
+local NoclipToggle = Instance.new("Frame")
+NoclipToggle.Name = "NoclipToggle"
+NoclipToggle.Size = UDim2.new(1, 0, 0, 30)
+NoclipToggle.Position = UDim2.new(0, 0, 0, 100)
+NoclipToggle.BackgroundTransparency = 1
+NoclipToggle.Parent = ContentFrame
+
+local NoclipLabel = Instance.new("TextLabel")
+NoclipLabel.Name = "NoclipLabel"
+NoclipLabel.Size = UDim2.new(0.7, 0, 1, 0)
+NoclipLabel.BackgroundTransparency = 1
+NoclipLabel.Text = "Pass Through Objects"
+NoclipLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoclipLabel.TextSize = 16
+NoclipLabel.Font = Enum.Font.Gotham
+NoclipLabel.TextXAlignment = Enum.TextXAlignment.Left
+NoclipLabel.Parent = NoclipToggle
+
+local NoclipButton = Instance.new("TextButton")
+NoclipButton.Name = "NoclipButton"
+NoclipButton.Size = UDim2.new(0.3, -10, 1, -10)
+NoclipButton.Position = UDim2.new(0.7, 0, 0, 5)
+NoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoclipButton.BorderSizePixel = 0
+NoclipButton.Text = "OFF"
+NoclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoclipButton.TextSize = 14
+NoclipButton.Font = Enum.Font.GothamSemibold
+NoclipButton.Parent = NoclipToggle
+
+-- Continuous Flying Toggle
+local ContinuousToggle = Instance.new("Frame")
+ContinuousToggle.Name = "ContinuousToggle"
+ContinuousToggle.Size = UDim2.new(1, 0, 0, 30)
+ContinuousToggle.Position = UDim2.new(0, 0, 0, 140)
+ContinuousToggle.BackgroundTransparency = 1
+ContinuousToggle.Parent = ContentFrame
+
+local ContinuousLabel = Instance.new("TextLabel")
+ContinuousLabel.Name = "ContinuousLabel"
+ContinuousLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ContinuousLabel.BackgroundTransparency = 1
+ContinuousLabel.Text = "Continuous Flying"
+ContinuousLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ContinuousLabel.TextSize = 16
+ContinuousLabel.Font = Enum.Font.Gotham
+ContinuousLabel.TextXAlignment = Enum.TextXAlignment.Left
+ContinuousLabel.Parent = ContinuousToggle
+
+local ContinuousButton = Instance.new("TextButton")
+ContinuousButton.Name = "ContinuousButton"
+ContinuousButton.Size = UDim2.new(0.3, -10, 1, -10)
+ContinuousButton.Position = UDim2.new(0.7, 0, 0, 5)
+ContinuousButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ContinuousButton.BorderSizePixel = 0
+ContinuousButton.Text = "OFF"
+ContinuousButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ContinuousButton.TextSize = 14
+ContinuousButton.Font = Enum.Font.GothamSemibold
+ContinuousButton.Parent = ContinuousToggle
+
+-- Offset Input
+local OffsetFrame = Instance.new("Frame")
+OffsetFrame.Name = "OffsetFrame"
+OffsetFrame.Size = UDim2.new(1, 0, 0, 70)
+OffsetFrame.Position = UDim2.new(0, 0, 0, 180)
+OffsetFrame.BackgroundTransparency = 1
+OffsetFrame.Parent = ContentFrame
+
+local OffsetLabel = Instance.new("TextLabel")
+OffsetLabel.Name = "OffsetLabel"
+OffsetLabel.Size = UDim2.new(1, 0, 0, 20)
+OffsetLabel.BackgroundTransparency = 1
+OffsetLabel.Text = "Position Offset (X, Y, Z)"
+OffsetLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+OffsetLabel.TextSize = 16
+OffsetLabel.Font = Enum.Font.Gotham
+OffsetLabel.TextXAlignment = Enum.TextXAlignment.Left
+OffsetLabel.Parent = OffsetFrame
+
+local XInput = Instance.new("TextBox")
+XInput.Name = "XInput"
+XInput.Size = UDim2.new(0.3, -5, 0, 30)
+XInput.Position = UDim2.new(0, 0, 0, 30)
+XInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+XInput.BorderSizePixel = 0
+XInput.Text = "0"
+XInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+XInput.TextSize = 14
+XInput.Font = Enum.Font.Gotham
+XInput.Parent = OffsetFrame
+
+local YInput = Instance.new("TextBox")
+YInput.Name = "YInput"
+YInput.Size = UDim2.new(0.3, -5, 0, 30)
+YInput.Position = UDim2.new(0.35, 0, 0, 30)
+YInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+YInput.BorderSizePixel = 0
+YInput.Text = "0"
+YInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+YInput.TextSize = 14
+YInput.Font = Enum.Font.Gotham
+YInput.Parent = OffsetFrame
+
+local ZInput = Instance.new("TextBox")
+ZInput.Name = "ZInput"
+ZInput.Size = UDim2.new(0.3, -5, 0, 30)
+ZInput.Position = UDim2.new(0.7, 0, 0, 30)
+ZInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ZInput.BorderSizePixel = 0
+ZInput.Text = "0"
+ZInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+ZInput.TextSize = 14
+ZInput.Font = Enum.Font.Gotham
+ZInput.Parent = OffsetFrame
+
+-- Player List
+local PlayerListFrame = Instance.new("Frame")
+PlayerListFrame.Name = "PlayerListFrame"
+PlayerListFrame.Size = UDim2.new(1, 0, 0, 120)
+PlayerListFrame.Position = UDim2.new(0, 0, 0, 260)
+PlayerListFrame.BackgroundTransparency = 1
+PlayerListFrame.Parent = ContentFrame
+
+local PlayerListLabel = Instance.new("TextLabel")
+PlayerListLabel.Name = "PlayerListLabel"
+PlayerListLabel.Size = UDim2.new(0.7, 0, 0, 20)
+PlayerListLabel.BackgroundTransparency = 1
+PlayerListLabel.Text = "Player List"
+PlayerListLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayerListLabel.TextSize = 16
+PlayerListLabel.Font = Enum.Font.Gotham
+PlayerListLabel.TextXAlignment = Enum.TextXAlignment.Left
+PlayerListLabel.Parent = PlayerListFrame
+
+local RefreshButton = Instance.new("TextButton")
+RefreshButton.Name = "RefreshButton"
+RefreshButton.Size = UDim2.new(0.3, -10, 0, 20)
+RefreshButton.Position = UDim2.new(0.7, 0, 0, 0)
+RefreshButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+RefreshButton.BorderSizePixel = 0
+RefreshButton.Text = "Refresh"
+RefreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshButton.TextSize = 14
+RefreshButton.Font = Enum.Font.GothamSemibold
+RefreshButton.Parent = PlayerListFrame
+
+local PlayerScrollFrame = Instance.new("ScrollingFrame")
+PlayerScrollFrame.Name = "PlayerScrollFrame"
+PlayerScrollFrame.Size = UDim2.new(1, 0, 0, 90)
+PlayerScrollFrame.Position = UDim2.new(0, 0, 0, 30)
+PlayerScrollFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+PlayerScrollFrame.BorderSizePixel = 0
+PlayerScrollFrame.ScrollBarThickness = 4
+PlayerScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayerScrollFrame.Parent = PlayerListFrame
+
+local PlayerListLayout = Instance.new("UIListLayout")
+PlayerListLayout.Name = "PlayerListLayout"
+PlayerListLayout.SortOrder = Enum.SortOrder.Name
+PlayerListLayout.Padding = UDim.new(0, 2)
+PlayerListLayout.Parent = PlayerScrollFrame
+
+-- Variables
+local flyEnabled = false
+local noclipEnabled = false
+local continuousEnabled = false
+local flySpeed = 50
+local selectedPlayer = nil
+local flyConnection = nil
+local noclipConnection = nil
+
+-- Functions
+local function updatePlayerList()
+    -- Clear existing buttons
+    for _, child in pairs(PlayerScrollFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    
+    -- Add player buttons
+    local buttonHeight = 25
+    local totalHeight = 0
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local PlayerButton = Instance.new("TextButton")
+            PlayerButton.Name = player.Name .. "Button"
+            PlayerButton.Size = UDim2.new(1, -8, 0, buttonHeight)
+            PlayerButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            PlayerButton.BorderSizePixel = 0
+            PlayerButton.Text = player.Name
+            PlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            PlayerButton.TextSize = 14
+            PlayerButton.Font = Enum.Font.Gotham
+            PlayerButton.Parent = PlayerScrollFrame
+            
+            PlayerButton.MouseButton1Click:Connect(function()
+                selectedPlayer = player
+                for _, btn in pairs(PlayerScrollFrame:GetChildren()) do
+                    if btn:IsA("TextButton") then
+                        if btn == PlayerButton then
+                            btn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+                        else
+                            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+                        end
+                    end
+                end
+            end)
+            
+            totalHeight = totalHeight + buttonHeight + 2 -- 2 is the padding
+        end
+    end
+    
+    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+end
+
+local function toggleFly()
+    flyEnabled = not flyEnabled
+    
+    if flyEnabled then
+        FlyButton.Text = "ON"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if flyConnection then
+            flyConnection:Disconnect()
+        end
+        
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            
+            flyConnection = RunService.Heartbeat:Connect(function()
+                if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetHrp = selectedPlayer.Character.HumanoidRootPart
+                    local offsetX = tonumber(XInput.Text) or 0
+                    local offsetY = tonumber(YInput.Text) or 0
+                    local offsetZ = tonumber(ZInput.Text) or 0
+                    local targetPosition = targetHrp.Position + Vector3.new(offsetX, offsetY, offsetZ)
+                    
+                    local direction = (targetPosition - hrp.Position).Unit
+                    local distance = (targetPosition - hrp.Position).Magnitude
+                    
+                    if continuousEnabled or distance > 5 then
+                        hrp.Velocity = direction * flySpeed
+                    else
+                        hrp.Velocity = Vector3.new(0, 0, 0)
+                    end
+                end
+            end)
+        end
+    else
+        FlyButton.Text = "OFF"
+        FlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if flyConnection then
+            flyConnection:Disconnect()
+            flyConnection = nil
+        end
+        
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+        end
+    end
+end
+
+local function toggleNoclip()
+    noclipEnabled = not noclipEnabled
+    
+    if noclipEnabled then
+        NoclipButton.Text = "ON"
+        NoclipButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if noclipConnection then
+            noclipConnection:Disconnect()
+        end
+        
+        noclipConnection = RunService.Stepped:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        NoclipButton.Text = "OFF"
+        NoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
+        end
+        
+        local character = LocalPlayer.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end
+
+local function toggleContinuous()
+    continuousEnabled = not continuousEnabled
+    
+    if continuousEnabled then
+        ContinuousButton.Text = "ON"
+        ContinuousButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        ContinuousButton.Text = "OFF"
+        ContinuousButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+end
+
+local function updateSpeedSlider()
+    local mousePosition = UserInputService:GetMouseLocation()
+    local sliderPosition = SpeedSlider.AbsolutePosition
+    local sliderSize = SpeedSlider.AbsoluteSize
+    
+    local relativeX = math.clamp((mousePosition.X - sliderPosition.X) / sliderSize.X, 0, 1)
+    SpeedIndicator.Size = UDim2.new(relativeX, 0, 1, 0)
+    SpeedButton.Position = UDim2.new(relativeX, -10, 0, -5)
+    
+    flySpeed = math.floor(relativeX * 200)
+    SpeedLabel.Text = "Flight Speed: " .. flySpeed
+end
+
+-- Connect events
+CloseButton.MouseButton1Click:Connect(function()
+    if flyConnection then
+        flyConnection:Disconnect()
+    end
+    if noclipConnection then
+        noclipConnection:Disconnect()
+    end
+    ScreenGui:Destroy()
+end)
+
+FlyButton.MouseButton1Click:Connect(toggleFly)
+NoclipButton.MouseButton1Click:Connect(toggleNoclip)
+ContinuousButton.MouseButton1Click:Connect(toggleContinuous)
+RefreshButton.MouseButton1Click:Connect(updatePlayerList)
+
+-- Speed slider events
+local isDraggingSpeed = false
+
+SpeedButton.MouseButton1Down:Connect(function()
+    isDraggingSpeed = true
+    updateSpeedSlider()
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDraggingSpeed = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if isDraggingSpeed and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateSpeedSlider()
+    end
+end)
+
+-- Initialize
+updatePlayerList()
+
+-- Player added/removed events
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
+
+-- Make corners rounded
+local function makeRounded(instance, radius)
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, radius)
+    uiCorner.Parent = instance
+end
+
+makeRounded(MainFrame, 8)
+makeRounded(TitleBar, 8)
+makeRounded(FlyButton, 4)
+makeRounded(NoclipButton, 4)
+makeRounded(ContinuousButton, 4)
+makeRounded(SpeedSlider, 5)
+makeRounded(SpeedIndicator, 5)
+makeRounded(SpeedButton, 10)
+makeRounded(XInput, 4)
+makeRounded(YInput, 4)
+makeRounded(ZInput, 4)
+makeRounded(RefreshButton, 4)
+makeRounded(PlayerScrollFrame, 4)
+
+-- Initial setup
+SpeedIndicator.Size = UDim2.new(0.5, 0, 1, 0)
+SpeedButton.Position = UDim2.new(0.5, -10, 0, -5)
+
