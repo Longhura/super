@@ -37,8 +37,8 @@ IconCorner.Parent = CircleIcon
 -- Main Frame (Initially hidden)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 500) -- Increased height for new features
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250)
+MainFrame.Size = UDim2.new(0, 300, 0, 250) -- Shorter main menu
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -91,16 +91,14 @@ CloseButton.Font = Enum.Font.GothamSemibold
 CloseButton.Parent = TitleBar
 
 -- Content Frame
-local ContentFrame = Instance.new("ScrollingFrame")
+local ContentFrame = Instance.new("Frame")
 ContentFrame.Name = "ContentFrame"
 ContentFrame.Size = UDim2.new(1, -20, 1, -40)
 ContentFrame.Position = UDim2.new(0, 10, 0, 35)
 ContentFrame.BackgroundTransparency = 1
-ContentFrame.ScrollBarThickness = 4
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 600) -- Increased for new features
 ContentFrame.Parent = MainFrame
 
--- Fly Toggle
+-- Fly Toggle (Main Menu)
 local FlyToggle = Instance.new("Frame")
 FlyToggle.Name = "FlyToggle"
 FlyToggle.Size = UDim2.new(1, 0, 0, 30)
@@ -130,7 +128,7 @@ FlyButton.TextSize = 14
 FlyButton.Font = Enum.Font.GothamSemibold
 FlyButton.Parent = FlyToggle
 
--- Speed Input
+-- Speed Input (Main Menu)
 local SpeedFrame = Instance.new("Frame")
 SpeedFrame.Name = "SpeedFrame"
 SpeedFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -161,13 +159,102 @@ SpeedInput.TextSize = 14
 SpeedInput.Font = Enum.Font.Gotham
 SpeedInput.Parent = SpeedFrame
 
+-- Category Buttons (Main Menu)
+local CategoryFrame = Instance.new("Frame")
+CategoryFrame.Name = "CategoryFrame"
+CategoryFrame.Size = UDim2.new(1, 0, 0, 120)
+CategoryFrame.Position = UDim2.new(0, 0, 0, 100)
+CategoryFrame.BackgroundTransparency = 1
+CategoryFrame.Parent = ContentFrame
+
+-- Movement Category Button
+local MovementButton = Instance.new("TextButton")
+MovementButton.Name = "MovementButton"
+MovementButton.Size = UDim2.new(0.48, 0, 0, 50)
+MovementButton.Position = UDim2.new(0, 0, 0, 0)
+MovementButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+MovementButton.BorderSizePixel = 0
+MovementButton.Text = "Movement"
+MovementButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MovementButton.TextSize = 16
+MovementButton.Font = Enum.Font.GothamSemibold
+MovementButton.Parent = CategoryFrame
+
+-- Anti-Stun Category Button
+local AntiStunButton = Instance.new("TextButton")
+AntiStunButton.Name = "AntiStunButton"
+AntiStunButton.Size = UDim2.new(0.48, 0, 0, 50)
+AntiStunButton.Position = UDim2.new(0.52, 0, 0, 0)
+AntiStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+AntiStunButton.BorderSizePixel = 0
+AntiStunButton.Text = "Anti-Stun"
+AntiStunButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AntiStunButton.TextSize = 16
+AntiStunButton.Font = Enum.Font.GothamSemibold
+AntiStunButton.Parent = CategoryFrame
+
+-- ESP Category Button
+local ESPButton = Instance.new("TextButton")
+ESPButton.Name = "ESPButton"
+ESPButton.Size = UDim2.new(0.48, 0, 0, 50)
+ESPButton.Position = UDim2.new(0, 0, 0, 60)
+ESPButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPButton.BorderSizePixel = 0
+ESPButton.Text = "ESP"
+ESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPButton.TextSize = 16
+ESPButton.Font = Enum.Font.GothamSemibold
+ESPButton.Parent = CategoryFrame
+
+-- Player List Category Button
+local PlayerListButton = Instance.new("TextButton")
+PlayerListButton.Name = "PlayerListButton"
+PlayerListButton.Size = UDim2.new(0.48, 0, 0, 50)
+PlayerListButton.Position = UDim2.new(0.52, 0, 0, 60)
+PlayerListButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+PlayerListButton.BorderSizePixel = 0
+PlayerListButton.Text = "Player List"
+PlayerListButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayerListButton.TextSize = 16
+PlayerListButton.Font = Enum.Font.GothamSemibold
+PlayerListButton.Parent = CategoryFrame
+
+-- Sub-Menu Frames (Initially hidden)
+-- Movement Sub-Menu
+local MovementMenu = Instance.new("Frame")
+MovementMenu.Name = "MovementMenu"
+MovementMenu.Size = UDim2.new(0, 250, 0, 200)
+MovementMenu.Position = UDim2.new(0, 310, 0, 100)
+MovementMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MovementMenu.BorderSizePixel = 0
+MovementMenu.Visible = false
+MovementMenu.Parent = ScreenGui
+
+local MovementTitle = Instance.new("TextLabel")
+MovementTitle.Name = "MovementTitle"
+MovementTitle.Size = UDim2.new(1, 0, 0, 30)
+MovementTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+MovementTitle.BorderSizePixel = 0
+MovementTitle.Text = "Movement Options"
+MovementTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+MovementTitle.TextSize = 16
+MovementTitle.Font = Enum.Font.GothamSemibold
+MovementTitle.Parent = MovementMenu
+
+local MovementContent = Instance.new("Frame")
+MovementContent.Name = "MovementContent"
+MovementContent.Size = UDim2.new(1, -20, 1, -40)
+MovementContent.Position = UDim2.new(0, 10, 0, 35)
+MovementContent.BackgroundTransparency = 1
+MovementContent.Parent = MovementMenu
+
 -- Noclip Toggle
 local NoclipToggle = Instance.new("Frame")
 NoclipToggle.Name = "NoclipToggle"
 NoclipToggle.Size = UDim2.new(1, 0, 0, 30)
-NoclipToggle.Position = UDim2.new(0, 0, 0, 100)
+NoclipToggle.Position = UDim2.new(0, 0, 0, 0)
 NoclipToggle.BackgroundTransparency = 1
-NoclipToggle.Parent = ContentFrame
+NoclipToggle.Parent = MovementContent
 
 local NoclipLabel = Instance.new("TextLabel")
 NoclipLabel.Name = "NoclipLabel"
@@ -192,75 +279,13 @@ NoclipButton.TextSize = 14
 NoclipButton.Font = Enum.Font.GothamSemibold
 NoclipButton.Parent = NoclipToggle
 
--- No Stun Toggle
-local NoStunToggle = Instance.new("Frame")
-NoStunToggle.Name = "NoStunToggle"
-NoStunToggle.Size = UDim2.new(1, 0, 0, 30)
-NoStunToggle.Position = UDim2.new(0, 0, 0, 140)
-NoStunToggle.BackgroundTransparency = 1
-NoStunToggle.Parent = ContentFrame
-
-local NoStunLabel = Instance.new("TextLabel")
-NoStunLabel.Name = "NoStunLabel"
-NoStunLabel.Size = UDim2.new(0.7, 0, 1, 0)
-NoStunLabel.BackgroundTransparency = 1
-NoStunLabel.Text = "No Stun"
-NoStunLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoStunLabel.TextSize = 16
-NoStunLabel.Font = Enum.Font.Gotham
-NoStunLabel.TextXAlignment = Enum.TextXAlignment.Left
-NoStunLabel.Parent = NoStunToggle
-
-local NoStunButton = Instance.new("TextButton")
-NoStunButton.Name = "NoStunButton"
-NoStunButton.Size = UDim2.new(0.3, -10, 1, -10)
-NoStunButton.Position = UDim2.new(0.7, 0, 0, 5)
-NoStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-NoStunButton.BorderSizePixel = 0
-NoStunButton.Text = "OFF"
-NoStunButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoStunButton.TextSize = 14
-NoStunButton.Font = Enum.Font.GothamSemibold
-NoStunButton.Parent = NoStunToggle
-
--- No Stun V2 + Anti Freeze Toggle (New Feature)
-local NoStunV2Toggle = Instance.new("Frame")
-NoStunV2Toggle.Name = "NoStunV2Toggle"
-NoStunV2Toggle.Size = UDim2.new(1, 0, 0, 30)
-NoStunV2Toggle.Position = UDim2.new(0, 0, 0, 180)
-NoStunV2Toggle.BackgroundTransparency = 1
-NoStunV2Toggle.Parent = ContentFrame
-
-local NoStunV2Label = Instance.new("TextLabel")
-NoStunV2Label.Name = "NoStunV2Label"
-NoStunV2Label.Size = UDim2.new(0.7, 0, 1, 0)
-NoStunV2Label.BackgroundTransparency = 1
-NoStunV2Label.Text = "No Stun V2 + Anti Freeze"
-NoStunV2Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoStunV2Label.TextSize = 16
-NoStunV2Label.Font = Enum.Font.Gotham
-NoStunV2Label.TextXAlignment = Enum.TextXAlignment.Left
-NoStunV2Label.Parent = NoStunV2Toggle
-
-local NoStunV2Button = Instance.new("TextButton")
-NoStunV2Button.Name = "NoStunV2Button"
-NoStunV2Button.Size = UDim2.new(0.3, -10, 1, -10)
-NoStunV2Button.Position = UDim2.new(0.7, 0, 0, 5)
-NoStunV2Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-NoStunV2Button.BorderSizePixel = 0
-NoStunV2Button.Text = "OFF"
-NoStunV2Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-NoStunV2Button.TextSize = 14
-NoStunV2Button.Font = Enum.Font.GothamSemibold
-NoStunV2Button.Parent = NoStunV2Toggle
-
 -- Continuous Flying Toggle
 local ContinuousToggle = Instance.new("Frame")
 ContinuousToggle.Name = "ContinuousToggle"
 ContinuousToggle.Size = UDim2.new(1, 0, 0, 30)
-ContinuousToggle.Position = UDim2.new(0, 0, 0, 220)
+ContinuousToggle.Position = UDim2.new(0, 0, 0, 40)
 ContinuousToggle.BackgroundTransparency = 1
-ContinuousToggle.Parent = ContentFrame
+ContinuousToggle.Parent = MovementContent
 
 local ContinuousLabel = Instance.new("TextLabel")
 ContinuousLabel.Name = "ContinuousLabel"
@@ -285,13 +310,13 @@ ContinuousButton.TextSize = 14
 ContinuousButton.Font = Enum.Font.GothamSemibold
 ContinuousButton.Parent = ContinuousToggle
 
--- Teleport Button (New Feature)
+-- Teleport Button
 local TeleportFrame = Instance.new("Frame")
 TeleportFrame.Name = "TeleportFrame"
 TeleportFrame.Size = UDim2.new(1, 0, 0, 30)
-TeleportFrame.Position = UDim2.new(0, 0, 0, 260)
+TeleportFrame.Position = UDim2.new(0, 0, 0, 80)
 TeleportFrame.BackgroundTransparency = 1
-TeleportFrame.Parent = ContentFrame
+TeleportFrame.Parent = MovementContent
 
 local TeleportLabel = Instance.new("TextLabel")
 TeleportLabel.Name = "TeleportLabel"
@@ -316,13 +341,13 @@ TeleportButton.TextSize = 12
 TeleportButton.Font = Enum.Font.GothamSemibold
 TeleportButton.Parent = TeleportFrame
 
--- Auto Teleport Toggle (New Feature)
+-- Auto Teleport Toggle
 local AutoTeleportToggle = Instance.new("Frame")
 AutoTeleportToggle.Name = "AutoTeleportToggle"
 AutoTeleportToggle.Size = UDim2.new(1, 0, 0, 30)
-AutoTeleportToggle.Position = UDim2.new(0, 0, 0, 300)
+AutoTeleportToggle.Position = UDim2.new(0, 0, 0, 120)
 AutoTeleportToggle.BackgroundTransparency = 1
-AutoTeleportToggle.Parent = ContentFrame
+AutoTeleportToggle.Parent = MovementContent
 
 local AutoTeleportLabel = Instance.new("TextLabel")
 AutoTeleportLabel.Name = "AutoTeleportLabel"
@@ -347,26 +372,131 @@ AutoTeleportButton.TextSize = 14
 AutoTeleportButton.Font = Enum.Font.GothamSemibold
 AutoTeleportButton.Parent = AutoTeleportToggle
 
--- ESP Features Section Header
-local ESPHeader = Instance.new("TextLabel")
-ESPHeader.Name = "ESPHeader"
-ESPHeader.Size = UDim2.new(1, 0, 0, 30)
-ESPHeader.Position = UDim2.new(0, 0, 0, 340)
-ESPHeader.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ESPHeader.BorderSizePixel = 0
-ESPHeader.Text = "ESP Features"
-ESPHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPHeader.TextSize = 16
-ESPHeader.Font = Enum.Font.GothamBold
-ESPHeader.Parent = ContentFrame
+-- Anti-Stun Sub-Menu
+local AntiStunMenu = Instance.new("Frame")
+AntiStunMenu.Name = "AntiStunMenu"
+AntiStunMenu.Size = UDim2.new(0, 250, 0, 150)
+AntiStunMenu.Position = UDim2.new(0, 310, 0, 100)
+AntiStunMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+AntiStunMenu.BorderSizePixel = 0
+AntiStunMenu.Visible = false
+AntiStunMenu.Parent = ScreenGui
+
+local AntiStunTitle = Instance.new("TextLabel")
+AntiStunTitle.Name = "AntiStunTitle"
+AntiStunTitle.Size = UDim2.new(1, 0, 0, 30)
+AntiStunTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+AntiStunTitle.BorderSizePixel = 0
+AntiStunTitle.Text = "Anti-Stun Options"
+AntiStunTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AntiStunTitle.TextSize = 16
+AntiStunTitle.Font = Enum.Font.GothamSemibold
+AntiStunTitle.Parent = AntiStunMenu
+
+local AntiStunContent = Instance.new("Frame")
+AntiStunContent.Name = "AntiStunContent"
+AntiStunContent.Size = UDim2.new(1, -20, 1, -40)
+AntiStunContent.Position = UDim2.new(0, 10, 0, 35)
+AntiStunContent.BackgroundTransparency = 1
+AntiStunContent.Parent = AntiStunMenu
+
+-- No Stun Toggle
+local NoStunToggle = Instance.new("Frame")
+NoStunToggle.Name = "NoStunToggle"
+NoStunToggle.Size = UDim2.new(1, 0, 0, 30)
+NoStunToggle.Position = UDim2.new(0, 0, 0, 0)
+NoStunToggle.BackgroundTransparency = 1
+NoStunToggle.Parent = AntiStunContent
+
+local NoStunLabel = Instance.new("TextLabel")
+NoStunLabel.Name = "NoStunLabel"
+NoStunLabel.Size = UDim2.new(0.7, 0, 1, 0)
+NoStunLabel.BackgroundTransparency = 1
+NoStunLabel.Text = "No Stun"
+NoStunLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunLabel.TextSize = 16
+NoStunLabel.Font = Enum.Font.Gotham
+NoStunLabel.TextXAlignment = Enum.TextXAlignment.Left
+NoStunLabel.Parent = NoStunToggle
+
+local NoStunButton = Instance.new("TextButton")
+NoStunButton.Name = "NoStunButton"
+NoStunButton.Size = UDim2.new(0.3, -10, 1, -10)
+NoStunButton.Position = UDim2.new(0.7, 0, 0, 5)
+NoStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoStunButton.BorderSizePixel = 0
+NoStunButton.Text = "OFF"
+NoStunButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunButton.TextSize = 14
+NoStunButton.Font = Enum.Font.GothamSemibold
+NoStunButton.Parent = NoStunToggle
+
+-- No Stun V2 + Anti Freeze Toggle
+local NoStunV2Toggle = Instance.new("Frame")
+NoStunV2Toggle.Name = "NoStunV2Toggle"
+NoStunV2Toggle.Size = UDim2.new(1, 0, 0, 30)
+NoStunV2Toggle.Position = UDim2.new(0, 0, 0, 40)
+NoStunV2Toggle.BackgroundTransparency = 1
+NoStunV2Toggle.Parent = AntiStunContent
+
+local NoStunV2Label = Instance.new("TextLabel")
+NoStunV2Label.Name = "NoStunV2Label"
+NoStunV2Label.Size = UDim2.new(0.7, 0, 1, 0)
+NoStunV2Label.BackgroundTransparency = 1
+NoStunV2Label.Text = "No Stun V2 + Anti Freeze"
+NoStunV2Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunV2Label.TextSize = 16
+NoStunV2Label.Font = Enum.Font.Gotham
+NoStunV2Label.TextXAlignment = Enum.TextXAlignment.Left
+NoStunV2Label.Parent = NoStunV2Toggle
+
+local NoStunV2Button = Instance.new("TextButton")
+NoStunV2Button.Name = "NoStunV2Button"
+NoStunV2Button.Size = UDim2.new(0.3, -10, 1, -10)
+NoStunV2Button.Position = UDim2.new(0.7, 0, 0, 5)
+NoStunV2Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoStunV2Button.BorderSizePixel = 0
+NoStunV2Button.Text = "OFF"
+NoStunV2Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunV2Button.TextSize = 14
+NoStunV2Button.Font = Enum.Font.GothamSemibold
+NoStunV2Button.Parent = NoStunV2Toggle
+
+-- ESP Sub-Menu
+local ESPMenu = Instance.new("Frame")
+ESPMenu.Name = "ESPMenu"
+ESPMenu.Size = UDim2.new(0, 250, 0, 250)
+ESPMenu.Position = UDim2.new(0, 310, 0, 100)
+ESPMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ESPMenu.BorderSizePixel = 0
+ESPMenu.Visible = false
+ESPMenu.Parent = ScreenGui
+
+local ESPTitle = Instance.new("TextLabel")
+ESPTitle.Name = "ESPTitle"
+ESPTitle.Size = UDim2.new(1, 0, 0, 30)
+ESPTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPTitle.BorderSizePixel = 0
+ESPTitle.Text = "ESP Options"
+ESPTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPTitle.TextSize = 16
+ESPTitle.Font = Enum.Font.GothamSemibold
+ESPTitle.Parent = ESPMenu
+
+local ESPContent = Instance.new("Frame")
+ESPContent.Name = "ESPContent"
+ESPContent.Size = UDim2.new(1, -20, 1, -40)
+ESPContent.Position = UDim2.new(0, 10, 0, 35)
+ESPContent.BackgroundTransparency = 1
+ESPContent.Parent = ESPMenu
 
 -- ESP Target Toggle
 local ESPTargetToggle = Instance.new("Frame")
 ESPTargetToggle.Name = "ESPTargetToggle"
 ESPTargetToggle.Size = UDim2.new(1, 0, 0, 30)
-ESPTargetToggle.Position = UDim2.new(0, 0, 0, 380)
+ESPTargetToggle.Position = UDim2.new(0, 0, 0, 0)
 ESPTargetToggle.BackgroundTransparency = 1
-ESPTargetToggle.Parent = ContentFrame
+ESPTargetToggle.Parent = ESPContent
 
 local ESPTargetLabel = Instance.new("TextLabel")
 ESPTargetLabel.Name = "ESPTargetLabel"
@@ -395,9 +525,9 @@ ESPTargetButton.Parent = ESPTargetToggle
 local ESPAllToggle = Instance.new("Frame")
 ESPAllToggle.Name = "ESPAllToggle"
 ESPAllToggle.Size = UDim2.new(1, 0, 0, 30)
-ESPAllToggle.Position = UDim2.new(0, 0, 0, 420)
+ESPAllToggle.Position = UDim2.new(0, 0, 0, 40)
 ESPAllToggle.BackgroundTransparency = 1
-ESPAllToggle.Parent = ContentFrame
+ESPAllToggle.Parent = ESPContent
 
 local ESPAllLabel = Instance.new("TextLabel")
 ESPAllLabel.Name = "ESPAllLabel"
@@ -426,9 +556,9 @@ ESPAllButton.Parent = ESPAllToggle
 local ESPLinesToggle = Instance.new("Frame")
 ESPLinesToggle.Name = "ESPLinesToggle"
 ESPLinesToggle.Size = UDim2.new(1, 0, 0, 30)
-ESPLinesToggle.Position = UDim2.new(0, 0, 0, 460)
+ESPLinesToggle.Position = UDim2.new(0, 0, 0, 80)
 ESPLinesToggle.BackgroundTransparency = 1
-ESPLinesToggle.Parent = ContentFrame
+ESPLinesToggle.Parent = ESPContent
 
 local ESPLinesLabel = Instance.new("TextLabel")
 ESPLinesLabel.Name = "ESPLinesLabel"
@@ -457,9 +587,9 @@ ESPLinesButton.Parent = ESPLinesToggle
 local ESPNamesToggle = Instance.new("Frame")
 ESPNamesToggle.Name = "ESPNamesToggle"
 ESPNamesToggle.Size = UDim2.new(1, 0, 0, 30)
-ESPNamesToggle.Position = UDim2.new(0, 0, 0, 500)
+ESPNamesToggle.Position = UDim2.new(0, 0, 0, 120)
 ESPNamesToggle.BackgroundTransparency = 1
-ESPNamesToggle.Parent = ContentFrame
+ESPNamesToggle.Parent = ESPContent
 
 local ESPNamesLabel = Instance.new("TextLabel")
 ESPNamesLabel.Name = "ESPNamesLabel"
@@ -488,9 +618,9 @@ ESPNamesButton.Parent = ESPNamesToggle
 local ESPHitboxToggle = Instance.new("Frame")
 ESPHitboxToggle.Name = "ESPHitboxToggle"
 ESPHitboxToggle.Size = UDim2.new(1, 0, 0, 30)
-ESPHitboxToggle.Position = UDim2.new(0, 0, 0, 540)
+ESPHitboxToggle.Position = UDim2.new(0, 0, 0, 160)
 ESPHitboxToggle.BackgroundTransparency = 1
-ESPHitboxToggle.Parent = ContentFrame
+ESPHitboxToggle.Parent = ESPContent
 
 local ESPHitboxLabel = Instance.new("TextLabel")
 ESPHitboxLabel.Name = "ESPHitboxLabel"
@@ -515,13 +645,41 @@ ESPHitboxButton.TextSize = 14
 ESPHitboxButton.Font = Enum.Font.GothamSemibold
 ESPHitboxButton.Parent = ESPHitboxToggle
 
+-- Player List Sub-Menu
+local PlayerListMenu = Instance.new("Frame")
+PlayerListMenu.Name = "PlayerListMenu"
+PlayerListMenu.Size = UDim2.new(0, 250, 0, 300)
+PlayerListMenu.Position = UDim2.new(0, 310, 0, 100)
+PlayerListMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PlayerListMenu.BorderSizePixel = 0
+PlayerListMenu.Visible = false
+PlayerListMenu.Parent = ScreenGui
+
+local PlayerListTitle = Instance.new("TextLabel")
+PlayerListTitle.Name = "PlayerListTitle"
+PlayerListTitle.Size = UDim2.new(1, 0, 0, 30)
+PlayerListTitle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+PlayerListTitle.BorderSizePixel = 0
+PlayerListTitle.Text = "Player List"
+PlayerListTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+PlayerListTitle.TextSize = 16
+PlayerListTitle.Font = Enum.Font.GothamSemibold
+PlayerListTitle.Parent = PlayerListMenu
+
+local PlayerListContent = Instance.new("Frame")
+PlayerListContent.Name = "PlayerListContent"
+PlayerListContent.Size = UDim2.new(1, -20, 1, -40)
+PlayerListContent.Position = UDim2.new(0, 10, 0, 35)
+PlayerListContent.BackgroundTransparency = 1
+PlayerListContent.Parent = PlayerListMenu
+
 -- Offset Input
 local OffsetFrame = Instance.new("Frame")
 OffsetFrame.Name = "OffsetFrame"
 OffsetFrame.Size = UDim2.new(1, 0, 0, 70)
-OffsetFrame.Position = UDim2.new(0, 0, 0, 580)
+OffsetFrame.Position = UDim2.new(0, 0, 0, 0)
 OffsetFrame.BackgroundTransparency = 1
-OffsetFrame.Parent = ContentFrame
+OffsetFrame.Parent = PlayerListContent
 
 local OffsetLabel = Instance.new("TextLabel")
 OffsetLabel.Name = "OffsetLabel"
@@ -573,16 +731,16 @@ ZInput.Parent = OffsetFrame
 -- Player List
 local PlayerListFrame = Instance.new("Frame")
 PlayerListFrame.Name = "PlayerListFrame"
-PlayerListFrame.Size = UDim2.new(1, 0, 0, 100)
-PlayerListFrame.Position = UDim2.new(0, 0, 0, 660)
+PlayerListFrame.Size = UDim2.new(1, 0, 0, 180)
+PlayerListFrame.Position = UDim2.new(0, 0, 0, 80)
 PlayerListFrame.BackgroundTransparency = 1
-PlayerListFrame.Parent = ContentFrame
+PlayerListFrame.Parent = PlayerListContent
 
 local PlayerListLabel = Instance.new("TextLabel")
 PlayerListLabel.Name = "PlayerListLabel"
 PlayerListLabel.Size = UDim2.new(0.7, 0, 0, 20)
 PlayerListLabel.BackgroundTransparency = 1
-PlayerListLabel.Text = "Player List"
+PlayerListLabel.Text = "Select Player"
 PlayerListLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 PlayerListLabel.TextSize = 16
 PlayerListLabel.Font = Enum.Font.Gotham
@@ -603,7 +761,7 @@ RefreshButton.Parent = PlayerListFrame
 
 local PlayerScrollFrame = Instance.new("ScrollingFrame")
 PlayerScrollFrame.Name = "PlayerScrollFrame"
-PlayerScrollFrame.Size = UDim2.new(1, 0, 0, 70)
+PlayerScrollFrame.Size = UDim2.new(1, 0, 0, 150)
 PlayerScrollFrame.Position = UDim2.new(0, 0, 0, 30)
 PlayerScrollFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 PlayerScrollFrame.BorderSizePixel = 0
@@ -643,6 +801,7 @@ local noStunConnection = nil
 local noStunV2Connection = nil
 local autoTeleportConnection = nil
 local espUpdateConnection = nil
+local activeSubMenu = nil
 
 -- Functions
 local function updatePlayerList()
@@ -1116,9 +1275,36 @@ local function toggleESPHitbox()
     updateESP()
 end
 
+-- Sub-menu management
+local function hideAllSubMenus()
+    MovementMenu.Visible = false
+    AntiStunMenu.Visible = false
+    ESPMenu.Visible = false
+    PlayerListMenu.Visible = false
+    activeSubMenu = nil
+end
+
+local function toggleSubMenu(menu)
+    if activeSubMenu == menu then
+        menu.Visible = false
+        activeSubMenu = nil
+    else
+        hideAllSubMenus()
+        menu.Visible = true
+        activeSubMenu = menu
+        
+        -- Position the sub-menu next to the main menu
+        menu.Position = UDim2.new(0, MainFrame.AbsolutePosition.X + MainFrame.AbsoluteSize.X + 10, 0, MainFrame.AbsolutePosition.Y)
+    end
+end
+
 local function toggleMainFrame()
     MainFrame.Visible = not MainFrame.Visible
     CircleIcon.Visible = not MainFrame.Visible
+    
+    if not MainFrame.Visible then
+        hideAllSubMenus()
+    end
 end
 
 -- Connect events
@@ -1136,18 +1322,34 @@ end)
 
 MinimizeButton.MouseButton1Click:Connect(toggleMainFrame)
 
+-- Main menu buttons
 FlyButton.MouseButton1Click:Connect(toggleFly)
+MovementButton.MouseButton1Click:Connect(function() toggleSubMenu(MovementMenu) end)
+AntiStunButton.MouseButton1Click:Connect(function() toggleSubMenu(AntiStunMenu) end)
+ESPButton.MouseButton1Click:Connect(function() toggleSubMenu(ESPMenu) end)
+PlayerListButton.MouseButton1Click:Connect(function() 
+    toggleSubMenu(PlayerListMenu)
+    updatePlayerList() -- Refresh player list when opening
+end)
+
+-- Movement sub-menu buttons
 NoclipButton.MouseButton1Click:Connect(toggleNoclip)
-NoStunButton.MouseButton1Click:Connect(toggleNoStun)
-NoStunV2Button.MouseButton1Click:Connect(toggleNoStunV2)
 ContinuousButton.MouseButton1Click:Connect(toggleContinuous)
 TeleportButton.MouseButton1Click:Connect(teleportToPlayer)
 AutoTeleportButton.MouseButton1Click:Connect(toggleAutoTeleport)
+
+-- Anti-Stun sub-menu buttons
+NoStunButton.MouseButton1Click:Connect(toggleNoStun)
+NoStunV2Button.MouseButton1Click:Connect(toggleNoStunV2)
+
+-- ESP sub-menu buttons
 ESPTargetButton.MouseButton1Click:Connect(toggleESPTarget)
 ESPAllButton.MouseButton1Click:Connect(toggleESPAll)
 ESPLinesButton.MouseButton1Click:Connect(toggleESPLines)
 ESPNamesButton.MouseButton1Click:Connect(toggleESPNames)
 ESPHitboxButton.MouseButton1Click:Connect(toggleESPHitbox)
+
+-- Player List sub-menu buttons
 RefreshButton.MouseButton1Click:Connect(updatePlayerList)
 
 -- Speed input validation
@@ -1182,25 +1384,41 @@ local function makeRounded(instance, radius)
     uiCorner.Parent = instance
 end
 
+-- Apply rounded corners to all UI elements
 makeRounded(MainFrame, 8)
 makeRounded(TitleBar, 8)
 makeRounded(FlyButton, 4)
+makeRounded(SpeedInput, 4)
+makeRounded(MovementButton, 6)
+makeRounded(AntiStunButton, 6)
+makeRounded(ESPButton, 6)
+makeRounded(PlayerListButton, 6)
+
+makeRounded(MovementMenu, 8)
+makeRounded(MovementTitle, 8)
 makeRounded(NoclipButton, 4)
-makeRounded(NoStunButton, 4)
-makeRounded(NoStunV2Button, 4)
 makeRounded(ContinuousButton, 4)
 makeRounded(TeleportButton, 4)
 makeRounded(AutoTeleportButton, 4)
+
+makeRounded(AntiStunMenu, 8)
+makeRounded(AntiStunTitle, 8)
+makeRounded(NoStunButton, 4)
+makeRounded(NoStunV2Button, 4)
+
+makeRounded(ESPMenu, 8)
+makeRounded(ESPTitle, 8)
 makeRounded(ESPTargetButton, 4)
 makeRounded(ESPAllButton, 4)
 makeRounded(ESPLinesButton, 4)
 makeRounded(ESPNamesButton, 4)
 makeRounded(ESPHitboxButton, 4)
-makeRounded(SpeedInput, 4)
+
+makeRounded(PlayerListMenu, 8)
+makeRounded(PlayerListTitle, 8)
 makeRounded(XInput, 4)
 makeRounded(YInput, 4)
 makeRounded(ZInput, 4)
 makeRounded(RefreshButton, 4)
 makeRounded(PlayerScrollFrame, 4)
-makeRounded(ESPHeader, 4)
 
