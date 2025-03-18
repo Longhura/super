@@ -4,6 +4,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -25,6 +26,8 @@ CircleIcon.ImageRectOffset = Vector2.new(324, 364)
 CircleIcon.ImageRectSize = Vector2.new(36, 36)
 CircleIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 CircleIcon.Parent = ScreenGui
+CircleIcon.Active = true -- Make it interactive
+CircleIcon.Draggable = true -- Make it draggable
 
 -- Make the icon circular
 local IconCorner = Instance.new("UICorner")
@@ -34,8 +37,8 @@ IconCorner.Parent = CircleIcon
 -- Main Frame (Initially hidden)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.Size = UDim2.new(0, 300, 0, 500) -- Increased height for new features
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -250)
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -88,11 +91,13 @@ CloseButton.Font = Enum.Font.GothamSemibold
 CloseButton.Parent = TitleBar
 
 -- Content Frame
-local ContentFrame = Instance.new("Frame")
+local ContentFrame = Instance.new("ScrollingFrame")
 ContentFrame.Name = "ContentFrame"
 ContentFrame.Size = UDim2.new(1, -20, 1, -40)
 ContentFrame.Position = UDim2.new(0, 10, 0, 35)
 ContentFrame.BackgroundTransparency = 1
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 600) -- Increased for new features
 ContentFrame.Parent = MainFrame
 
 -- Fly Toggle
@@ -125,7 +130,7 @@ FlyButton.TextSize = 14
 FlyButton.Font = Enum.Font.GothamSemibold
 FlyButton.Parent = FlyToggle
 
--- Speed Input (replacing slider with text input)
+-- Speed Input
 local SpeedFrame = Instance.new("Frame")
 SpeedFrame.Name = "SpeedFrame"
 SpeedFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -187,7 +192,7 @@ NoclipButton.TextSize = 14
 NoclipButton.Font = Enum.Font.GothamSemibold
 NoclipButton.Parent = NoclipToggle
 
--- No Stun Toggle (New Feature)
+-- No Stun Toggle
 local NoStunToggle = Instance.new("Frame")
 NoStunToggle.Name = "NoStunToggle"
 NoStunToggle.Size = UDim2.new(1, 0, 0, 30)
@@ -199,7 +204,7 @@ local NoStunLabel = Instance.new("TextLabel")
 NoStunLabel.Name = "NoStunLabel"
 NoStunLabel.Size = UDim2.new(0.7, 0, 1, 0)
 NoStunLabel.BackgroundTransparency = 1
-NoStunLabel.Text = "No Stun/Control"
+NoStunLabel.Text = "No Stun"
 NoStunLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 NoStunLabel.TextSize = 16
 NoStunLabel.Font = Enum.Font.Gotham
@@ -218,11 +223,42 @@ NoStunButton.TextSize = 14
 NoStunButton.Font = Enum.Font.GothamSemibold
 NoStunButton.Parent = NoStunToggle
 
+-- No Stun V2 + Anti Freeze Toggle (New Feature)
+local NoStunV2Toggle = Instance.new("Frame")
+NoStunV2Toggle.Name = "NoStunV2Toggle"
+NoStunV2Toggle.Size = UDim2.new(1, 0, 0, 30)
+NoStunV2Toggle.Position = UDim2.new(0, 0, 0, 180)
+NoStunV2Toggle.BackgroundTransparency = 1
+NoStunV2Toggle.Parent = ContentFrame
+
+local NoStunV2Label = Instance.new("TextLabel")
+NoStunV2Label.Name = "NoStunV2Label"
+NoStunV2Label.Size = UDim2.new(0.7, 0, 1, 0)
+NoStunV2Label.BackgroundTransparency = 1
+NoStunV2Label.Text = "No Stun V2 + Anti Freeze"
+NoStunV2Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunV2Label.TextSize = 16
+NoStunV2Label.Font = Enum.Font.Gotham
+NoStunV2Label.TextXAlignment = Enum.TextXAlignment.Left
+NoStunV2Label.Parent = NoStunV2Toggle
+
+local NoStunV2Button = Instance.new("TextButton")
+NoStunV2Button.Name = "NoStunV2Button"
+NoStunV2Button.Size = UDim2.new(0.3, -10, 1, -10)
+NoStunV2Button.Position = UDim2.new(0.7, 0, 0, 5)
+NoStunV2Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoStunV2Button.BorderSizePixel = 0
+NoStunV2Button.Text = "OFF"
+NoStunV2Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunV2Button.TextSize = 14
+NoStunV2Button.Font = Enum.Font.GothamSemibold
+NoStunV2Button.Parent = NoStunV2Toggle
+
 -- Continuous Flying Toggle
 local ContinuousToggle = Instance.new("Frame")
 ContinuousToggle.Name = "ContinuousToggle"
 ContinuousToggle.Size = UDim2.new(1, 0, 0, 30)
-ContinuousToggle.Position = UDim2.new(0, 0, 0, 180)
+ContinuousToggle.Position = UDim2.new(0, 0, 0, 220)
 ContinuousToggle.BackgroundTransparency = 1
 ContinuousToggle.Parent = ContentFrame
 
@@ -249,11 +285,241 @@ ContinuousButton.TextSize = 14
 ContinuousButton.Font = Enum.Font.GothamSemibold
 ContinuousButton.Parent = ContinuousToggle
 
+-- Teleport Button (New Feature)
+local TeleportFrame = Instance.new("Frame")
+TeleportFrame.Name = "TeleportFrame"
+TeleportFrame.Size = UDim2.new(1, 0, 0, 30)
+TeleportFrame.Position = UDim2.new(0, 0, 0, 260)
+TeleportFrame.BackgroundTransparency = 1
+TeleportFrame.Parent = ContentFrame
+
+local TeleportLabel = Instance.new("TextLabel")
+TeleportLabel.Name = "TeleportLabel"
+TeleportLabel.Size = UDim2.new(0.7, 0, 1, 0)
+TeleportLabel.BackgroundTransparency = 1
+TeleportLabel.Text = "Teleport to Player"
+TeleportLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeleportLabel.TextSize = 16
+TeleportLabel.Font = Enum.Font.Gotham
+TeleportLabel.TextXAlignment = Enum.TextXAlignment.Left
+TeleportLabel.Parent = TeleportFrame
+
+local TeleportButton = Instance.new("TextButton")
+TeleportButton.Name = "TeleportButton"
+TeleportButton.Size = UDim2.new(0.3, -10, 1, -10)
+TeleportButton.Position = UDim2.new(0.7, 0, 0, 5)
+TeleportButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TeleportButton.BorderSizePixel = 0
+TeleportButton.Text = "TELEPORT"
+TeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeleportButton.TextSize = 12
+TeleportButton.Font = Enum.Font.GothamSemibold
+TeleportButton.Parent = TeleportFrame
+
+-- Auto Teleport Toggle (New Feature)
+local AutoTeleportToggle = Instance.new("Frame")
+AutoTeleportToggle.Name = "AutoTeleportToggle"
+AutoTeleportToggle.Size = UDim2.new(1, 0, 0, 30)
+AutoTeleportToggle.Position = UDim2.new(0, 0, 0, 300)
+AutoTeleportToggle.BackgroundTransparency = 1
+AutoTeleportToggle.Parent = ContentFrame
+
+local AutoTeleportLabel = Instance.new("TextLabel")
+AutoTeleportLabel.Name = "AutoTeleportLabel"
+AutoTeleportLabel.Size = UDim2.new(0.7, 0, 1, 0)
+AutoTeleportLabel.BackgroundTransparency = 1
+AutoTeleportLabel.Text = "Auto Teleport"
+AutoTeleportLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoTeleportLabel.TextSize = 16
+AutoTeleportLabel.Font = Enum.Font.Gotham
+AutoTeleportLabel.TextXAlignment = Enum.TextXAlignment.Left
+AutoTeleportLabel.Parent = AutoTeleportToggle
+
+local AutoTeleportButton = Instance.new("TextButton")
+AutoTeleportButton.Name = "AutoTeleportButton"
+AutoTeleportButton.Size = UDim2.new(0.3, -10, 1, -10)
+AutoTeleportButton.Position = UDim2.new(0.7, 0, 0, 5)
+AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+AutoTeleportButton.BorderSizePixel = 0
+AutoTeleportButton.Text = "OFF"
+AutoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoTeleportButton.TextSize = 14
+AutoTeleportButton.Font = Enum.Font.GothamSemibold
+AutoTeleportButton.Parent = AutoTeleportToggle
+
+-- ESP Features Section Header
+local ESPHeader = Instance.new("TextLabel")
+ESPHeader.Name = "ESPHeader"
+ESPHeader.Size = UDim2.new(1, 0, 0, 30)
+ESPHeader.Position = UDim2.new(0, 0, 0, 340)
+ESPHeader.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ESPHeader.BorderSizePixel = 0
+ESPHeader.Text = "ESP Features"
+ESPHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPHeader.TextSize = 16
+ESPHeader.Font = Enum.Font.GothamBold
+ESPHeader.Parent = ContentFrame
+
+-- ESP Target Toggle
+local ESPTargetToggle = Instance.new("Frame")
+ESPTargetToggle.Name = "ESPTargetToggle"
+ESPTargetToggle.Size = UDim2.new(1, 0, 0, 30)
+ESPTargetToggle.Position = UDim2.new(0, 0, 0, 380)
+ESPTargetToggle.BackgroundTransparency = 1
+ESPTargetToggle.Parent = ContentFrame
+
+local ESPTargetLabel = Instance.new("TextLabel")
+ESPTargetLabel.Name = "ESPTargetLabel"
+ESPTargetLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ESPTargetLabel.BackgroundTransparency = 1
+ESPTargetLabel.Text = "ESP Target"
+ESPTargetLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPTargetLabel.TextSize = 16
+ESPTargetLabel.Font = Enum.Font.Gotham
+ESPTargetLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPTargetLabel.Parent = ESPTargetToggle
+
+local ESPTargetButton = Instance.new("TextButton")
+ESPTargetButton.Name = "ESPTargetButton"
+ESPTargetButton.Size = UDim2.new(0.3, -10, 1, -10)
+ESPTargetButton.Position = UDim2.new(0.7, 0, 0, 5)
+ESPTargetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPTargetButton.BorderSizePixel = 0
+ESPTargetButton.Text = "OFF"
+ESPTargetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPTargetButton.TextSize = 14
+ESPTargetButton.Font = Enum.Font.GothamSemibold
+ESPTargetButton.Parent = ESPTargetToggle
+
+-- ESP All Players Toggle
+local ESPAllToggle = Instance.new("Frame")
+ESPAllToggle.Name = "ESPAllToggle"
+ESPAllToggle.Size = UDim2.new(1, 0, 0, 30)
+ESPAllToggle.Position = UDim2.new(0, 0, 0, 420)
+ESPAllToggle.BackgroundTransparency = 1
+ESPAllToggle.Parent = ContentFrame
+
+local ESPAllLabel = Instance.new("TextLabel")
+ESPAllLabel.Name = "ESPAllLabel"
+ESPAllLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ESPAllLabel.BackgroundTransparency = 1
+ESPAllLabel.Text = "ESP All Players"
+ESPAllLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPAllLabel.TextSize = 16
+ESPAllLabel.Font = Enum.Font.Gotham
+ESPAllLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPAllLabel.Parent = ESPAllToggle
+
+local ESPAllButton = Instance.new("TextButton")
+ESPAllButton.Name = "ESPAllButton"
+ESPAllButton.Size = UDim2.new(0.3, -10, 1, -10)
+ESPAllButton.Position = UDim2.new(0.7, 0, 0, 5)
+ESPAllButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPAllButton.BorderSizePixel = 0
+ESPAllButton.Text = "OFF"
+ESPAllButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPAllButton.TextSize = 14
+ESPAllButton.Font = Enum.Font.GothamSemibold
+ESPAllButton.Parent = ESPAllToggle
+
+-- ESP Lines Toggle
+local ESPLinesToggle = Instance.new("Frame")
+ESPLinesToggle.Name = "ESPLinesToggle"
+ESPLinesToggle.Size = UDim2.new(1, 0, 0, 30)
+ESPLinesToggle.Position = UDim2.new(0, 0, 0, 460)
+ESPLinesToggle.BackgroundTransparency = 1
+ESPLinesToggle.Parent = ContentFrame
+
+local ESPLinesLabel = Instance.new("TextLabel")
+ESPLinesLabel.Name = "ESPLinesLabel"
+ESPLinesLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ESPLinesLabel.BackgroundTransparency = 1
+ESPLinesLabel.Text = "ESP Lines"
+ESPLinesLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPLinesLabel.TextSize = 16
+ESPLinesLabel.Font = Enum.Font.Gotham
+ESPLinesLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPLinesLabel.Parent = ESPLinesToggle
+
+local ESPLinesButton = Instance.new("TextButton")
+ESPLinesButton.Name = "ESPLinesButton"
+ESPLinesButton.Size = UDim2.new(0.3, -10, 1, -10)
+ESPLinesButton.Position = UDim2.new(0.7, 0, 0, 5)
+ESPLinesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPLinesButton.BorderSizePixel = 0
+ESPLinesButton.Text = "OFF"
+ESPLinesButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPLinesButton.TextSize = 14
+ESPLinesButton.Font = Enum.Font.GothamSemibold
+ESPLinesButton.Parent = ESPLinesToggle
+
+-- ESP Names Toggle
+local ESPNamesToggle = Instance.new("Frame")
+ESPNamesToggle.Name = "ESPNamesToggle"
+ESPNamesToggle.Size = UDim2.new(1, 0, 0, 30)
+ESPNamesToggle.Position = UDim2.new(0, 0, 0, 500)
+ESPNamesToggle.BackgroundTransparency = 1
+ESPNamesToggle.Parent = ContentFrame
+
+local ESPNamesLabel = Instance.new("TextLabel")
+ESPNamesLabel.Name = "ESPNamesLabel"
+ESPNamesLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ESPNamesLabel.BackgroundTransparency = 1
+ESPNamesLabel.Text = "ESP Names"
+ESPNamesLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPNamesLabel.TextSize = 16
+ESPNamesLabel.Font = Enum.Font.Gotham
+ESPNamesLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPNamesLabel.Parent = ESPNamesToggle
+
+local ESPNamesButton = Instance.new("TextButton")
+ESPNamesButton.Name = "ESPNamesButton"
+ESPNamesButton.Size = UDim2.new(0.3, -10, 1, -10)
+ESPNamesButton.Position = UDim2.new(0.7, 0, 0, 5)
+ESPNamesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPNamesButton.BorderSizePixel = 0
+ESPNamesButton.Text = "OFF"
+ESPNamesButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPNamesButton.TextSize = 14
+ESPNamesButton.Font = Enum.Font.GothamSemibold
+ESPNamesButton.Parent = ESPNamesToggle
+
+-- ESP Hitbox Toggle
+local ESPHitboxToggle = Instance.new("Frame")
+ESPHitboxToggle.Name = "ESPHitboxToggle"
+ESPHitboxToggle.Size = UDim2.new(1, 0, 0, 30)
+ESPHitboxToggle.Position = UDim2.new(0, 0, 0, 540)
+ESPHitboxToggle.BackgroundTransparency = 1
+ESPHitboxToggle.Parent = ContentFrame
+
+local ESPHitboxLabel = Instance.new("TextLabel")
+ESPHitboxLabel.Name = "ESPHitboxLabel"
+ESPHitboxLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ESPHitboxLabel.BackgroundTransparency = 1
+ESPHitboxLabel.Text = "ESP Hitbox"
+ESPHitboxLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPHitboxLabel.TextSize = 16
+ESPHitboxLabel.Font = Enum.Font.Gotham
+ESPHitboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+ESPHitboxLabel.Parent = ESPHitboxToggle
+
+local ESPHitboxButton = Instance.new("TextButton")
+ESPHitboxButton.Name = "ESPHitboxButton"
+ESPHitboxButton.Size = UDim2.new(0.3, -10, 1, -10)
+ESPHitboxButton.Position = UDim2.new(0.7, 0, 0, 5)
+ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+ESPHitboxButton.BorderSizePixel = 0
+ESPHitboxButton.Text = "OFF"
+ESPHitboxButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPHitboxButton.TextSize = 14
+ESPHitboxButton.Font = Enum.Font.GothamSemibold
+ESPHitboxButton.Parent = ESPHitboxToggle
+
 -- Offset Input
 local OffsetFrame = Instance.new("Frame")
 OffsetFrame.Name = "OffsetFrame"
 OffsetFrame.Size = UDim2.new(1, 0, 0, 70)
-OffsetFrame.Position = UDim2.new(0, 0, 0, 220)
+OffsetFrame.Position = UDim2.new(0, 0, 0, 580)
 OffsetFrame.BackgroundTransparency = 1
 OffsetFrame.Parent = ContentFrame
 
@@ -308,7 +574,7 @@ ZInput.Parent = OffsetFrame
 local PlayerListFrame = Instance.new("Frame")
 PlayerListFrame.Name = "PlayerListFrame"
 PlayerListFrame.Size = UDim2.new(1, 0, 0, 100)
-PlayerListFrame.Position = UDim2.new(0, 0, 0, 300)
+PlayerListFrame.Position = UDim2.new(0, 0, 0, 660)
 PlayerListFrame.BackgroundTransparency = 1
 PlayerListFrame.Parent = ContentFrame
 
@@ -352,16 +618,31 @@ PlayerListLayout.SortOrder = Enum.SortOrder.Name
 PlayerListLayout.Padding = UDim.new(0, 2)
 PlayerListLayout.Parent = PlayerScrollFrame
 
+-- ESP Container for visual elements
+local ESPContainer = Instance.new("Folder")
+ESPContainer.Name = "ESPContainer"
+ESPContainer.Parent = ScreenGui
+
 -- Variables
 local flyEnabled = false
 local noclipEnabled = false
 local noStunEnabled = false
+local noStunV2Enabled = false
 local continuousEnabled = false
+local autoTeleportEnabled = false
+local espTargetEnabled = false
+local espAllEnabled = false
+local espLinesEnabled = false
+local espNamesEnabled = false
+local espHitboxEnabled = false
 local flySpeed = 50
 local selectedPlayer = nil
 local flyConnection = nil
 local noclipConnection = nil
 local noStunConnection = nil
+local noStunV2Connection = nil
+local autoTeleportConnection = nil
+local espUpdateConnection = nil
 
 -- Functions
 local function updatePlayerList()
@@ -544,6 +825,60 @@ local function toggleNoStun()
     end
 end
 
+local function toggleNoStunV2()
+    noStunV2Enabled = not noStunV2Enabled
+    
+    if noStunV2Enabled then
+        NoStunV2Button.Text = "ON"
+        NoStunV2Button.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if noStunV2Connection then
+            noStunV2Connection:Disconnect()
+        end
+        
+        noStunV2Connection = RunService.Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    -- Advanced anti-stun and anti-freeze (for games like BloxFruits)
+                    humanoid.PlatformStand = false
+                    humanoid.Sit = false
+                    humanoid.AutoRotate = true
+                    
+                    -- Override animation states
+                    if humanoid:GetState() ~= Enum.HumanoidStateType.Running and
+                       humanoid:GetState() ~= Enum.HumanoidStateType.Jumping and
+                       humanoid:GetState() ~= Enum.HumanoidStateType.Climbing and
+                       humanoid:GetState() ~= Enum.HumanoidStateType.Swimming then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+                    end
+                    
+                    -- Ensure character can move by checking and resetting velocity
+                    for _, part in pairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.Anchored then
+                            part.Anchored = false
+                        end
+                    end
+                    
+                    -- Override any scripts that might be freezing the character
+                    if character.HumanoidRootPart.Anchored then
+                        character.HumanoidRootPart.Anchored = false
+                    end
+                end
+            end
+        end)
+    else
+        NoStunV2Button.Text = "OFF"
+        NoStunV2Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if noStunV2Connection then
+            noStunV2Connection:Disconnect()
+            noStunV2Connection = nil
+        end
+    end
+end
+
 local function toggleContinuous()
     continuousEnabled = not continuousEnabled
     
@@ -556,6 +891,231 @@ local function toggleContinuous()
     end
 end
 
+local function teleportToPlayer()
+    if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local targetHrp = selectedPlayer.Character.HumanoidRootPart
+            local offsetX = tonumber(XInput.Text) or 0
+            local offsetY = tonumber(YInput.Text) or 0
+            local offsetZ = tonumber(ZInput.Text) or 0
+            local targetPosition = targetHrp.Position + Vector3.new(offsetX, offsetY, offsetZ)
+            
+            character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+        end
+    end
+end
+
+local function toggleAutoTeleport()
+    autoTeleportEnabled = not autoTeleportEnabled
+    
+    if autoTeleportEnabled then
+        AutoTeleportButton.Text = "ON"
+        AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if autoTeleportConnection then
+            autoTeleportConnection:Disconnect()
+        end
+        
+        autoTeleportConnection = RunService.Heartbeat:Connect(function()
+            teleportToPlayer()
+        end)
+    else
+        AutoTeleportButton.Text = "OFF"
+        AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if autoTeleportConnection then
+            autoTeleportConnection:Disconnect()
+            autoTeleportConnection = nil
+        end
+    end
+end
+
+-- ESP Functions
+local function createESPItem(player)
+    -- Create ESP folder for this player
+    local espFolder = Instance.new("Folder")
+    espFolder.Name = player.Name .. "_ESP"
+    espFolder.Parent = ESPContainer
+    
+    -- Create box highlight
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "Highlight"
+    highlight.FillColor = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Enabled = false
+    highlight.Parent = espFolder
+    
+    -- Create ESP name billboard
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Name = "NameESP"
+    billboardGui.Size = UDim2.new(0, 200, 0, 50)
+    billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+    billboardGui.AlwaysOnTop = true
+    billboardGui.LightInfluence = 0
+    billboardGui.Enabled = false
+    billboardGui.Parent = espFolder
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.TextSize = 18
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.Parent = billboardGui
+    
+    -- Create ESP line
+    local line = Instance.new("LineHandleAdornment")
+    line.Name = "Line"
+    line.Color3 = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+    line.Thickness = 2
+    line.ZIndex = 1
+    line.Transparency = 0
+    line.Visible = false
+    line.Parent = espFolder
+    
+    return espFolder
+end
+
+local function updateESP()
+    -- Clear existing ESP
+    ESPContainer:ClearAllChildren()
+    
+    -- Create new ESP for each player
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local isTarget = (player == selectedPlayer)
+            
+            -- Only create ESP for target or all players based on settings
+            if (isTarget and espTargetEnabled) or (espAllEnabled) then
+                local espFolder = createESPItem(player)
+                
+                -- Apply ESP to player character
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    -- Update highlight
+                    local highlight = espFolder:FindFirstChild("Highlight")
+                    if highlight then
+                        highlight.Enabled = true
+                        highlight.Parent = player.Character
+                    end
+                    
+                    -- Update name ESP
+                    local nameESP = espFolder:FindFirstChild("NameESP")
+                    if nameESP and espNamesEnabled then
+                        nameESP.Enabled = true
+                        nameESP.Adornee = player.Character.Head
+                    end
+                    
+                    -- Update line ESP
+                    local line = espFolder:FindFirstChild("Line")
+                    if line and espLinesEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        line.Visible = true
+                        line.Adornee = workspace
+                        line.Length = 1000
+                        line.CFrame = CFrame.new(
+                            LocalPlayer.Character.HumanoidRootPart.Position,
+                            player.Character.HumanoidRootPart.Position
+                        )
+                    end
+                    
+                    -- Update hitbox ESP
+                    if espHitboxEnabled then
+                        for _, part in pairs(player.Character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                local boxHandleAdornment = Instance.new("BoxHandleAdornment")
+                                boxHandleAdornment.Name = part.Name .. "_Hitbox"
+                                boxHandleAdornment.Adornee = part
+                                boxHandleAdornment.AlwaysOnTop = true
+                                boxHandleAdornment.ZIndex = 10
+                                boxHandleAdornment.Size = part.Size
+                                boxHandleAdornment.Transparency = 0.7
+                                boxHandleAdornment.Color3 = isTarget and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+                                boxHandleAdornment.Parent = espFolder
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function toggleESPTarget()
+    espTargetEnabled = not espTargetEnabled
+    
+    if espTargetEnabled then
+        ESPTargetButton.Text = "ON"
+        ESPTargetButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        ESPTargetButton.Text = "OFF"
+        ESPTargetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+    
+    updateESP()
+end
+
+local function toggleESPAll()
+    espAllEnabled = not espAllEnabled
+    
+    if espAllEnabled then
+        ESPAllButton.Text = "ON"
+        ESPAllButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        ESPAllButton.Text = "OFF"
+        ESPAllButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+    
+    updateESP()
+end
+
+local function toggleESPLines()
+    espLinesEnabled = not espLinesEnabled
+    
+    if espLinesEnabled then
+        ESPLinesButton.Text = "ON"
+        ESPLinesButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        ESPLinesButton.Text = "OFF"
+        ESPLinesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+    
+    updateESP()
+end
+
+local function toggleESPNames()
+    espNamesEnabled = not espNamesEnabled
+    
+    if espNamesEnabled then
+        ESPNamesButton.Text = "ON"
+        ESPNamesButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        ESPNamesButton.Text = "OFF"
+        ESPNamesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+    
+    updateESP()
+end
+
+local function toggleESPHitbox()
+    espHitboxEnabled = not espHitboxEnabled
+    
+    if espHitboxEnabled then
+        ESPHitboxButton.Text = "ON"
+        ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        ESPHitboxButton.Text = "OFF"
+        ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+    
+    updateESP()
+end
+
 local function toggleMainFrame()
     MainFrame.Visible = not MainFrame.Visible
     CircleIcon.Visible = not MainFrame.Visible
@@ -565,15 +1125,12 @@ end
 CircleIcon.MouseButton1Click:Connect(toggleMainFrame)
 
 CloseButton.MouseButton1Click:Connect(function()
-    if flyConnection then
-        flyConnection:Disconnect()
-    end
-    if noclipConnection then
-        noclipConnection:Disconnect()
-    end
-    if noStunConnection then
-        noStunConnection:Disconnect()
-    end
+    if flyConnection then flyConnection:Disconnect() end
+    if noclipConnection then noclipConnection:Disconnect() end
+    if noStunConnection then noStunConnection:Disconnect() end
+    if noStunV2Connection then noStunV2Connection:Disconnect() end
+    if autoTeleportConnection then autoTeleportConnection:Disconnect() end
+    if espUpdateConnection then espUpdateConnection:Disconnect() end
     ScreenGui:Destroy()
 end)
 
@@ -582,7 +1139,15 @@ MinimizeButton.MouseButton1Click:Connect(toggleMainFrame)
 FlyButton.MouseButton1Click:Connect(toggleFly)
 NoclipButton.MouseButton1Click:Connect(toggleNoclip)
 NoStunButton.MouseButton1Click:Connect(toggleNoStun)
+NoStunV2Button.MouseButton1Click:Connect(toggleNoStunV2)
 ContinuousButton.MouseButton1Click:Connect(toggleContinuous)
+TeleportButton.MouseButton1Click:Connect(teleportToPlayer)
+AutoTeleportButton.MouseButton1Click:Connect(toggleAutoTeleport)
+ESPTargetButton.MouseButton1Click:Connect(toggleESPTarget)
+ESPAllButton.MouseButton1Click:Connect(toggleESPAll)
+ESPLinesButton.MouseButton1Click:Connect(toggleESPLines)
+ESPNamesButton.MouseButton1Click:Connect(toggleESPNames)
+ESPHitboxButton.MouseButton1Click:Connect(toggleESPHitbox)
 RefreshButton.MouseButton1Click:Connect(updatePlayerList)
 
 -- Speed input validation
@@ -598,6 +1163,13 @@ end)
 
 -- Initialize
 updatePlayerList()
+
+-- Set up ESP update loop
+espUpdateConnection = RunService.RenderStepped:Connect(function()
+    if espTargetEnabled or espAllEnabled then
+        updateESP()
+    end
+end)
 
 -- Player added/removed events
 Players.PlayerAdded:Connect(updatePlayerList)
@@ -615,11 +1187,20 @@ makeRounded(TitleBar, 8)
 makeRounded(FlyButton, 4)
 makeRounded(NoclipButton, 4)
 makeRounded(NoStunButton, 4)
+makeRounded(NoStunV2Button, 4)
 makeRounded(ContinuousButton, 4)
+makeRounded(TeleportButton, 4)
+makeRounded(AutoTeleportButton, 4)
+makeRounded(ESPTargetButton, 4)
+makeRounded(ESPAllButton, 4)
+makeRounded(ESPLinesButton, 4)
+makeRounded(ESPNamesButton, 4)
+makeRounded(ESPHitboxButton, 4)
 makeRounded(SpeedInput, 4)
 makeRounded(XInput, 4)
 makeRounded(YInput, 4)
 makeRounded(ZInput, 4)
 makeRounded(RefreshButton, 4)
 makeRounded(PlayerScrollFrame, 4)
+makeRounded(ESPHeader, 4)
 
