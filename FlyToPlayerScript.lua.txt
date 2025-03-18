@@ -13,7 +13,25 @@ ScreenGui.Name = "FlyToPlayerGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = game.CoreGui
 
--- Main Frame
+-- Circular Icon (Initially visible)
+local CircleIcon = Instance.new("ImageButton")
+CircleIcon.Name = "CircleIcon"
+CircleIcon.Size = UDim2.new(0, 50, 0, 50)
+CircleIcon.Position = UDim2.new(0.9, 0, 0.5, 0)
+CircleIcon.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+CircleIcon.BorderSizePixel = 0
+CircleIcon.Image = "rbxassetid://3926307971" -- Roblox asset ID for a fly icon
+CircleIcon.ImageRectOffset = Vector2.new(324, 364)
+CircleIcon.ImageRectSize = Vector2.new(36, 36)
+CircleIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+CircleIcon.Parent = ScreenGui
+
+-- Make the icon circular
+local IconCorner = Instance.new("UICorner")
+IconCorner.CornerRadius = UDim.new(1, 0)
+IconCorner.Parent = CircleIcon
+
+-- Main Frame (Initially hidden)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 300, 0, 400)
@@ -22,6 +40,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
 -- Title Bar
@@ -34,7 +53,7 @@ TitleBar.Parent = MainFrame
 
 local TitleText = Instance.new("TextLabel")
 TitleText.Name = "TitleText"
-TitleText.Size = UDim2.new(1, -10, 1, 0)
+TitleText.Size = UDim2.new(1, -100, 1, 0)
 TitleText.Position = UDim2.new(0, 10, 0, 0)
 TitleText.BackgroundTransparency = 1
 TitleText.Text = "Fly To Player"
@@ -43,6 +62,18 @@ TitleText.TextSize = 18
 TitleText.Font = Enum.Font.GothamSemibold
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Parent = TitleBar
+
+-- Minimize Button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -60, 0, 0)
+MinimizeButton.BackgroundTransparency = 1
+MinimizeButton.Text = "−"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 18
+MinimizeButton.Font = Enum.Font.GothamSemibold
+MinimizeButton.Parent = TitleBar
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
@@ -94,7 +125,7 @@ FlyButton.TextSize = 14
 FlyButton.Font = Enum.Font.GothamSemibold
 FlyButton.Parent = FlyToggle
 
--- Speed Slider
+-- Speed Input (replacing slider with text input)
 local SpeedFrame = Instance.new("Frame")
 SpeedFrame.Name = "SpeedFrame"
 SpeedFrame.Size = UDim2.new(1, 0, 0, 50)
@@ -106,36 +137,24 @@ local SpeedLabel = Instance.new("TextLabel")
 SpeedLabel.Name = "SpeedLabel"
 SpeedLabel.Size = UDim2.new(1, 0, 0, 20)
 SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "Flight Speed: 50"
+SpeedLabel.Text = "Flight Speed:"
 SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 SpeedLabel.TextSize = 16
 SpeedLabel.Font = Enum.Font.Gotham
 SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
 SpeedLabel.Parent = SpeedFrame
 
-local SpeedSlider = Instance.new("Frame")
-SpeedSlider.Name = "SpeedSlider"
-SpeedSlider.Size = UDim2.new(1, 0, 0, 10)
-SpeedSlider.Position = UDim2.new(0, 0, 0, 30)
-SpeedSlider.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-SpeedSlider.BorderSizePixel = 0
-SpeedSlider.Parent = SpeedFrame
-
-local SpeedIndicator = Instance.new("Frame")
-SpeedIndicator.Name = "SpeedIndicator"
-SpeedIndicator.Size = UDim2.new(0.5, 0, 1, 0)
-SpeedIndicator.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-SpeedIndicator.BorderSizePixel = 0
-SpeedIndicator.Parent = SpeedSlider
-
-local SpeedButton = Instance.new("TextButton")
-SpeedButton.Name = "SpeedButton"
-SpeedButton.Size = UDim2.new(0, 20, 0, 20)
-SpeedButton.Position = UDim2.new(0.5, -10, 0, -5)
-SpeedButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-SpeedButton.BorderSizePixel = 0
-SpeedButton.Text = ""
-SpeedButton.Parent = SpeedSlider
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Name = "SpeedInput"
+SpeedInput.Size = UDim2.new(1, 0, 0, 30)
+SpeedInput.Position = UDim2.new(0, 0, 0, 20)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SpeedInput.BorderSizePixel = 0
+SpeedInput.Text = "50"
+SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.TextSize = 14
+SpeedInput.Font = Enum.Font.Gotham
+SpeedInput.Parent = SpeedFrame
 
 -- Noclip Toggle
 local NoclipToggle = Instance.new("Frame")
@@ -168,11 +187,42 @@ NoclipButton.TextSize = 14
 NoclipButton.Font = Enum.Font.GothamSemibold
 NoclipButton.Parent = NoclipToggle
 
+-- No Stun Toggle (New Feature)
+local NoStunToggle = Instance.new("Frame")
+NoStunToggle.Name = "NoStunToggle"
+NoStunToggle.Size = UDim2.new(1, 0, 0, 30)
+NoStunToggle.Position = UDim2.new(0, 0, 0, 140)
+NoStunToggle.BackgroundTransparency = 1
+NoStunToggle.Parent = ContentFrame
+
+local NoStunLabel = Instance.new("TextLabel")
+NoStunLabel.Name = "NoStunLabel"
+NoStunLabel.Size = UDim2.new(0.7, 0, 1, 0)
+NoStunLabel.BackgroundTransparency = 1
+NoStunLabel.Text = "No Stun/Control"
+NoStunLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunLabel.TextSize = 16
+NoStunLabel.Font = Enum.Font.Gotham
+NoStunLabel.TextXAlignment = Enum.TextXAlignment.Left
+NoStunLabel.Parent = NoStunToggle
+
+local NoStunButton = Instance.new("TextButton")
+NoStunButton.Name = "NoStunButton"
+NoStunButton.Size = UDim2.new(0.3, -10, 1, -10)
+NoStunButton.Position = UDim2.new(0.7, 0, 0, 5)
+NoStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoStunButton.BorderSizePixel = 0
+NoStunButton.Text = "OFF"
+NoStunButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoStunButton.TextSize = 14
+NoStunButton.Font = Enum.Font.GothamSemibold
+NoStunButton.Parent = NoStunToggle
+
 -- Continuous Flying Toggle
 local ContinuousToggle = Instance.new("Frame")
 ContinuousToggle.Name = "ContinuousToggle"
 ContinuousToggle.Size = UDim2.new(1, 0, 0, 30)
-ContinuousToggle.Position = UDim2.new(0, 0, 0, 140)
+ContinuousToggle.Position = UDim2.new(0, 0, 0, 180)
 ContinuousToggle.BackgroundTransparency = 1
 ContinuousToggle.Parent = ContentFrame
 
@@ -203,7 +253,7 @@ ContinuousButton.Parent = ContinuousToggle
 local OffsetFrame = Instance.new("Frame")
 OffsetFrame.Name = "OffsetFrame"
 OffsetFrame.Size = UDim2.new(1, 0, 0, 70)
-OffsetFrame.Position = UDim2.new(0, 0, 0, 180)
+OffsetFrame.Position = UDim2.new(0, 0, 0, 220)
 OffsetFrame.BackgroundTransparency = 1
 OffsetFrame.Parent = ContentFrame
 
@@ -257,8 +307,8 @@ ZInput.Parent = OffsetFrame
 -- Player List
 local PlayerListFrame = Instance.new("Frame")
 PlayerListFrame.Name = "PlayerListFrame"
-PlayerListFrame.Size = UDim2.new(1, 0, 0, 120)
-PlayerListFrame.Position = UDim2.new(0, 0, 0, 260)
+PlayerListFrame.Size = UDim2.new(1, 0, 0, 100)
+PlayerListFrame.Position = UDim2.new(0, 0, 0, 300)
 PlayerListFrame.BackgroundTransparency = 1
 PlayerListFrame.Parent = ContentFrame
 
@@ -287,7 +337,7 @@ RefreshButton.Parent = PlayerListFrame
 
 local PlayerScrollFrame = Instance.new("ScrollingFrame")
 PlayerScrollFrame.Name = "PlayerScrollFrame"
-PlayerScrollFrame.Size = UDim2.new(1, 0, 0, 90)
+PlayerScrollFrame.Size = UDim2.new(1, 0, 0, 70)
 PlayerScrollFrame.Position = UDim2.new(0, 0, 0, 30)
 PlayerScrollFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 PlayerScrollFrame.BorderSizePixel = 0
@@ -305,11 +355,13 @@ PlayerListLayout.Parent = PlayerScrollFrame
 -- Variables
 local flyEnabled = false
 local noclipEnabled = false
+local noStunEnabled = false
 local continuousEnabled = false
 local flySpeed = 50
 local selectedPlayer = nil
 local flyConnection = nil
 local noclipConnection = nil
+local noStunConnection = nil
 
 -- Functions
 local function updatePlayerList()
@@ -383,6 +435,10 @@ local function toggleFly()
                     local direction = (targetPosition - hrp.Position).Unit
                     local distance = (targetPosition - hrp.Position).Magnitude
                     
+                    -- Get speed from input
+                    local speed = tonumber(SpeedInput.Text) or 50
+                    flySpeed = math.clamp(speed, 1, 500)
+                    
                     if continuousEnabled or distance > 5 then
                         hrp.Velocity = direction * flySpeed
                     else
@@ -448,6 +504,46 @@ local function toggleNoclip()
     end
 end
 
+local function toggleNoStun()
+    noStunEnabled = not noStunEnabled
+    
+    if noStunEnabled then
+        NoStunButton.Text = "ON"
+        NoStunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if noStunConnection then
+            noStunConnection:Disconnect()
+        end
+        
+        noStunConnection = RunService.Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    -- Prevent stun by resetting these properties
+                    humanoid.PlatformStand = false
+                    humanoid.Sit = false
+                    
+                    -- Reset animation if it's a stun animation
+                    if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll or
+                       humanoid:GetState() == Enum.HumanoidStateType.Stunned or
+                       humanoid:GetState() == Enum.HumanoidStateType.FallingDown then
+                        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+                    end
+                end
+            end
+        end)
+    else
+        NoStunButton.Text = "OFF"
+        NoStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if noStunConnection then
+            noStunConnection:Disconnect()
+            noStunConnection = nil
+        end
+    end
+end
+
 local function toggleContinuous()
     continuousEnabled = not continuousEnabled
     
@@ -460,20 +556,14 @@ local function toggleContinuous()
     end
 end
 
-local function updateSpeedSlider()
-    local mousePosition = UserInputService:GetMouseLocation()
-    local sliderPosition = SpeedSlider.AbsolutePosition
-    local sliderSize = SpeedSlider.AbsoluteSize
-    
-    local relativeX = math.clamp((mousePosition.X - sliderPosition.X) / sliderSize.X, 0, 1)
-    SpeedIndicator.Size = UDim2.new(relativeX, 0, 1, 0)
-    SpeedButton.Position = UDim2.new(relativeX, -10, 0, -5)
-    
-    flySpeed = math.floor(relativeX * 200)
-    SpeedLabel.Text = "Flight Speed: " .. flySpeed
+local function toggleMainFrame()
+    MainFrame.Visible = not MainFrame.Visible
+    CircleIcon.Visible = not MainFrame.Visible
 end
 
 -- Connect events
+CircleIcon.MouseButton1Click:Connect(toggleMainFrame)
+
 CloseButton.MouseButton1Click:Connect(function()
     if flyConnection then
         flyConnection:Disconnect()
@@ -481,31 +571,28 @@ CloseButton.MouseButton1Click:Connect(function()
     if noclipConnection then
         noclipConnection:Disconnect()
     end
+    if noStunConnection then
+        noStunConnection:Disconnect()
+    end
     ScreenGui:Destroy()
 end)
 
+MinimizeButton.MouseButton1Click:Connect(toggleMainFrame)
+
 FlyButton.MouseButton1Click:Connect(toggleFly)
 NoclipButton.MouseButton1Click:Connect(toggleNoclip)
+NoStunButton.MouseButton1Click:Connect(toggleNoStun)
 ContinuousButton.MouseButton1Click:Connect(toggleContinuous)
 RefreshButton.MouseButton1Click:Connect(updatePlayerList)
 
--- Speed slider events
-local isDraggingSpeed = false
-
-SpeedButton.MouseButton1Down:Connect(function()
-    isDraggingSpeed = true
-    updateSpeedSlider()
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDraggingSpeed = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if isDraggingSpeed and input.UserInputType == Enum.UserInputType.MouseMovement then
-        updateSpeedSlider()
+-- Speed input validation
+SpeedInput.FocusLost:Connect(function(enterPressed)
+    local speed = tonumber(SpeedInput.Text)
+    if speed then
+        flySpeed = math.clamp(speed, 1, 500)
+        SpeedInput.Text = tostring(flySpeed)
+    else
+        SpeedInput.Text = tostring(flySpeed)
     end
 end)
 
@@ -527,17 +614,12 @@ makeRounded(MainFrame, 8)
 makeRounded(TitleBar, 8)
 makeRounded(FlyButton, 4)
 makeRounded(NoclipButton, 4)
+makeRounded(NoStunButton, 4)
 makeRounded(ContinuousButton, 4)
-makeRounded(SpeedSlider, 5)
-makeRounded(SpeedIndicator, 5)
-makeRounded(SpeedButton, 10)
+makeRounded(SpeedInput, 4)
 makeRounded(XInput, 4)
 makeRounded(YInput, 4)
 makeRounded(ZInput, 4)
 makeRounded(RefreshButton, 4)
 makeRounded(PlayerScrollFrame, 4)
-
--- Initial setup
-SpeedIndicator.Size = UDim2.new(0.5, 0, 1, 0)
-SpeedButton.Position = UDim2.new(0.5, -10, 0, -5)
 
