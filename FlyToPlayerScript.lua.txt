@@ -496,14 +496,14 @@ AntiStunContent.Parent = AntiStunMenu
 -- No Stun Toggle
 local NoStunToggle = Instance.new("Frame")
 NoStunToggle.Name = "NoStunToggle"
-NoStunToggle.Size = UDim2.new(1, 0, 0, 30.Size = UDim2.new(1, 0, 0, 30)
+NoStunToggle.Size = UDim2.new(1, 0, 0, 30)
 NoStunToggle.Position = UDim2.new(0, 0, 0, 0)
 NoStunToggle.BackgroundTransparency = 1
 NoStunToggle.Parent = AntiStunContent
 
 local NoStunLabel = Instance.new("TextLabel")
 NoStunLabel.Name = "NoStunLabel"
-NoStunLabel.Size = UDim2.new(0.7, 0, 1, 0)
+NoStunLabel.Size = UDim2.new(0.7, .Size = UDim2.new(0.7, 0, 1, 0)
 NoStunLabel.BackgroundTransparency = 1
 NoStunLabel.Text = "No Stun"
 NoStunLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -969,6 +969,7 @@ local isEscaping = false
 local noComboEnabled = false
 local noComboConnection = nil
 local modifiedParts = {} -- For tracking modified parts in wall penetration v2
+local partOriginalStates = {} -- Store original collision states
 
 -- Functions
 local function updatePlayerList()
@@ -1292,6 +1293,7 @@ local function toggleAutoRun()
                       character.HumanoidRootPart.CFrame = CFrame.new(upPosition)
                       
                       -- Then fly up quickly (10x faster)
+                      task.wait(0.1) -- Small delay to ensure teleport completes
                       local upVector = Vector3.new(0, 1, 0)
                       character.HumanoidRootPart.Velocity = upVector * 2000 -- 10x faster upward velocity
                   elseif healthPercent > 51 and isEscaping then
@@ -1346,8 +1348,9 @@ local function toggleWallPenetration()
       WallPenetrationButton.Text = "ON"
       WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
       
-      -- Clear the modified parts table
+      -- Clear the modified parts table and original states
       modifiedParts = {}
+      partOriginalStates = {}
       
       if wallPenetrationConnection then
           wallPenetrationConnection:Disconnect()
@@ -1370,20 +1373,24 @@ local function toggleWallPenetration()
               for _, part in ipairs(parts) do
                   if part:IsA("BasePart") and part.CanCollide and not part:IsDescendantOf(character) then
                       -- Store original state if we haven't seen this part before
-                      if not modifiedParts[part] then
-                          modifiedParts[part] = true
+                      if not partOriginalStates[part] then
+                          partOriginalStates[part] = part.CanCollide
                       end
                       
                       part.CanCollide = false
                       currentModifiedParts[part] = true
+                      modifiedParts[part] = true
                   end
               end
               
               -- Restore collision for parts that are no longer in range
               for part, _ in pairs(modifiedParts) do
                   if part and part:IsA("BasePart") and not currentModifiedParts[part] then
-                      part.CanCollide = true
-                      modifiedParts[part] = nil
+                      -- Only restore if we have the original state
+                      if partOriginalStates[part] ~= nil then
+                          part.CanCollide = partOriginalStates[part]
+                          modifiedParts[part] = nil
+                      end
                   end
               end
           end
@@ -1399,13 +1406,14 @@ local function toggleWallPenetration()
       
       -- Restore collision for all modified parts
       for part, _ in pairs(modifiedParts) do
-          if part and part:IsA("BasePart") then
-              part.CanCollide = true
+          if part and part:IsA("BasePart") and partOriginalStates[part] ~= nil then
+              part.CanCollide = partOriginalStates[part]
           end
       end
       
-      -- Clear the modified parts table
+      -- Clear the modified parts table and original states
       modifiedParts = {}
+      partOriginalStates = {}
   end
 end
 
@@ -1420,6 +1428,9 @@ local function toggleWallPenetrationV3()
       if wallPenetrationV3Connection then
           wallPenetrationV3Connection:Disconnect()
       end
+      
+      -- Store modified parts for v3
+      local v3ModifiedParts = {}
       
       wallPenetrationV3Connection = RunService.Heartbeat:Connect(function()
           local character = LocalPlayer.Character
@@ -1445,6 +1456,9 @@ local function toggleWallPenetrationV3()
                   Vector3.new(-1, -1, -1).Unit
               }
               
+              -- Track parts we've modified this frame
+              local currentModifiedParts = {}
+              
               for _, direction in ipairs(directions) do
                   local raycastParams = RaycastParams.new()
                   raycastParams.FilterDescendantsInstances = {character}
@@ -1453,15 +1467,26 @@ local function toggleWallPenetrationV3()
                   local raycastResult = workspace:Raycast(position, direction * 5, raycastParams)
                   
                   if raycastResult and raycastResult.Instance and raycastResult.Instance:IsA("BasePart") and raycastResult.Instance.CanCollide then
+                      -- Store original state if we haven't seen this part before
+                      if not partOriginalStates[raycastResult.Instance] then
+                          partOriginalStates[raycastResult.Instance] = raycastResult.Instance.CanCollide
+                      end
+                      
                       -- Temporarily disable collision for this part
                       raycastResult.Instance.CanCollide = false
-                      
-                      -- Schedule to re-enable collision after a short delay
-                      task.delay(0.1, function()
-                          if raycastResult.Instance and raycastResult.Instance:IsA("BasePart") then
-                              raycastResult.Instance.CanCollide = true
-                          end
-                      end)
+                      currentModifiedParts[raycastResult.Instance] = true
+                      v3ModifiedParts[raycastResult.Instance] = true
+                  end
+              end
+              
+              -- Restore collision for parts that are no longer in range
+              for part, _ in pairs(v3ModifiedParts) do
+                  if part and part:IsA("BasePart") and not currentModifiedParts[part] then
+                      -- Only restore if we have the original state
+                      if partOriginalStates[part] ~= nil then
+                          part.CanCollide = partOriginalStates[part]
+                          v3ModifiedParts[part] = nil
+                      end
                   end
               end
           end
@@ -1473,6 +1498,13 @@ local function toggleWallPenetrationV3()
       if wallPenetrationV3Connection then
           wallPenetrationV3Connection:Disconnect()
           wallPenetrationV3Connection = nil
+          
+          -- Restore collision for all modified parts
+          for part, _ in pairs(v3ModifiedParts or {}) do
+              if part and part:IsA("BasePart") and partOriginalStates[part] ~= nil then
+                  part.CanCollide = partOriginalStates[part]
+              end
+          end
       end
   end
 end
@@ -1495,10 +1527,11 @@ local function toggleNoCombo()
               local humanoid = character:FindFirstChildOfClass("Humanoid")
               if humanoid then
                   -- Prevent animation cancellation by forcing movement state
-                  if humanoid:GetState() == Enum.HumanoidStateType.Attacking or
-                     humanoid:GetState() == Enum.HumanoidStateType.Swimming then
-                      -- Allow movement during attack animations
-                      humanoid.WalkSpeed = humanoid.WalkSpeed
+                  local currentState = humanoid:GetState()
+                  
+                  -- Allow movement during attack animations
+                  if currentState == Enum.HumanoidStateType.Attacking or 
+                     currentState == Enum.HumanoidStateType.Swimming then
                       
                       -- Force the humanoid to respond to movement inputs
                       local moveDir = humanoid.MoveDirection
@@ -1514,9 +1547,21 @@ local function toggleNoCombo()
                   
                   -- Hook into animation events to prevent movement locks
                   for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                      if track.Name:find("Attack") or track.Name:find("Ability") or track.Name:find("Skill") then
+                      if track.Name and (
+                         string.find(track.Name:lower(), "attack") or 
+                         string.find(track.Name:lower(), "ability") or 
+                         string.find(track.Name:lower(), "skill") or
+                         string.find(track.Name:lower(), "combo")) then
+                          
                           -- Allow movement during attack animations
                           humanoid.AutoRotate = true
+                          
+                          -- Prevent animation from locking movement
+                          if track.Priority == Enum.AnimationPriority.Action or 
+                             track.Priority == Enum.AnimationPriority.Core then
+                              -- Don't stop the animation, but allow movement
+                              humanoid.WalkSpeed = humanoid.WalkSpeed
+                          end
                       end
                   end
               end
@@ -1766,9 +1811,9 @@ CloseButton.MouseButton1Click:Connect(function()
   if noComboConnection then noComboConnection:Disconnect() end
   
   -- Restore any modified parts
-  for part, _ in pairs(modifiedParts) do
+  for part, originalState in pairs(partOriginalStates) do
       if part and part:IsA("BasePart") then
-          part.CanCollide = true
+          part.CanCollide = originalState
       end
   end
   
