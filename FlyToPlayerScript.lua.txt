@@ -223,7 +223,7 @@ PlayerListButton.Parent = CategoryFrame
 -- Movement Sub-Menu
 local MovementMenu = Instance.new("Frame")
 MovementMenu.Name = "MovementMenu"
-MovementMenu.Size = UDim2.new(0, 250, 0, 200)
+MovementMenu.Size = UDim2.new(0, 250, 0, 280) -- Increased size for new options
 MovementMenu.Position = UDim2.new(0, 310, 0, 100)
 MovementMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MovementMenu.BorderSizePixel = 0
@@ -372,10 +372,103 @@ AutoTeleportButton.TextSize = 14
 AutoTeleportButton.Font = Enum.Font.GothamSemibold
 AutoTeleportButton.Parent = AutoTeleportToggle
 
+-- FlyUp Toggle (New Feature)
+local FlyUpToggle = Instance.new("Frame")
+FlyUpToggle.Name = "FlyUpToggle"
+FlyUpToggle.Size = UDim2.new(1, 0, 0, 30)
+FlyUpToggle.Position = UDim2.new(0, 0, 0, 160)
+FlyUpToggle.BackgroundTransparency = 1
+FlyUpToggle.Parent = MovementContent
+
+local FlyUpLabel = Instance.new("TextLabel")
+FlyUpLabel.Name = "FlyUpLabel"
+FlyUpLabel.Size = UDim2.new(0.7, 0, 1, 0)
+FlyUpLabel.BackgroundTransparency = 1
+FlyUpLabel.Text = "Fly Upward Angle"
+FlyUpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyUpLabel.TextSize = 16
+FlyUpLabel.Font = Enum.Font.Gotham
+FlyUpLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlyUpLabel.Parent = FlyUpToggle
+
+local FlyUpButton = Instance.new("TextButton")
+FlyUpButton.Name = "FlyUpButton"
+FlyUpButton.Size = UDim2.new(0.3, -10, 1, -10)
+FlyUpButton.Position = UDim2.new(0.7, 0, 0, 5)
+FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+FlyUpButton.BorderSizePixel = 0
+FlyUpButton.Text = "OFF"
+FlyUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyUpButton.TextSize = 14
+FlyUpButton.Font = Enum.Font.GothamSemibold
+FlyUpButton.Parent = FlyUpToggle
+
+-- Wall Penetration 360° Toggle (v2)
+local WallPenetrationToggle = Instance.new("Frame")
+WallPenetrationToggle.Name = "WallPenetrationToggle"
+WallPenetrationToggle.Size = UDim2.new(1, 0, 0, 30)
+WallPenetrationToggle.Position = UDim2.new(0, 0, 0, 200)
+WallPenetrationToggle.BackgroundTransparency = 1
+WallPenetrationToggle.Parent = MovementContent
+
+local WallPenetrationLabel = Instance.new("TextLabel")
+WallPenetrationLabel.Name = "WallPenetrationLabel"
+WallPenetrationLabel.Size = UDim2.new(0.7, 0, 1, 0)
+WallPenetrationLabel.BackgroundTransparency = 1
+WallPenetrationLabel.Text = "360° Wall Penetration v2"
+WallPenetrationLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallPenetrationLabel.TextSize = 16
+WallPenetrationLabel.Font = Enum.Font.Gotham
+WallPenetrationLabel.TextXAlignment = Enum.TextXAlignment.Left
+WallPenetrationLabel.Parent = WallPenetrationToggle
+
+local WallPenetrationButton = Instance.new("TextButton")
+WallPenetrationButton.Name = "WallPenetrationButton"
+WallPenetrationButton.Size = UDim2.new(0.3, -10, 1, -10)
+WallPenetrationButton.Position = UDim2.new(0.7, 0, 0, 5)
+WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+WallPenetrationButton.BorderSizePixel = 0
+WallPenetrationButton.Text = "OFF"
+WallPenetrationButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallPenetrationButton.TextSize = 14
+WallPenetrationButton.Font = Enum.Font.GothamSemibold
+WallPenetrationButton.Parent = WallPenetrationToggle
+
+-- Wall Penetration 360° Toggle (v3)
+local WallPenetrationV3Toggle = Instance.new("Frame")
+WallPenetrationV3Toggle.Name = "WallPenetrationV3Toggle"
+WallPenetrationV3Toggle.Size = UDim2.new(1, 0, 0, 30)
+WallPenetrationV3Toggle.Position = UDim2.new(0, 0, 0, 240)
+WallPenetrationV3Toggle.BackgroundTransparency = 1
+WallPenetrationV3Toggle.Parent = MovementContent
+
+local WallPenetrationV3Label = Instance.new("TextLabel")
+WallPenetrationV3Label.Name = "WallPenetrationV3Label"
+WallPenetrationV3Label.Size = UDim2.new(0.7, 0, 1, 0)
+WallPenetrationV3Label.BackgroundTransparency = 1
+WallPenetrationV3Label.Text = "360° Wall Penetration v3"
+WallPenetrationV3Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallPenetrationV3Label.TextSize = 16
+WallPenetrationV3Label.Font = Enum.Font.Gotham
+WallPenetrationV3Label.TextXAlignment = Enum.TextXAlignment.Left
+WallPenetrationV3Label.Parent = WallPenetrationV3Toggle
+
+local WallPenetrationV3Button = Instance.new("TextButton")
+WallPenetrationV3Button.Name = "WallPenetrationV3Button"
+WallPenetrationV3Button.Size = UDim2.new(0.3, -10, 1, -10)
+WallPenetrationV3Button.Position = UDim2.new(0.7, 0, 0, 5)
+WallPenetrationV3Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+WallPenetrationV3Button.BorderSizePixel = 0
+WallPenetrationV3Button.Text = "OFF"
+WallPenetrationV3Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallPenetrationV3Button.TextSize = 14
+WallPenetrationV3Button.Font = Enum.Font.GothamSemibold
+WallPenetrationV3Button.Parent = WallPenetrationV3Toggle
+
 -- Anti-Stun Sub-Menu
 local AntiStunMenu = Instance.new("Frame")
 AntiStunMenu.Name = "AntiStunMenu"
-AntiStunMenu.Size = UDim2.new(0, 250, 0, 230)
+AntiStunMenu.Size = UDim2.new(0, 250, 0, 160) -- Increased size for new options
 AntiStunMenu.Position = UDim2.new(0, 310, 0, 100)
 AntiStunMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 AntiStunMenu.BorderSizePixel = 0
@@ -403,7 +496,7 @@ AntiStunContent.Parent = AntiStunMenu
 -- No Stun Toggle
 local NoStunToggle = Instance.new("Frame")
 NoStunToggle.Name = "NoStunToggle"
-NoStunToggle.Size = UDim2.new(1, 0, 0, 30)
+NoStunToggle.Size = UDim2.new(1, 0, 0, 30.Size = UDim2.new(1, 0, 0, 30)
 NoStunToggle.Position = UDim2.new(0, 0, 0, 0)
 NoStunToggle.BackgroundTransparency = 1
 NoStunToggle.Parent = AntiStunContent
@@ -462,7 +555,7 @@ NoStunV2Button.TextSize = 14
 NoStunV2Button.Font = Enum.Font.GothamSemibold
 NoStunV2Button.Parent = NoStunV2Toggle
 
--- Auto Run Toggle (Emergency Escape)
+-- Auto Run Toggle (New Feature)
 local AutoRunToggle = Instance.new("Frame")
 AutoRunToggle.Name = "AutoRunToggle"
 AutoRunToggle.Size = UDim2.new(1, 0, 0, 30)
@@ -493,67 +586,36 @@ AutoRunButton.TextSize = 14
 AutoRunButton.Font = Enum.Font.GothamSemibold
 AutoRunButton.Parent = AutoRunToggle
 
--- FlyUp Toggle (Angle Adjustment)
-local FlyUpToggle = Instance.new("Frame")
-FlyUpToggle.Name = "FlyUpToggle"
-FlyUpToggle.Size = UDim2.new(1, 0, 0, 30)
-FlyUpToggle.Position = UDim2.new(0, 0, 0, 120)
-FlyUpToggle.BackgroundTransparency = 1
-FlyUpToggle.Parent = AntiStunContent
+-- No Combo Toggle (New Feature)
+local NoComboToggle = Instance.new("Frame")
+NoComboToggle.Name = "NoComboToggle"
+NoComboToggle.Size = UDim2.new(1, 0, 0, 30)
+NoComboToggle.Position = UDim2.new(0, 0, 0, 120)
+NoComboToggle.BackgroundTransparency = 1
+NoComboToggle.Parent = AntiStunContent
 
-local FlyUpLabel = Instance.new("TextLabel")
-FlyUpLabel.Name = "FlyUpLabel"
-FlyUpLabel.Size = UDim2.new(0.7, 0, 1, 0)
-FlyUpLabel.BackgroundTransparency = 1
-FlyUpLabel.Text = "FlyUp (Angle Adjustment)"
-FlyUpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyUpLabel.TextSize = 16
-FlyUpLabel.Font = Enum.Font.Gotham
-FlyUpLabel.TextXAlignment = Enum.TextXAlignment.Left
-FlyUpLabel.Parent = FlyUpToggle
+local NoComboLabel = Instance.new("TextLabel")
+NoComboLabel.Name = "NoComboLabel"
+NoComboLabel.Size = UDim2.new(0.7, 0, 1, 0)
+NoComboLabel.BackgroundTransparency = 1
+NoComboLabel.Text = "No Combo (Move & Attack)"
+NoComboLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoComboLabel.TextSize = 16
+NoComboLabel.Font = Enum.Font.Gotham
+NoComboLabel.TextXAlignment = Enum.TextXAlignment.Left
+NoComboLabel.Parent = NoComboToggle
 
-local FlyUpButton = Instance.new("TextButton")
-FlyUpButton.Name = "FlyUpButton"
-FlyUpButton.Size = UDim2.new(0.3, -10, 1, -10)
-FlyUpButton.Position = UDim2.new(0.7, 0, 0, 5)
-FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-FlyUpButton.BorderSizePixel = 0
-FlyUpButton.Text = "OFF"
-FlyUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyUpButton.TextSize = 14
-FlyUpButton.Font = Enum.Font.GothamSemibold
-FlyUpButton.Parent = FlyUpToggle
-
--- Enhanced Noclip Toggle (360° Wall Penetration)
-local EnhancedNoclipToggle = Instance.new("Frame")
-EnhancedNoclipToggle.Name = "EnhancedNoclipToggle"
-EnhancedNoclipToggle.Size = UDim2.new(1, 0, 0, 30)
-EnhancedNoclipToggle.Position = UDim2.new(0, 0, 0, 160)
-EnhancedNoclipToggle.BackgroundTransparency = 1
-EnhancedNoclipToggle.Parent = AntiStunContent
-
-local EnhancedNoclipLabel = Instance.new("TextLabel")
-EnhancedNoclipLabel.Name = "EnhancedNoclipLabel"
-EnhancedNoclipLabel.Size = UDim2.new(0.7, 0, 1, 0)
-EnhancedNoclipLabel.BackgroundTransparency = 1
-EnhancedNoclipLabel.Text = "360° Wall Penetration"
-EnhancedNoclipLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-EnhancedNoclipLabel.TextSize = 16
-EnhancedNoclipLabel.Font = Enum.Font.Gotham
-EnhancedNoclipLabel.TextXAlignment = Enum.TextXAlignment.Left
-EnhancedNoclipLabel.Parent = EnhancedNoclipToggle
-
-local EnhancedNoclipButton = Instance.new("TextButton")
-EnhancedNoclipButton.Name = "EnhancedNoclipButton"
-EnhancedNoclipButton.Size = UDim2.new(0.3, -10, 1, -10)
-EnhancedNoclipButton.Position = UDim2.new(0.7, 0, 0, 5)
-EnhancedNoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-EnhancedNoclipButton.BorderSizePixel = 0
-EnhancedNoclipButton.Text = "OFF"
-EnhancedNoclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-EnhancedNoclipButton.TextSize = 14
-EnhancedNoclipButton.Font = Enum.Font.GothamSemibold
-EnhancedNoclipButton.Parent = EnhancedNoclipToggle
+local NoComboButton = Instance.new("TextButton")
+NoComboButton.Name = "NoComboButton"
+NoComboButton.Size = UDim2.new(0.3, -10, 1, -10)
+NoComboButton.Position = UDim2.new(0.7, 0, 0, 5)
+NoComboButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+NoComboButton.BorderSizePixel = 0
+NoComboButton.Text = "OFF"
+NoComboButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NoComboButton.TextSize = 14
+NoComboButton.Font = Enum.Font.GothamSemibold
+NoComboButton.Parent = NoComboToggle
 
 -- ESP Sub-Menu
 local ESPMenu = Instance.new("Frame")
@@ -897,661 +959,820 @@ local espUpdateConnection = nil
 local activeSubMenu = nil
 local autoRunEnabled = false
 local flyUpEnabled = false
-local enhancedNoclipEnabled = false
+local wallPenetrationEnabled = false
+local wallPenetrationV3Enabled = false
 local autoRunConnection = nil
-local flyUpConnection = nil
-local enhancedNoclipConnection = nil
-local emergencyPosition = nil
-local isInEmergency = false
+local wallPenetrationConnection = nil
+local wallPenetrationV3Connection = nil
+local originalPosition = nil
+local isEscaping = false
+local noComboEnabled = false
+local noComboConnection = nil
+local modifiedParts = {} -- For tracking modified parts in wall penetration v2
 
 -- Functions
 local function updatePlayerList()
-    -- Clear existing buttons
-    for _, child in pairs(PlayerScrollFrame:GetChildren()) do
-        if child:IsA("TextButton") then
-            child:Destroy()
-        end
-    end
-    
-    -- Add player buttons
-    local buttonHeight = 25
-    local totalHeight = 0
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local PlayerButton = Instance.new("TextButton")
-            PlayerButton.Name = player.Name .. "Button"
-            PlayerButton.Size = UDim2.new(1, -8, 0, buttonHeight)
-            PlayerButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-            PlayerButton.BorderSizePixel = 0
-            PlayerButton.Text = player.Name
-            PlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            PlayerButton.TextSize = 14
-            PlayerButton.Font = Enum.Font.Gotham
-            PlayerButton.Parent = PlayerScrollFrame
-            
-            PlayerButton.MouseButton1Click:Connect(function()
-                selectedPlayer = player
-                for _, btn in pairs(PlayerScrollFrame:GetChildren()) do
-                    if btn:IsA("TextButton") then
-                        if btn == PlayerButton then
-                            btn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-                        else
-                            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-                        end
-                    end
-                end
-            end)
-            
-            totalHeight = totalHeight + buttonHeight + 2 -- 2 is the padding
-        end
-    end
-    
-    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+  -- Clear existing buttons
+  for _, child in pairs(PlayerScrollFrame:GetChildren()) do
+      if child:IsA("TextButton") then
+          child:Destroy()
+      end
+  end
+  
+  -- Add player buttons
+  local buttonHeight = 25
+  local totalHeight = 0
+  
+  for _, player in pairs(Players:GetPlayers()) do
+      if player ~= LocalPlayer then
+          local PlayerButton = Instance.new("TextButton")
+          PlayerButton.Name = player.Name .. "Button"
+          PlayerButton.Size = UDim2.new(1, -8, 0, buttonHeight)
+          PlayerButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+          PlayerButton.BorderSizePixel = 0
+          PlayerButton.Text = player.Name
+          PlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+          PlayerButton.TextSize = 14
+          PlayerButton.Font = Enum.Font.Gotham
+          PlayerButton.Parent = PlayerScrollFrame
+          
+          PlayerButton.MouseButton1Click:Connect(function()
+              selectedPlayer = player
+              for _, btn in pairs(PlayerScrollFrame:GetChildren()) do
+                  if btn:IsA("TextButton") then
+                      if btn == PlayerButton then
+                          btn.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+                      else
+                          btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+                      end
+                  end
+              end
+          end)
+          
+          totalHeight = totalHeight + buttonHeight + 2 -- 2 is the padding
+      end
+  end
+  
+  PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
 end
 
 local function toggleFly()
-    flyEnabled = not flyEnabled
-    
-    if flyEnabled then
-        FlyButton.Text = "ON"
-        FlyButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if flyConnection then
-            flyConnection:Disconnect()
-        end
-        
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local hrp = character.HumanoidRootPart
-            
-            flyConnection = RunService.Heartbeat:Connect(function()
-                if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local targetHrp = selectedPlayer.Character.HumanoidRootPart
-                    local offsetX = tonumber(XInput.Text) or 0
-                    local offsetY = tonumber(YInput.Text) or 0
-                    local offsetZ = tonumber(ZInput.Text) or 0
-                    local targetPosition = targetHrp.Position + Vector3.new(offsetX, offsetY, offsetZ)
-                    
-                    local direction = (targetPosition - hrp.Position).Unit
-                    local distance = (targetPosition - hrp.Position).Magnitude
-                    
-                    -- Get speed from input
-                    local speed = tonumber(SpeedInput.Text) or 50
-                    flySpeed = math.clamp(speed, 1, 10000)
-                    
-                    -- Apply FlyUp angle adjustment for long distances
-                    if flyUpEnabled and distance > 50 then
-                        -- Add upward component to direction vector
-                        local upwardBias = 0.2 -- Adjust this value to control the upward angle
-                        direction = (direction + Vector3.new(0, upwardBias, 0)).Unit
-                    end
-                    
-                    if continuousEnabled or distance > 5 then
-                        hrp.Velocity = direction * flySpeed
-                    else
-                        hrp.Velocity = Vector3.new(0, 0, 0)
-                    end
-                end
-            end)
-        end
-    else
-        FlyButton.Text = "OFF"
-        FlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if flyConnection then
-            flyConnection:Disconnect()
-            flyConnection = nil
-        end
-        
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-        end
-    end
+  flyEnabled = not flyEnabled
+  
+  if flyEnabled then
+      FlyButton.Text = "ON"
+      FlyButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if flyConnection then
+          flyConnection:Disconnect()
+      end
+      
+      local character = LocalPlayer.Character
+      if character and character:FindFirstChild("HumanoidRootPart") then
+          local hrp = character.HumanoidRootPart
+          
+          flyConnection = RunService.Heartbeat:Connect(function()
+              if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                  local targetHrp = selectedPlayer.Character.HumanoidRootPart
+                  local offsetX = tonumber(XInput.Text) or 0
+                  local offsetY = tonumber(YInput.Text) or 0
+                  local offsetZ = tonumber(ZInput.Text) or 0
+                  local targetPosition = targetHrp.Position + Vector3.new(offsetX, offsetY, offsetZ)
+                  
+                  local direction = (targetPosition - hrp.Position).Unit
+                  local distance = (targetPosition - hrp.Position).Magnitude
+                  
+                  -- Get speed from input
+                  local speed = tonumber(SpeedInput.Text) or 50
+                  flySpeed = math.clamp(speed, 1, 10000) -- Increased max speed to 10000
+                  
+                  -- Apply FlyUp feature - adjust direction to fly slightly upward when far away
+                  if flyUpEnabled and distance > 30 then
+                      -- Add an upward component to the direction vector
+                      local upwardBias = 0.2 -- How much to bias upward
+                      direction = (direction + Vector3.new(0, upwardBias, 0)).Unit
+                  end
+                  
+                  if continuousEnabled or distance > 5 then
+                      hrp.Velocity = direction * flySpeed
+                  else
+                      hrp.Velocity = Vector3.new(0, 0, 0)
+                  end
+              end
+          end)
+      end
+  else
+      FlyButton.Text = "OFF"
+      FlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if flyConnection then
+          flyConnection:Disconnect()
+          flyConnection = nil
+      end
+      
+      local character = LocalPlayer.Character
+      if character and character:FindFirstChild("HumanoidRootPart") then
+          character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+      end
+  end
 end
 
 local function toggleNoclip()
-    noclipEnabled = not noclipEnabled
-    
-    if noclipEnabled then
-        NoclipButton.Text = "ON"
-        NoclipButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if noclipConnection then
-            noclipConnection:Disconnect()
-        end
-        
-        noclipConnection = RunService.Stepped:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                for _, part in pairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.CanCollide then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        end)
-    else
-        NoclipButton.Text = "OFF"
-        NoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
-        end
-        
-        local character = LocalPlayer.Character
-        if character then
-            for _, part in pairs(character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = true
-                end
-            end
-        end
-    end
+  noclipEnabled = not noclipEnabled
+  
+  if noclipEnabled then
+      NoclipButton.Text = "ON"
+      NoclipButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if noclipConnection then
+          noclipConnection:Disconnect()
+      end
+      
+      noclipConnection = RunService.Stepped:Connect(function()
+          local character = LocalPlayer.Character
+          if character then
+              for _, part in pairs(character:GetDescendants()) do
+                  if part:IsA("BasePart") and part.CanCollide then
+                      part.CanCollide = false
+                  end
+              end
+          end
+      end)
+  else
+      NoclipButton.Text = "OFF"
+      NoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if noclipConnection then
+          noclipConnection:Disconnect()
+          noclipConnection = nil
+      end
+      
+      local character = LocalPlayer.Character
+      if character then
+          for _, part in pairs(character:GetDescendants()) do
+              if part:IsA("BasePart") then
+                  part.CanCollide = true
+              end
+          end
+      end
+  end
 end
 
 local function toggleNoStun()
-    noStunEnabled = not noStunEnabled
-    
-    if noStunEnabled then
-        NoStunButton.Text = "ON"
-        NoStunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if noStunConnection then
-            noStunConnection:Disconnect()
-        end
-        
-        noStunConnection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    -- Prevent stun by resetting these properties
-                    humanoid.PlatformStand = false
-                    humanoid.Sit = false
-                    
-                    -- Reset animation if it's a stun animation
-                    if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll or
-                       humanoid:GetState() == Enum.HumanoidStateType.Stunned or
-                       humanoid:GetState() == Enum.HumanoidStateType.FallingDown then
-                        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-                    end
-                end
-            end
-        end)
-    else
-        NoStunButton.Text = "OFF"
-        NoStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if noStunConnection then
-            noStunConnection:Disconnect()
-            noStunConnection = nil
-        end
-    end
+  noStunEnabled = not noStunEnabled
+  
+  if noStunEnabled then
+      NoStunButton.Text = "ON"
+      NoStunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if noStunConnection then
+          noStunConnection:Disconnect()
+      end
+      
+      noStunConnection = RunService.Heartbeat:Connect(function()
+          local character = LocalPlayer.Character
+          if character then
+              local humanoid = character:FindFirstChildOfClass("Humanoid")
+              if humanoid then
+                  -- Prevent stun by resetting these properties
+                  humanoid.PlatformStand = false
+                  humanoid.Sit = false
+                  
+                  -- Reset animation if it's a stun animation
+                  if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll or
+                     humanoid:GetState() == Enum.HumanoidStateType.Stunned or
+                     humanoid:GetState() == Enum.HumanoidStateType.FallingDown then
+                      humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+                  end
+              end
+          end
+      end)
+  else
+      NoStunButton.Text = "OFF"
+      NoStunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if noStunConnection then
+          noStunConnection:Disconnect()
+          noStunConnection = nil
+      end
+  end
 end
 
 local function toggleNoStunV2()
-    noStunV2Enabled = not noStunV2Enabled
-    
-    if noStunV2Enabled then
-        NoStunV2Button.Text = "ON"
-        NoStunV2Button.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if noStunV2Connection then
-            noStunV2Connection:Disconnect()
-        end
-        
-        noStunV2Connection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    -- Advanced anti-stun and anti-freeze (for games like BloxFruits)
-                    humanoid.PlatformStand = false
-                    humanoid.Sit = false
-                    humanoid.AutoRotate = true
-                    
-                    -- Override animation states
-                    if humanoid:GetState() ~= Enum.HumanoidStateType.Running and
-                       humanoid:GetState() ~= Enum.HumanoidStateType.Jumping and
-                       humanoid:GetState() ~= Enum.HumanoidStateType.Climbing and
-                       humanoid:GetState() ~= Enum.HumanoidStateType.Swimming then
-                        humanoid:ChangeState(Enum.HumanoidStateType.Running)
-                    end
-                    
-                    -- Ensure character can move by checking and resetting velocity
-                    for _, part in pairs(character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.Anchored then
-                            part.Anchored = false
-                        end
-                    end
-                    
-                    -- Override any scripts that might be freezing the character
-                    if character.HumanoidRootPart.Anchored then
-                        character.HumanoidRootPart.Anchored = false
-                    end
-                end
-            end
-        end)
-    else
-        NoStunV2Button.Text = "OFF"
-        NoStunV2Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if noStunV2Connection then
-            noStunV2Connection:Disconnect()
-            noStunV2Connection = nil
-        end
-    end
+  noStunV2Enabled = not noStunV2Enabled
+  
+  if noStunV2Enabled then
+      NoStunV2Button.Text = "ON"
+      NoStunV2Button.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if noStunV2Connection then
+          noStunV2Connection:Disconnect()
+      end
+      
+      noStunV2Connection = RunService.Heartbeat:Connect(function()
+          local character = LocalPlayer.Character
+          if character then
+              local humanoid = character:FindFirstChildOfClass("Humanoid")
+              if humanoid then
+                  -- Advanced anti-stun and anti-freeze (for games like BloxFruits)
+                  humanoid.PlatformStand = false
+                  humanoid.Sit = false
+                  humanoid.AutoRotate = true
+                  
+                  -- Override animation states
+                  if humanoid:GetState() ~= Enum.HumanoidStateType.Running and
+                     humanoid:GetState() ~= Enum.HumanoidStateType.Jumping and
+                     humanoid:GetState() ~= Enum.HumanoidStateType.Climbing and
+                     humanoid:GetState() ~= Enum.HumanoidStateType.Swimming then
+                      humanoid:ChangeState(Enum.HumanoidStateType.Running)
+                  end
+                  
+                  -- Ensure character can move by checking and resetting velocity
+                  for _, part in pairs(character:GetDescendants()) do
+                      if part:IsA("BasePart") and part.Anchored then
+                          part.Anchored = false
+                      end
+                  end
+                  
+                  -- Override any scripts that might be freezing the character
+                  if character.HumanoidRootPart.Anchored then
+                      character.HumanoidRootPart.Anchored = false
+                  end
+              end
+          end
+      end)
+  else
+      NoStunV2Button.Text = "OFF"
+      NoStunV2Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if noStunV2Connection then
+          noStunV2Connection:Disconnect()
+          noStunV2Connection = nil
+      end
+  end
 end
 
 local function toggleContinuous()
-    continuousEnabled = not continuousEnabled
-    
-    if continuousEnabled then
-        ContinuousButton.Text = "ON"
-        ContinuousButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        ContinuousButton.Text = "OFF"
-        ContinuousButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
+  continuousEnabled = not continuousEnabled
+  
+  if continuousEnabled then
+      ContinuousButton.Text = "ON"
+      ContinuousButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      ContinuousButton.Text = "OFF"
+      ContinuousButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
 end
 
 local function teleportToPlayer()
-    if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local targetHrp = selectedPlayer.Character.HumanoidRootPart
-            local offsetX = tonumber(XInput.Text) or 0
-            local offsetY = tonumber(YInput.Text) or 0
-            local offsetZ = tonumber(ZInput.Text) or 0
-            local targetPosition = targetHrp.Position + Vector3.new(offsetX, offsetY, offsetZ)
-            
-            character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        end
-    end
+  if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+      local character = LocalPlayer.Character
+      if character and character:FindFirstChild("HumanoidRootPart") then
+          local targetHrp = selectedPlayer.Character.HumanoidRootPart
+          local offsetX = tonumber(XInput.Text) or 0
+          local offsetY = tonumber(YInput.Text) or 0
+          local offsetZ = tonumber(ZInput.Text) or 0
+          local targetPosition = targetHrp.Position + Vector3.new(offsetX, offsetY, offsetZ)
+          
+          character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+      end
+  end
 end
 
 local function toggleAutoTeleport()
-    autoTeleportEnabled = not autoTeleportEnabled
-    
-    if autoTeleportEnabled then
-        AutoTeleportButton.Text = "ON"
-        AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if autoTeleportConnection then
-            autoTeleportConnection:Disconnect()
-        end
-        
-        autoTeleportConnection = RunService.Heartbeat:Connect(function()
-            teleportToPlayer()
-        end)
-    else
-        AutoTeleportButton.Text = "OFF"
-        AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if autoTeleportConnection then
-            autoTeleportConnection:Disconnect()
-            autoTeleportConnection = nil
-        end
-    end
+  autoTeleportEnabled = not autoTeleportEnabled
+  
+  if autoTeleportEnabled then
+      AutoTeleportButton.Text = "ON"
+      AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if autoTeleportConnection then
+          autoTeleportConnection:Disconnect()
+      end
+      
+      autoTeleportConnection = RunService.Heartbeat:Connect(function()
+          teleportToPlayer()
+      end)
+  else
+      AutoTeleportButton.Text = "OFF"
+      AutoTeleportButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if autoTeleportConnection then
+          autoTeleportConnection:Disconnect()
+          autoTeleportConnection = nil
+      end
+  end
+end
+
+local function toggleAutoRun()
+  autoRunEnabled = not autoRunEnabled
+  
+  if autoRunEnabled then
+      AutoRunButton.Text = "ON"
+      AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if autoRunConnection then
+          autoRunConnection:Disconnect()
+      end
+      
+      autoRunConnection = RunService.Heartbeat:Connect(function()
+          local character = LocalPlayer.Character
+          if character then
+              local humanoid = character:FindFirstChildOfClass("Humanoid")
+              if humanoid then
+                  local healthPercent = humanoid.Health / humanoid.MaxHealth * 100
+                  
+                  if healthPercent <= 50 and not isEscaping then
+                      -- Store original position when health drops below 50%
+                      originalPosition = character.HumanoidRootPart.Position
+                      isEscaping = true
+                      
+                      -- Teleport 100 blocks up instantly before flying
+                      local upPosition = character.HumanoidRootPart.Position + Vector3.new(0, 100, 0)
+                      character.HumanoidRootPart.CFrame = CFrame.new(upPosition)
+                      
+                      -- Then fly up quickly (10x faster)
+                      local upVector = Vector3.new(0, 1, 0)
+                      character.HumanoidRootPart.Velocity = upVector * 2000 -- 10x faster upward velocity
+                  elseif healthPercent > 51 and isEscaping then
+                      -- Return to original position when health goes above 51%
+                      if originalPosition then
+                          character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+                          isEscaping = false
+                      end
+                  end
+              end
+          end
+      end)
+  else
+      AutoRunButton.Text = "OFF"
+      AutoRunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if autoRunConnection then
+          autoRunConnection:Disconnect()
+          autoRunConnection = nil
+      end
+      
+      -- Return to original position when turned off if currently escaping
+      if isEscaping and originalPosition then
+          local character = LocalPlayer.Character
+          if character and character:FindFirstChild("HumanoidRootPart") then
+              character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+          end
+          isEscaping = false
+      end
+  end
+end
+
+local function toggleFlyUp()
+  flyUpEnabled = not flyUpEnabled
+  
+  if flyUpEnabled then
+      FlyUpButton.Text = "ON"
+      FlyUpButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      FlyUpButton.Text = "OFF"
+      FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
+  
+  -- The actual functionality is implemented in the fly function
+end
+
+-- Wall Penetration v2 (Improved version that restores collision)
+local function toggleWallPenetration()
+  wallPenetrationEnabled = not wallPenetrationEnabled
+  
+  if wallPenetrationEnabled then
+      WallPenetrationButton.Text = "ON"
+      WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      -- Clear the modified parts table
+      modifiedParts = {}
+      
+      if wallPenetrationConnection then
+          wallPenetrationConnection:Disconnect()
+      end
+      
+      wallPenetrationConnection = RunService.Heartbeat:Connect(function()
+          local character = LocalPlayer.Character
+          if character then
+              local hrp = character.HumanoidRootPart
+              local position = hrp.Position
+              
+              -- Get all parts in a sphere around the character
+              local radius = 10 -- Radius for 360° penetration
+              local parts = workspace:GetPartBoundsInRadius(position, radius)
+              
+              -- Track parts we've modified this frame
+              local currentModifiedParts = {}
+              
+              -- Disable collision for all parts in range
+              for _, part in ipairs(parts) do
+                  if part:IsA("BasePart") and part.CanCollide and not part:IsDescendantOf(character) then
+                      -- Store original state if we haven't seen this part before
+                      if not modifiedParts[part] then
+                          modifiedParts[part] = true
+                      end
+                      
+                      part.CanCollide = false
+                      currentModifiedParts[part] = true
+                  end
+              end
+              
+              -- Restore collision for parts that are no longer in range
+              for part, _ in pairs(modifiedParts) do
+                  if part and part:IsA("BasePart") and not currentModifiedParts[part] then
+                      part.CanCollide = true
+                      modifiedParts[part] = nil
+                  end
+              end
+          end
+      end)
+  else
+      WallPenetrationButton.Text = "OFF"
+      WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if wallPenetrationConnection then
+          wallPenetrationConnection:Disconnect()
+          wallPenetrationConnection = nil
+      end
+      
+      -- Restore collision for all modified parts
+      for part, _ in pairs(modifiedParts) do
+          if part and part:IsA("BasePart") then
+              part.CanCollide = true
+          end
+      end
+      
+      -- Clear the modified parts table
+      modifiedParts = {}
+  end
+end
+
+-- Wall Penetration v3 (Alternative method using raycasting)
+local function toggleWallPenetrationV3()
+  wallPenetrationV3Enabled = not wallPenetrationV3Enabled
+  
+  if wallPenetrationV3Enabled then
+      WallPenetrationV3Button.Text = "ON"
+      WallPenetrationV3Button.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if wallPenetrationV3Connection then
+          wallPenetrationV3Connection:Disconnect()
+      end
+      
+      wallPenetrationV3Connection = RunService.Heartbeat:Connect(function()
+          local character = LocalPlayer.Character
+          if character and character:FindFirstChild("HumanoidRootPart") then
+              local hrp = character.HumanoidRootPart
+              local position = hrp.Position
+              
+              -- Cast rays in all directions to detect walls
+              local directions = {
+                  Vector3.new(1, 0, 0),
+                  Vector3.new(-1, 0, 0),
+                  Vector3.new(0, 1, 0),
+                  Vector3.new(0, -1, 0),
+                  Vector3.new(0, 0, 1),
+                  Vector3.new(0, 0, -1),
+                  Vector3.new(1, 1, 1).Unit,
+                  Vector3.new(1, 1, -1).Unit,
+                  Vector3.new(1, -1, 1).Unit,
+                  Vector3.new(1, -1, -1).Unit,
+                  Vector3.new(-1, 1, 1).Unit,
+                  Vector3.new(-1, 1, -1).Unit,
+                  Vector3.new(-1, -1, 1).Unit,
+                  Vector3.new(-1, -1, -1).Unit
+              }
+              
+              for _, direction in ipairs(directions) do
+                  local raycastParams = RaycastParams.new()
+                  raycastParams.FilterDescendantsInstances = {character}
+                  raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+                  
+                  local raycastResult = workspace:Raycast(position, direction * 5, raycastParams)
+                  
+                  if raycastResult and raycastResult.Instance and raycastResult.Instance:IsA("BasePart") and raycastResult.Instance.CanCollide then
+                      -- Temporarily disable collision for this part
+                      raycastResult.Instance.CanCollide = false
+                      
+                      -- Schedule to re-enable collision after a short delay
+                      task.delay(0.1, function()
+                          if raycastResult.Instance and raycastResult.Instance:IsA("BasePart") then
+                              raycastResult.Instance.CanCollide = true
+                          end
+                      end)
+                  end
+              end
+          end
+      end)
+  else
+      WallPenetrationV3Button.Text = "OFF"
+      WallPenetrationV3Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if wallPenetrationV3Connection then
+          wallPenetrationV3Connection:Disconnect()
+          wallPenetrationV3Connection = nil
+      end
+  end
+end
+
+-- No Combo function (allows using abilities while moving/flying)
+local function toggleNoCombo()
+  noComboEnabled = not noComboEnabled
+  
+  if noComboEnabled then
+      NoComboButton.Text = "ON"
+      NoComboButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+      
+      if noComboConnection then
+          noComboConnection:Disconnect()
+      end
+      
+      noComboConnection = RunService.Heartbeat:Connect(function()
+          local character = LocalPlayer.Character
+          if character then
+              local humanoid = character:FindFirstChildOfClass("Humanoid")
+              if humanoid then
+                  -- Prevent animation cancellation by forcing movement state
+                  if humanoid:GetState() == Enum.HumanoidStateType.Attacking or
+                     humanoid:GetState() == Enum.HumanoidStateType.Swimming then
+                      -- Allow movement during attack animations
+                      humanoid.WalkSpeed = humanoid.WalkSpeed
+                      
+                      -- Force the humanoid to respond to movement inputs
+                      local moveDir = humanoid.MoveDirection
+                      if moveDir.Magnitude > 0 then
+                          -- Apply movement velocity directly to bypass animation locks
+                          character.HumanoidRootPart.Velocity = Vector3.new(
+                              moveDir.X * humanoid.WalkSpeed,
+                              character.HumanoidRootPart.Velocity.Y,
+                              moveDir.Z * humanoid.WalkSpeed
+                          )
+                      end
+                  end
+                  
+                  -- Hook into animation events to prevent movement locks
+                  for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                      if track.Name:find("Attack") or track.Name:find("Ability") or track.Name:find("Skill") then
+                          -- Allow movement during attack animations
+                          humanoid.AutoRotate = true
+                      end
+                  end
+              end
+          end
+      end)
+  else
+      NoComboButton.Text = "OFF"
+      NoComboButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+      
+      if noComboConnection then
+          noComboConnection:Disconnect()
+          noComboConnection = nil
+      end
+  end
 end
 
 -- ESP Functions
 local function createESPItem(player)
-    -- Create ESP folder for this player
-    local espFolder = Instance.new("Folder")
-    espFolder.Name = player.Name .. "_ESP"
-    espFolder.Parent = ESPContainer
-    
-    -- Create box highlight
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "Highlight"
-    highlight.FillColor = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.Enabled = false
-    highlight.Parent = espFolder
-    
-    -- Create ESP name billboard
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Name = "NameESP"
-    billboardGui.Size = UDim2.new(0, 200, 0, 50)
-    billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-    billboardGui.AlwaysOnTop = true
-    billboardGui.LightInfluence = 0
-    billboardGui.Enabled = false
-    billboardGui.Parent = espFolder
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, 0, 1, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = player.Name
-    nameLabel.TextColor3 = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-    nameLabel.TextStrokeTransparency = 0
-    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    nameLabel.TextSize = 18
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.Parent = billboardGui
-    
-    -- Create ESP line
-    local line = Instance.new("LineHandleAdornment")
-    line.Name = "Line"
-    line.Color3 = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-    line.Thickness = 2
-    line.ZIndex = 1
-    line.Transparency = 0
-    line.Visible = false
-    line.Parent = espFolder
-    
-    return espFolder
+  -- Create ESP folder for this player
+  local espFolder = Instance.new("Folder")
+  espFolder.Name = player.Name .. "_ESP"
+  espFolder.Parent = ESPContainer
+  
+  -- Create box highlight
+  local highlight = Instance.new("Highlight")
+  highlight.Name = "Highlight"
+  highlight.FillColor = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+  highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+  highlight.FillTransparency = 0.5
+  highlight.OutlineTransparency = 0
+  highlight.Enabled = false
+  highlight.Parent = espFolder
+  
+  -- Create ESP name billboard
+  local billboardGui = Instance.new("BillboardGui")
+  billboardGui.Name = "NameESP"
+  billboardGui.Size = UDim2.new(0, 200, 0, 50)
+  billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+  billboardGui.AlwaysOnTop = true
+  billboardGui.LightInfluence = 0
+  billboardGui.Enabled = false
+  billboardGui.Parent = espFolder
+  
+  local nameLabel = Instance.new("TextLabel")
+  nameLabel.Name = "NameLabel"
+  nameLabel.Size = UDim2.new(1, 0, 1, 0)
+  nameLabel.BackgroundTransparency = 1
+  nameLabel.Text = player.Name
+  nameLabel.TextColor3 = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+  nameLabel.TextStrokeTransparency = 0
+  nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+  nameLabel.TextSize = 18
+  nameLabel.Font = Enum.Font.GothamBold
+  nameLabel.Parent = billboardGui
+  
+  -- Create ESP line
+  local line = Instance.new("LineHandleAdornment")
+  line.Name = "Line"
+  line.Color3 = player == selectedPlayer and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+  line.Thickness = 2
+  line.ZIndex = 1
+  line.Transparency = 0
+  line.Visible = false
+  line.Parent = espFolder
+  
+  return espFolder
 end
 
 local function updateESP()
-    -- Clear existing ESP
-    ESPContainer:ClearAllChildren()
-    
-    -- Create new ESP for each player
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            local isTarget = (player == selectedPlayer)
-            
-            -- Only create ESP for target or all players based on settings
-            if (isTarget and espTargetEnabled) or (espAllEnabled) then
-                local espFolder = createESPItem(player)
-                
-                -- Apply ESP to player character
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Update highlight
-                    local highlight = espFolder:FindFirstChild("Highlight")
-                    if highlight then
-                        highlight.Enabled = true
-                        highlight.Parent = player.Character
-                    end
-                    
-                    -- Update name ESP
-                    local nameESP = espFolder:FindFirstChild("NameESP")
-                    if nameESP and espNamesEnabled then
-                        nameESP.Enabled = true
-                        nameESP.Adornee = player.Character.Head
-                    end
-                    
-                    -- Update line ESP
-                    local line = espFolder:FindFirstChild("Line")
-                    if line and espLinesEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        line.Visible = true
-                        line.Adornee = workspace
-                        line.Length = 1000
-                        line.CFrame = CFrame.new(
-                            LocalPlayer.Character.HumanoidRootPart.Position,
-                            player.Character.HumanoidRootPart.Position
-                        )
-                    end
-                    
-                    -- Update hitbox ESP
-                    if espHitboxEnabled then
-                        for _, part in pairs(player.Character:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                local boxHandleAdornment = Instance.new("BoxHandleAdornment")
-                                boxHandleAdornment.Name = part.Name .. "_Hitbox"
-                                boxHandleAdornment.Adornee = part
-                                boxHandleAdornment.AlwaysOnTop = true
-                                boxHandleAdornment.ZIndex = 10
-                                boxHandleAdornment.Size = part.Size
-                                boxHandleAdornment.Transparency = 0.7
-                                boxHandleAdornment.Color3 = isTarget and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-                                boxHandleAdornment.Parent = espFolder
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
+  -- Clear existing ESP
+  ESPContainer:ClearAllChildren()
+  
+  -- Create new ESP for each player
+  for _, player in pairs(Players:GetPlayers()) do
+      if player ~= LocalPlayer then
+          local isTarget = (player == selectedPlayer)
+          
+          -- Only create ESP for target or all players based on settings
+          if (isTarget and espTargetEnabled) or (espAllEnabled) then
+              local espFolder = createESPItem(player)
+              
+              -- Apply ESP to player character
+              if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                  -- Update highlight
+                  local highlight = espFolder:FindFirstChild("Highlight")
+                  if highlight then
+                      highlight.Enabled = true
+                      highlight.Parent = player.Character
+                  end
+                  
+                  -- Update name ESP
+                  local nameESP = espFolder:FindFirstChild("NameESP")
+                  if nameESP and espNamesEnabled then
+                      nameESP.Enabled = true
+                      nameESP.Adornee = player.Character.Head
+                  end
+                  
+                  -- Update line ESP
+                  local line = espFolder:FindFirstChild("Line")
+                  if line and espLinesEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                      line.Visible = true
+                      line.Adornee = workspace
+                      line.Length = 1000
+                      line.CFrame = CFrame.new(
+                          LocalPlayer.Character.HumanoidRootPart.Position,
+                          player.Character.HumanoidRootPart.Position
+                      )
+                  end
+                  
+                  -- Update hitbox ESP
+                  if espHitboxEnabled then
+                      for _, part in pairs(player.Character:GetDescendants()) do
+                          if part:IsA("BasePart") then
+                              local boxHandleAdornment = Instance.new("BoxHandleAdornment")
+                              boxHandleAdornment.Name = part.Name .. "_Hitbox"
+                              boxHandleAdornment.Adornee = part
+                              boxHandleAdornment.AlwaysOnTop = true
+                              boxHandleAdornment.ZIndex = 10
+                              boxHandleAdornment.Size = part.Size
+                              boxHandleAdornment.Transparency = 0.7
+                              boxHandleAdornment.Color3 = isTarget and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+                              boxHandleAdornment.Parent = espFolder
+                          end
+                      end
+                  end
+              end
+          end
+      end
+  end
 end
 
 local function toggleESPTarget()
-    espTargetEnabled = not espTargetEnabled
-    
-    if espTargetEnabled then
-        ESPTargetButton.Text = "ON"
-        ESPTargetButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        ESPTargetButton.Text = Color3.fromRGB(45, 45, 45)
-    end
-    
-    updateESP()
+  espTargetEnabled = not espTargetEnabled
+  
+  if espTargetEnabled then
+      ESPTargetButton.Text = "ON"
+      ESPTargetButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      ESPTargetButton.Text = "OFF"
+      ESPTargetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
+  
+  updateESP()
 end
 
 local function toggleESPAll()
-    espAllEnabled = not espAllEnabled
-    
-    if espAllEnabled then
-        ESPAllButton.Text = "ON"
-        ESPAllButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        ESPAllButton.Text = "OFF"
-        ESPAllButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-    
-    updateESP()
+  espAllEnabled = not espAllEnabled
+  
+  if espAllEnabled then
+      ESPAllButton.Text = "ON"
+      ESPAllButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      ESPAllButton.Text = "OFF"
+      ESPAllButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
+  
+  updateESP()
 end
 
 local function toggleESPLines()
-    espLinesEnabled = not espLinesEnabled
-    
-    if espLinesEnabled then
-        ESPLinesButton.Text = "ON"
-        ESPLinesButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        ESPLinesButton.Text = "OFF"
-        ESPLinesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-    
-    updateESP()
+  espLinesEnabled = not espLinesEnabled
+  
+  if espLinesEnabled then
+      ESPLinesButton.Text = "ON"
+      ESPLinesButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      ESPLinesButton.Text = "OFF"
+      ESPLinesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
+  
+  updateESP()
 end
 
 local function toggleESPNames()
-    espNamesEnabled = not espNamesEnabled
-    
-    if espNamesEnabled then
-        ESPNamesButton.Text = "ON"
-        ESPNamesButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        ESPNamesButton.Text = "OFF"
-        ESPNamesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-    
-    updateESP()
+  espNamesEnabled = not espNamesEnabled
+  
+  if espNamesEnabled then
+      ESPNamesButton.Text = "ON"
+      ESPNamesButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      ESPNamesButton.Text = "OFF"
+      ESPNamesButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
+  
+  updateESP()
 end
 
 local function toggleESPHitbox()
-    espHitboxEnabled = not espHitboxEnabled
-    
-    if espHitboxEnabled then
-        ESPHitboxButton.Text = "ON"
-        ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        ESPHitboxButton.Text = "OFF"
-        ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-    
-    updateESP()
-end
-
-local function toggleAutoRun()
-    autoRunEnabled = not autoRunEnabled
-    
-    if autoRunEnabled then
-        AutoRunButton.Text = "ON"
-        AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if autoRunConnection then
-            autoRunConnection:Disconnect()
-        end
-        
-        autoRunConnection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    local healthPercent = humanoid.Health / humanoid.MaxHealth * 100
-                    
-                    if healthPercent <= 50 and not isInEmergency then
-                        -- Store current position for return
-                        if character:FindFirstChild("HumanoidRootPart") then
-                            emergencyPosition = character.HumanoidRootPart.Position
-                            isInEmergency = true
-                            
-                            -- Fly upward rapidly
-                            local upwardVelocity = Vector3.new(0, 2000, 0)
-                            character.HumanoidRootPart.Velocity = upwardVelocity
-                        end
-                    elseif healthPercent > 51 and isInEmergency then
-                        -- Return to original position
-                        if character:FindFirstChild("HumanoidRootPart") and emergencyPosition then
-                            character.HumanoidRootPart.CFrame = CFrame.new(emergencyPosition)
-                            isInEmergency = false
-                        end
-                    end
-                    
-                    -- If in emergency mode, keep flying up
-                    if isInEmergency and character:FindFirstChild("HumanoidRootPart") then
-                        character.HumanoidRootPart.Velocity = Vector3.new(0, 200, 0)
-                    end
-                end
-            end
-        end)
-    else
-        AutoRunButton.Text = "OFF"
-        AutoRunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if autoRunConnection then
-            autoRunConnection:Disconnect()
-            autoRunConnection = nil
-        end
-        
-        -- If we were in emergency mode, return to original position
-        if isInEmergency and emergencyPosition then
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = CFrame.new(emergencyPosition)
-            end
-            isInEmergency = false
-        end
-    end
-end
-
-local function toggleFlyUp()
-    flyUpEnabled = not flyUpEnabled
-    
-    if flyUpEnabled then
-        FlyUpButton.Text = "ON"
-        FlyUpButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        FlyUpButton.Text = "OFF"
-        FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-    
-    -- The actual functionality is integrated into the fly function
-    -- No need for a separate connection
-end
-
-local function toggleEnhancedNoclip()
-    enhancedNoclipEnabled = not enhancedNoclipEnabled
-    
-    if enhancedNoclipEnabled then
-        EnhancedNoclipButton.Text = "ON"
-        EnhancedNoclipButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if enhancedNoclipConnection then
-            enhancedNoclipConnection:Disconnect()
-        end
-        
-        enhancedNoclipConnection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                -- Get all parts in a radius around the character
-                local hrp = character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local radius = 10 -- 360° penetration radius
-                    local parts = workspace:GetPartBoundsInRadius(hrp.Position, radius)
-                    
-                    -- Disable collision for all these parts
-                    for _, part in ipairs(parts) do
-                        if part:IsA("BasePart") and part.CanCollide and not part:IsDescendantOf(character) then
-                            part.CanCollide = false
-                        end
-                    end
-                    
-                    -- Also disable collision for character parts
-                    for _, part in pairs(character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide then
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end
-        end)
-    else
-        EnhancedNoclipButton.Text = "OFF"
-        EnhancedNoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if enhancedNoclipConnection then
-            enhancedNoclipConnection:Disconnect()
-            enhancedNoclipConnection = nil
-        end
-    end
+  espHitboxEnabled = not espHitboxEnabled
+  
+  if espHitboxEnabled then
+      ESPHitboxButton.Text = "ON"
+      ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+  else
+      ESPHitboxButton.Text = "OFF"
+      ESPHitboxButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+  end
+  
+  updateESP()
 end
 
 -- Sub-menu management
 local function hideAllSubMenus()
-    MovementMenu.Visible = false
-    AntiStunMenu.Visible = false
-    ESPMenu.Visible = false
-    PlayerListMenu.Visible = false
-    activeSubMenu = nil
+  MovementMenu.Visible = false
+  AntiStunMenu.Visible = false
+  ESPMenu.Visible = false
+  PlayerListMenu.Visible = false
+  activeSubMenu = nil
 end
 
 local function toggleSubMenu(menu)
-    if activeSubMenu == menu then
-        menu.Visible = false
-        activeSubMenu = nil
-    else
-        hideAllSubMenus()
-        menu.Visible = true
-        activeSubMenu = menu
-        
-        -- Position the sub-menu next to the main menu
-        menu.Position = UDim2.new(0, MainFrame.AbsolutePosition.X + MainFrame.AbsoluteSize.X + 10, 0, MainFrame.AbsolutePosition.Y)
-    end
+  if activeSubMenu == menu then
+      menu.Visible = false
+      activeSubMenu = nil
+  else
+      hideAllSubMenus()
+      menu.Visible = true
+      activeSubMenu = menu
+      
+      -- Position the sub-menu next to the main menu
+      menu.Position = UDim2.new(0, MainFrame.AbsolutePosition.X + MainFrame.AbsoluteSize.X + 10, 0, MainFrame.AbsolutePosition.Y)
+  end
 end
 
 local function toggleMainFrame()
-    MainFrame.Visible = not MainFrame.Visible
-    CircleIcon.Visible = not MainFrame.Visible
-    
-    if not MainFrame.Visible then
-        hideAllSubMenus()
-    end
+  MainFrame.Visible = not MainFrame.Visible
+  CircleIcon.Visible = not MainFrame.Visible
+  
+  if not MainFrame.Visible then
+      hideAllSubMenus()
+  end
 end
 
 -- Connect events
 CircleIcon.MouseButton1Click:Connect(toggleMainFrame)
 
 CloseButton.MouseButton1Click:Connect(function()
-    if flyConnection then flyConnection:Disconnect() end
-    if noclipConnection then noclipConnection:Disconnect() end
-    if noStunConnection then noStunConnection:Disconnect() end
-    if noStunV2Connection then noStunV2Connection:Disconnect() end
-    if autoTeleportConnection then autoTeleportConnection:Disconnect() end
-    if espUpdateConnection then espUpdateConnection:Disconnect() end
-    if autoRunConnection then autoRunConnection:Disconnect() end
-    if enhancedNoclipConnection then enhancedNoclipConnection:Disconnect() end
-    ScreenGui:Destroy()
+  if flyConnection then flyConnection:Disconnect() end
+  if noclipConnection then noclipConnection:Disconnect() end
+  if noStunConnection then noStunConnection:Disconnect() end
+  if noStunV2Connection then noStunV2Connection:Disconnect() end
+  if autoTeleportConnection then autoTeleportConnection:Disconnect() end
+  if espUpdateConnection then espUpdateConnection:Disconnect() end
+  if autoRunConnection then autoRunConnection:Disconnect() end
+  if wallPenetrationConnection then wallPenetrationConnection:Disconnect() end
+  if wallPenetrationV3Connection then wallPenetrationV3Connection:Disconnect() end
+  if noComboConnection then noComboConnection:Disconnect() end
+  
+  -- Restore any modified parts
+  for part, _ in pairs(modifiedParts) do
+      if part and part:IsA("BasePart") then
+          part.CanCollide = true
+      end
+  end
+  
+  ScreenGui:Destroy()
 end)
 
 MinimizeButton.MouseButton1Click:Connect(toggleMainFrame)
@@ -1562,8 +1783,8 @@ MovementButton.MouseButton1Click:Connect(function() toggleSubMenu(MovementMenu) 
 AntiStunButton.MouseButton1Click:Connect(function() toggleSubMenu(AntiStunMenu) end)
 ESPButton.MouseButton1Click:Connect(function() toggleSubMenu(ESPMenu) end)
 PlayerListButton.MouseButton1Click:Connect(function() 
-    toggleSubMenu(PlayerListMenu)
-    updatePlayerList() -- Refresh player list when opening
+  toggleSubMenu(PlayerListMenu)
+  updatePlayerList() -- Refresh player list when opening
 end)
 
 -- Movement sub-menu buttons
@@ -1571,13 +1792,15 @@ NoclipButton.MouseButton1Click:Connect(toggleNoclip)
 ContinuousButton.MouseButton1Click:Connect(toggleContinuous)
 TeleportButton.MouseButton1Click:Connect(teleportToPlayer)
 AutoTeleportButton.MouseButton1Click:Connect(toggleAutoTeleport)
+FlyUpButton.MouseButton1Click:Connect(toggleFlyUp)
+WallPenetrationButton.MouseButton1Click:Connect(toggleWallPenetration)
+WallPenetrationV3Button.MouseButton1Click:Connect(toggleWallPenetrationV3)
 
 -- Anti-Stun sub-menu buttons
 NoStunButton.MouseButton1Click:Connect(toggleNoStun)
 NoStunV2Button.MouseButton1Click:Connect(toggleNoStunV2)
 AutoRunButton.MouseButton1Click:Connect(toggleAutoRun)
-FlyUpButton.MouseButton1Click:Connect(toggleFlyUp)
-EnhancedNoclipButton.MouseButton1Click:Connect(toggleEnhancedNoclip)
+NoComboButton.MouseButton1Click:Connect(toggleNoCombo)
 
 -- ESP sub-menu buttons
 ESPTargetButton.MouseButton1Click:Connect(toggleESPTarget)
@@ -1591,13 +1814,13 @@ RefreshButton.MouseButton1Click:Connect(updatePlayerList)
 
 -- Speed input validation
 SpeedInput.FocusLost:Connect(function(enterPressed)
-    local speed = tonumber(SpeedInput.Text)
-    if speed then
-        flySpeed = math.clamp(speed, 1, 500)
-        SpeedInput.Text = tostring(flySpeed)
-    else
-        SpeedInput.Text = tostring(flySpeed)
-    end
+  local speed = tonumber(SpeedInput.Text)
+  if speed then
+      flySpeed = math.clamp(speed, 1, 10000) -- Increased max speed to 10000
+      SpeedInput.Text = tostring(flySpeed)
+  else
+      SpeedInput.Text = tostring(flySpeed)
+  end
 end)
 
 -- Initialize
@@ -1605,9 +1828,9 @@ updatePlayerList()
 
 -- Set up ESP update loop
 espUpdateConnection = RunService.RenderStepped:Connect(function()
-    if espTargetEnabled or espAllEnabled then
-        updateESP()
-    end
+  if espTargetEnabled or espAllEnabled then
+      updateESP()
+  end
 end)
 
 -- Player added/removed events
@@ -1616,9 +1839,9 @@ Players.PlayerRemoving:Connect(updatePlayerList)
 
 -- Make corners rounded
 local function makeRounded(instance, radius)
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(0, radius)
-    uiCorner.Parent = instance
+  local uiCorner = Instance.new("UICorner")
+  uiCorner.CornerRadius = UDim.new(0, radius)
+  uiCorner.Parent = instance
 end
 
 -- Apply rounded corners to all UI elements
@@ -1637,14 +1860,16 @@ makeRounded(NoclipButton, 4)
 makeRounded(ContinuousButton, 4)
 makeRounded(TeleportButton, 4)
 makeRounded(AutoTeleportButton, 4)
+makeRounded(FlyUpButton, 4)
+makeRounded(WallPenetrationButton, 4)
+makeRounded(WallPenetrationV3Button, 4)
 
 makeRounded(AntiStunMenu, 8)
 makeRounded(AntiStunTitle, 8)
 makeRounded(NoStunButton, 4)
 makeRounded(NoStunV2Button, 4)
 makeRounded(AutoRunButton, 4)
-makeRounded(FlyUpButton, 4)
-makeRounded(EnhancedNoclipButton, 4)
+makeRounded(NoComboButton, 4)
 
 makeRounded(ESPMenu, 8)
 makeRounded(ESPTitle, 8)
