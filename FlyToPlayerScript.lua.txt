@@ -978,7 +978,7 @@ local function toggleFly()
                     
                     -- Get speed from input
                     local speed = tonumber(SpeedInput.Text) or 50
-                    flySpeed = math.clamp(speed, 1, 500)
+                    flySpeed = math.clamp(speed, 1, 10000)
                     
                     -- Apply FlyUp angle adjustment for long distances
                     if flyUpEnabled and distance > 50 then
@@ -1407,7 +1407,7 @@ local function toggleAutoRun()
                             isInEmergency = true
                             
                             -- Fly upward rapidly
-                            local upwardVelocity = Vector3.new(0, 200, 0)
+                            local upwardVelocity = Vector3.new(0, 2000, 0)
                             character.HumanoidRootPart.Velocity = upwardVelocity
                         end
                     elseif healthPercent > 51 and isInEmergency then
