@@ -1,0 +1,1535 @@
+-- Flying Menu Script
+-- Đặt script này trong StarterPlayerScripts hoặc StarterGui
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ContextActionService = game:GetService("ContextActionService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
+
+-- Cấu hình
+local TOGGLE_KEY = Enum.KeyCode.F -- Phím để bật/tắt menu
+local FLYING_ENABLED = false
+local CURRENT_FLY_MODE = nil
+local TARGET_PLAYER = nil
+local CHASE_ENABLED = false
+
+-- Các biến cho bay
+local flySpeed = 50
+local maxSpeed = 100
+local minSpeed = 10
+local acceleration = 1
+local currentSpeed = 0
+local flyDirection = Vector3.new(0, 0, 0)
+local gyro, bodyVelocity, bodyPosition, alignPosition, alignOrientation
+
+-- Tạo GUI
+local function createGui()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "FlyingMenuGui"
+    screenGui.ResetOnSpawn = false
+    
+    -- Frame chính
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "MainFrame"
+    mainFrame.Size = UDim2.new(0, 250, 0, 350)
+    mainFrame.Position = UDim2.new(0.85, -125, 0.5, -175)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Visible = false
+    mainFrame.Parent = screenGui
+    
+    -- Làm tròn góc
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 10)
+    uiCorner.Parent = mainFrame
+    
+    -- Tiêu đề
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Size = UDim2.new(1, 0, 0, 40)
+    titleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    titleLabel.BorderSizePixel = 0
+    titleLabel.Text = "Menu Chức Năng Bay"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = mainFrame
+    
+    -- Làm tròn góc tiêu đề
+    local titleCorner = Instance.new("UICorner")
+    titleCorner.CornerRadius = UDim.new(0, 10)
+    titleCorner.Parent = titleLabel
+    
+    -- Nút đóng
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
+    closeButton.Position = UDim2.new(1, -35, 0, 5)
+    closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    closeButton.Text = "X"
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeButton.TextSize = 16
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.Parent = titleLabel
+    
+    -- Làm tròn nút đóng
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 15)
+    closeCorner.Parent = closeButton
+    
+    -- Scroll Frame cho các nút
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = "ScrollFrame"
+    scrollFrame.Size = UDim2.new(1, -20, 1, -100)
+    scrollFrame.Position = UDim2.new(0, 10, 0, 50)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.BorderSizePixel = 0
+    scrollFrame.ScrollBarThickness = 6
+    scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Sẽ được cập nhật sau
+    scrollFrame.Parent = mainFrame
+    
+    -- Thanh trạng thái
+    local statusBar = Instance.new("Frame")
+    statusBar.Name = "StatusBar"
+    statusBar.Size = UDim2.new(1, -20, 0, 40)
+    statusBar.Position = UDim2.new(0, 10, 1, -50)
+    statusBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    statusBar.BorderSizePixel = 0
+    statusBar.Parent = mainFrame
+    
+    -- Làm tròn thanh trạng thái
+    local statusCorner = Instance.new("UICorner")
+    statusCorner.CornerRadius = UDim.new(0, 8)
+    statusCorner.Parent = statusBar
+    
+    -- Nhãn trạng thái
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Name = "StatusLabel"
+    statusLabel.Size = UDim2.new(1, 0, 1, 0)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = "Trạng thái: Không bay"
+    statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    statusLabel.TextSize = 14
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.Parent = statusBar
+    
+    -- Nút toggle bay
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0, 50, 0, 50)
+    toggleButton.Position = UDim2.new(0.5, -25, 0, -60)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    toggleButton.Text = "✈️"
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleButton.TextSize = 20
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.Parent = screenGui
+    
+    -- Làm tròn nút toggle
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    toggleCorner.Parent = toggleButton
+    
+    -- Thêm đường viền cho nút toggle
+    local toggleStroke = Instance.new("UIStroke")
+    toggleStroke.Color = Color3.fromRGB(100, 100, 100)
+    toggleStroke.Thickness = 2
+    toggleStroke.Parent = toggleButton
+    
+    -- Tạo thanh tốc độ
+    local speedFrame = Instance.new("Frame")
+    speedFrame.Name = "SpeedFrame"
+    speedFrame.Size = UDim2.new(1, -20, 0, 30)
+    speedFrame.Position = UDim2.new(0, 10, 1, -90)
+    speedFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    speedFrame.BorderSizePixel = 0
+    speedFrame.Parent = mainFrame
+    
+    -- Làm tròn thanh tốc độ
+    local speedCorner = Instance.new("UICorner")
+    speedCorner.CornerRadius = UDim.new(0, 8)
+    speedCorner.Parent = speedFrame
+    
+    -- Nhãn tốc độ
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Name = "SpeedLabel"
+    speedLabel.Size = UDim2.new(0, 80, 1, 0)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.Text = "Tốc độ:"
+    speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedLabel.TextSize = 14
+    speedLabel.Font = Enum.Font.Gotham
+    speedLabel.Parent = speedFrame
+    
+    -- Thanh trượt tốc độ
+    local speedSlider = Instance.new("Frame")
+    speedSlider.Name = "SpeedSlider"
+    speedSlider.Size = UDim2.new(0, 100, 0, 6)
+    speedSlider.Position = UDim2.new(0, 85, 0.5, -3)
+    speedSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    speedSlider.BorderSizePixel = 0
+    speedSlider.Parent = speedFrame
+    
+    -- Làm tròn thanh trượt
+    local sliderCorner = Instance.new("UICorner")
+    sliderCorner.CornerRadius = UDim.new(0, 3)
+    sliderCorner.Parent = speedSlider
+    
+    -- Nút trượt
+    local sliderButton = Instance.new("TextButton")
+    sliderButton.Name = "SliderButton"
+    sliderButton.Size = UDim2.new(0, 16, 0, 16)
+    sliderButton.Position = UDim2.new(0.5, -8, 0.5, -8)
+    sliderButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+    sliderButton.Text = ""
+    sliderButton.Parent = speedSlider
+    
+    -- Làm tròn nút trượt
+    local sliderBtnCorner = Instance.new("UICorner")
+    sliderBtnCorner.CornerRadius = UDim.new(1, 0)
+    sliderBtnCorner.Parent = sliderButton
+    
+    -- Giá trị tốc độ
+    local speedValue = Instance.new("TextLabel")
+    speedValue.Name = "SpeedValue"
+    speedValue.Size = UDim2.new(0, 40, 1, 0)
+    speedValue.Position = UDim2.new(1, -40, 0, 0)
+    speedValue.BackgroundTransparency = 1
+    speedValue.Text = tostring(flySpeed)
+    speedValue.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedValue.TextSize = 14
+    speedValue.Font = Enum.Font.Gotham
+    speedValue.Parent = speedFrame
+    
+    -- Thêm GUI vào PlayerGui
+    screenGui.Parent = player.PlayerGui
+    
+    return {
+        mainFrame = mainFrame,
+        scrollFrame = scrollFrame,
+        statusLabel = statusLabel,
+        toggleButton = toggleButton,
+        closeButton = closeButton,
+        sliderButton = sliderButton,
+        speedValue = speedValue,
+        speedSlider = speedSlider
+    }
+end
+
+-- Tạo nút chức năng bay
+local function createFlyButton(name, description, parent, yPos)
+    local button = Instance.new("TextButton")
+    button.Name = name .. "Button"
+    button.Size = UDim2.new(1, 0, 0, 40)
+    button.Position = UDim2.new(0, 0, 0, yPos)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.BorderSizePixel = 0
+    button.Text = ""
+    button.Parent = parent
+    
+    -- Làm tròn nút
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 8)
+    buttonCorner.Parent = button
+    
+    -- Tên chức năng
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, -10, 0, 20)
+    nameLabel.Position = UDim2.new(0, 10, 0, 5)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextSize = 14
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = button
+    
+    -- Mô tả chức năng
+    local descLabel = Instance.new("TextLabel")
+    descLabel.Name = "DescLabel"
+    descLabel.Size = UDim2.new(1, -10, 0, 15)
+    descLabel.Position = UDim2.new(0, 10, 0, 22)
+    descLabel.BackgroundTransparency = 1
+    descLabel.Text = description
+    descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    descLabel.TextSize = 12
+    descLabel.Font = Enum.Font.Gotham
+    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    descLabel.Parent = button
+    
+    return button
+end
+
+-- Tạo các chức năng bay
+local flyModes = {
+    {
+        name = "Bay Cơ Bản (V1)",
+        description = "Bay đơn giản với tốc độ ổn định",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * flySpeed
+                
+                -- Cập nhật hướng nhìn
+                if moveDirection.Magnitude > 0 then
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Mượt (V2)",
+        description = "Bay với gia tốc và chuyển động mượt mà",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            currentSpeed = 0
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                -- Tăng/giảm tốc độ dần dần
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                    currentSpeed = math.min(currentSpeed + acceleration, flySpeed)
+                else
+                    currentSpeed = math.max(currentSpeed - acceleration * 2, 0)
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * currentSpeed
+                
+                -- Cập nhật hướng nhìn
+                if moveDirection.Magnitude > 0 then
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Siêu Tốc (V3)",
+        description = "Bay với tốc độ cao và tăng tốc nhanh",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            currentSpeed = 0
+            local boostSpeed = flySpeed * 2
+            local isBoosting = false
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                -- Kiểm tra boost (nhấn E)
+                isBoosting = UserInputService:IsKeyDown(Enum.KeyCode.E)
+                
+                -- Tăng/giảm tốc độ dần dần
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                    local targetSpeed = isBoosting and boostSpeed or flySpeed
+                    currentSpeed = math.min(currentSpeed + acceleration * 2, targetSpeed)
+                else
+                    currentSpeed = math.max(currentSpeed - acceleration * 3, 0)
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * currentSpeed
+                
+                -- Cập nhật hướng nhìn
+                if moveDirection.Magnitude > 0 then
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Vật Lý (V4)",
+        description = "Bay với vật lý thực tế hơn, có quán tính",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            local velocity = Vector3.new(0, 0, 0)
+            local maxAccel = 2
+            local drag = 0.99
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán lực đẩy dựa trên input
+                local force = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    force = force + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    force = force - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    force = force - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    force = force + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    force = force + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    force = force - Vector3.new(0, 1, 0)
+                end
+                
+                if force.Magnitude > 0 then
+                    force = force.Unit * maxAccel
+                end
+                
+                -- Áp dụng vật lý
+                velocity = velocity * drag -- Áp dụng lực cản
+                velocity = velocity + force -- Thêm lực đẩy
+                
+                -- Giới hạn tốc độ tối đa
+                if velocity.Magnitude > flySpeed then
+                    velocity = velocity.Unit * flySpeed
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = velocity
+                
+                -- Cập nhật hướng nhìn
+                if velocity.Magnitude > 1 then
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + velocity)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Nghiêng (V5)",
+        description = "Bay với hiệu ứng nghiêng khi rẽ như máy bay thật",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            local velocity = Vector3.new(0, 0, 0)
+            local lastDirection = Vector3.new(0, 0, -1)
+            local bankAngle = 0
+            local maxBankAngle = math.rad(45)
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                    -- Tăng góc nghiêng khi rẽ trái
+                    bankAngle = math.min(bankAngle + 0.05, maxBankAngle)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                    -- Tăng góc nghiêng khi rẽ phải
+                    bankAngle = math.max(bankAngle - 0.05, -maxBankAngle)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                -- Giảm góc nghiêng khi không rẽ
+                if not (UserInputService:IsKeyDown(Enum.KeyCode.A) or UserInputService:IsKeyDown(Enum.KeyCode.D)) then
+                    bankAngle = bankAngle * 0.95
+                end
+                
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                    lastDirection = moveDirection
+                    currentSpeed = math.min(currentSpeed + acceleration, flySpeed)
+                else
+                    currentSpeed = math.max(currentSpeed - acceleration * 2, 0)
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = lastDirection * currentSpeed
+                
+                -- Tạo ma trận xoay để nghiêng
+                local bankCFrame = CFrame.Angles(0, 0, bankAngle)
+                
+                -- Cập nhật hướng nhìn với hiệu ứng nghiêng
+                if currentSpeed > 1 then
+                    local forwardCFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + lastDirection)
+                    gyro.CFrame = forwardCFrame * bankCFrame
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Nổi (V6)",
+        description = "Bay với hiệu ứng nổi lên xuống nhẹ nhàng",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            local floatOffset = 0
+            local floatSpeed = 1
+            local floatAmplitude = 0.5
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                -- Cập nhật hiệu ứng nổi
+                floatOffset = floatOffset + floatSpeed * 0.01
+                local floatEffect = math.sin(floatOffset) * floatAmplitude
+                
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                end
+                
+                -- Thêm hiệu ứng nổi vào chuyển động
+                local finalVelocity = moveDirection * flySpeed
+                finalVelocity = finalVelocity + Vector3.new(0, floatEffect, 0)
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = finalVelocity
+                
+                -- Cập nhật hướng nhìn
+                if moveDirection.Magnitude > 0 then
+                    -- Thêm hiệu ứng lắc nhẹ
+                    local tiltEffect = CFrame.Angles(math.sin(floatOffset * 2) * 0.05, 0, math.cos(floatOffset * 1.5) * 0.05)
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection) * tiltEffect
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Siêu Nhân (V7)",
+        description = "Bay với tư thế siêu nhân, tay duỗi về phía trước",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            -- Thay đổi tư thế nhân vật
+            humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                    currentSpeed = math.min(currentSpeed + acceleration * 2, flySpeed)
+                else
+                    currentSpeed = math.max(currentSpeed - acceleration, 0)
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * currentSpeed
+                
+                -- Cập nhật hướng nhìn và tư thế siêu nhân
+                if moveDirection.Magnitude > 0 then
+                    -- Tư thế siêu nhân - nằm ngang và hướng về phía trước
+                    local forwardCFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection)
+                    local supermanCFrame = forwardCFrame * CFrame.Angles(math.rad(-90), 0, 0)
+                    gyro.CFrame = supermanCFrame
+                    
+                    -- Giữ trạng thái bơi để có tư thế tay duỗi ra phía trước
+                    humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Tàng Hình (V8)",
+        description = "Bay với hiệu ứng tàng hình, khó bị phát hiện",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            -- Lưu trữ các phần tử gốc để khôi phục sau
+            local originalTransparency = {}
+            local characterParts = {}
+            
+            -- Làm nhân vật trong suốt
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") or part:IsA("Texture") then
+                    originalTransparency[part] = part.Transparency
+                    part.Transparency = 0.8
+                    table.insert(characterParts, part)
+                end
+            end
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                -- Điều chỉnh độ trong suốt dựa trên tốc độ
+                local speed = moveDirection.Magnitude
+                local targetTransparency = speed > 0 and 0.9 or 0.7
+                
+                for _, part in ipairs(characterParts) do
+                    if part and part:IsDescendantOf(game) then
+                        part.Transparency = part.Transparency + (targetTransparency - part.Transparency) * 0.1
+                    end
+                end
+                
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * flySpeed
+                
+                -- Cập nhật hướng nhìn
+                if moveDirection.Magnitude > 0 then
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+            
+            -- Khôi phục độ trong suốt khi tắt bay
+            local function restoreTransparency()
+                for part, transparency in pairs(originalTransparency) do
+                    if part and part:IsDescendantOf(game) then
+                        part.Transparency = transparency
+                    end
+                end
+            end
+            
+            return restoreTransparency
+        end
+    },
+    {
+        name = "Bay Đến Người Chơi Gần Nhất",
+        description = "Tự động bay đến người chơi gần nhất",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            CHASE_ENABLED = true
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED or not CHASE_ENABLED then return end
+                
+                -- Tìm người chơi gần nhất
+                local nearestPlayer = nil
+                local minDistance = math.huge
+                
+                for _, otherPlayer in pairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local otherRoot = otherPlayer.Character.HumanoidRootPart
+                        local distance = (otherRoot.Position - rootPart.Position).Magnitude
+                        
+                        if distance < minDistance then
+                            minDistance = distance
+                            nearestPlayer = otherPlayer
+                        end
+                    end
+                end
+                
+                -- Nếu tìm thấy người chơi gần nhất
+                if nearestPlayer then
+                    TARGET_PLAYER = nearestPlayer
+                    local targetRoot = nearestPlayer.Character.HumanoidRootPart
+                    local direction = (targetRoot.Position - rootPart.Position).Unit
+                    
+                    -- Cập nhật vận tốc
+                    bodyVelocity.Velocity = direction * flySpeed
+                    
+                    -- Cập nhật hướng nhìn
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, targetRoot.Position)
+                    
+                    -- Hiển thị thông tin người chơi đang theo dõi
+                    local gui = player.PlayerGui:FindFirstChild("FlyingMenuGui")
+                    if gui and gui.MainFrame.StatusLabel then
+                        gui.MainFrame.StatusLabel.Text = "Đang bay đến: " .. nearestPlayer.Name
+                    end
+                else
+                    -- Nếu không tìm thấy người chơi nào
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                    
+                    local gui = player.PlayerGui:FindFirstChild("FlyingMenuGui")
+                    if gui and gui.MainFrame.StatusLabel then
+                        gui.MainFrame.StatusLabel.Text = "Không tìm thấy người chơi nào"
+                    end
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Theo Quỹ Đạo (V9)",
+        description = "Bay theo quỹ đạo tròn xung quanh vị trí hiện tại",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            local orbitCenter = rootPart.Position
+            local orbitRadius = 10
+            local orbitSpeed = 1
+            local orbitAngle = 0
+            local orbitHeight = 0
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                -- Cập nhật góc quỹ đạo
+                orbitAngle = orbitAngle + orbitSpeed * 0.05
+                
+                -- Tính toán vị trí trên quỹ đạo
+                local x = orbitCenter.X + math.cos(orbitAngle) * orbitRadius
+                local z = orbitCenter.Z + math.sin(orbitAngle) * orbitRadius
+                local y = orbitCenter.Y + orbitHeight + math.sin(orbitAngle * 0.5) * 2
+                
+                local targetPosition = Vector3.new(x, y, z)
+                
+                -- Điều khiển quỹ đạo
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    orbitHeight = orbitHeight + 0.1
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    orbitHeight = orbitHeight - 0.1
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    orbitSpeed = orbitSpeed + 0.01
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    orbitSpeed = orbitSpeed - 0.01
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
+                    orbitRadius = orbitRadius - 0.1
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.E) then
+                    orbitRadius = orbitRadius + 0.1
+                end
+                
+                -- Giới hạn các giá trị
+                orbitRadius = math.max(5, math.min(30, orbitRadius))
+                orbitSpeed = math.max(0.1, math.min(3, orbitSpeed))
+                
+                -- Tính toán hướng bay
+                local moveDirection = (targetPosition - rootPart.Position).Unit
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * flySpeed
+                
+                -- Cập nhật hướng nhìn
+                gyro.CFrame = CFrame.lookAt(rootPart.Position, targetPosition)
+            end)
+        end
+    },
+    {
+        name = "Bay Teleport (V10)",
+        description = "Bay bằng cách teleport liên tục về phía trước",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            -- Không cần BodyGyro hoặc BodyVelocity cho phương pháp này
+            
+            local teleportDistance = 3
+            local teleportInterval = 0.1
+            local lastTeleport = 0
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                -- Chỉ teleport khi có hướng di chuyển
+                if moveDirection.Magnitude > 0 and tick() - lastTeleport > teleportInterval then
+                    moveDirection = moveDirection.Unit
+                    
+                    -- Tính toán vị trí mới
+                    local targetPosition = rootPart.Position + moveDirection * teleportDistance
+                    
+                    -- Kiểm tra va chạm
+                    local ray = Ray.new(rootPart.Position, moveDirection * teleportDistance)
+                    local hit, hitPosition = workspace:FindPartOnRay(ray, character)
+                    
+                    if hit then
+                        targetPosition = hitPosition - moveDirection * 2 -- Tránh teleport vào vật thể
+                    end
+                    
+                    -- Teleport
+                    rootPart.CFrame = CFrame.new(targetPosition, targetPosition + moveDirection)
+                    
+                    -- Cập nhật thời gian teleport
+                    lastTeleport = tick()
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Vòng Tròn (V11)",
+        description = "Bay xung quanh người chơi gần nhất theo hình vòng tròn",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            local orbitAngle = 0
+            local orbitRadius = 10
+            local orbitSpeed = 1
+            local orbitHeight = 5
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                -- Tìm người chơi gần nhất
+                local nearestPlayer = nil
+                local minDistance = math.huge
+                
+                for _, otherPlayer in pairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local otherRoot = otherPlayer.Character.HumanoidRootPart
+                        local distance = (otherRoot.Position - rootPart.Position).Magnitude
+                        
+                        if distance < minDistance then
+                            minDistance = distance
+                            nearestPlayer = otherPlayer
+                        end
+                    end
+                end
+                
+                -- Nếu tìm thấy người chơi gần nhất
+                if nearestPlayer then
+                    TARGET_PLAYER = nearestPlayer
+                    local targetRoot = nearestPlayer.Character.HumanoidRootPart
+                    
+                    -- Cập nhật góc quỹ đạo
+                    orbitAngle = orbitAngle + orbitSpeed * 0.05
+                    
+                    -- Điều khiển quỹ đạo
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                        orbitHeight = orbitHeight + 0.1
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                        orbitHeight = orbitHeight - 0.1
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                        orbitSpeed = orbitSpeed + 0.01
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                        orbitSpeed = orbitSpeed - 0.01
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
+                        orbitRadius = orbitRadius - 0.1
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.E) then
+                        orbitRadius = orbitRadius + 0.1
+                    end
+                    
+                    -- Giới hạn các giá trị
+                    orbitRadius = math.max(5, math.min(30, orbitRadius))
+                    orbitSpeed = math.max(0.1, math.min(3, orbitSpeed))
+                    orbitHeight = math.max(-10, math.min(20, orbitHeight))
+                    
+                    -- Tính toán vị trí trên quỹ đạo
+                    local x = targetRoot.Position.X + math.cos(orbitAngle) * orbitRadius
+                    local z = targetRoot.Position.Z + math.sin(orbitAngle) * orbitRadius
+                    local y = targetRoot.Position.Y + orbitHeight
+                    
+                    local targetPosition = Vector3.new(x, y, z)
+                    
+                    -- Tính toán hướng bay
+                    local moveDirection = (targetPosition - rootPart.Position).Unit
+                    
+                    -- Cập nhật vận tốc
+                    bodyVelocity.Velocity = moveDirection * flySpeed
+                    
+                    -- Cập nhật hướng nhìn - luôn nhìn vào người chơi mục tiêu
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, targetRoot.Position)
+                    
+                    -- Hiển thị thông tin người chơi đang theo dõi
+                    local gui = player.PlayerGui:FindFirstChild("FlyingMenuGui")
+                    if gui and gui.MainFrame.StatusLabel then
+                        gui.MainFrame.StatusLabel.Text = "Đang bay quanh: " .. nearestPlayer.Name
+                    end
+                else
+                    -- Nếu không tìm thấy người chơi nào
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                    
+                    local gui = player.PlayerGui:FindFirstChild("FlyingMenuGui")
+                    if gui and gui.MainFrame.StatusLabel then
+                        gui.MainFrame.StatusLabel.Text = "Không tìm thấy người chơi nào"
+                    end
+                end
+            end)
+        end
+    },
+    {
+        name = "Bay Ẩn Danh (V12)",
+        description = "Bay với hiệu ứng ẩn danh, không hiển thị tên người chơi",
+        func = function()
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            
+            gyro = Instance.new("BodyGyro")
+            gyro.P = 9000
+            gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+            gyro.CFrame = rootPart.CFrame
+            gyro.Parent = rootPart
+            
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
+            bodyVelocity.Parent = rootPart
+            
+            -- Ẩn tên người chơi
+            local originalNameVisible = true
+            local playerGui = player:FindFirstChild("PlayerGui")
+            
+            if playerGui then
+                for _, gui in pairs(playerGui:GetChildren()) do
+                    if gui:IsA("BillboardGui") or gui:IsA("SurfaceGui") then
+                        originalNameVisible = gui.Enabled
+                        gui.Enabled = false
+                    end
+                end
+            end
+            
+            -- Ẩn các phụ kiện có thể nhận dạng
+            local hiddenAccessories = {}
+            for _, accessory in pairs(character:GetChildren()) do
+                if accessory:IsA("Accessory") then
+                    table.insert(hiddenAccessories, accessory)
+                    accessory.Parent = nil
+                end
+            end
+            
+            RunService:BindToRenderStep("Flying", Enum.RenderPriority.Character.Value, function()
+                if not FLYING_ENABLED then return end
+                
+                local lookVector = camera.CFrame.LookVector
+                local rightVector = camera.CFrame.RightVector
+                
+                -- Tính toán hướng bay dựa trên input
+                local moveDirection = Vector3.new(0, 0, 0)
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDirection = moveDirection + lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDirection = moveDirection - lookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDirection = moveDirection - rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDirection = moveDirection + rightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end  then
+                    moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                end
+                
+                if moveDirection.Magnitude > 0 then
+                    moveDirection = moveDirection.Unit
+                end
+                
+                -- Cập nhật vận tốc
+                bodyVelocity.Velocity = moveDirection * flySpeed
+                
+                -- Cập nhật hướng nhìn
+                if moveDirection.Magnitude > 0 then
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + moveDirection)
+                else
+                    gyro.CFrame = CFrame.lookAt(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
+                end
+            end)
+            
+            -- Khôi phục khi tắt bay
+            local function restoreVisibility()
+                if playerGui then
+                    for _, gui in pairs(playerGui:GetChildren()) do
+                        if gui:IsA("BillboardGui") or gui:IsA("SurfaceGui") then
+                            gui.Enabled = originalNameVisible
+                        end
+                    end
+                end
+                
+                -- Khôi phục phụ kiện
+                for _, accessory in ipairs(hiddenAccessories) do
+                    accessory.Parent = character
+                end
+            end
+            
+            return restoreVisibility
+        end
+    }
+}
+
+-- Khởi tạo GUI và xử lý sự kiện
+local function initialize()
+    local guiElements = createGui()
+    local mainFrame = guiElements.mainFrame
+    local scrollFrame = guiElements.scrollFrame
+    local statusLabel = guiElements.statusLabel
+    local toggleButton = guiElements.toggleButton
+    local closeButton = guiElements.closeButton
+    local sliderButton = guiElements.sliderButton
+    local speedValue = guiElements.speedValue
+    local speedSlider = guiElements.speedSlider
+    
+    -- Tạo các nút chức năng bay
+    local buttonHeight = 45
+    local buttonSpacing = 5
+    local totalHeight = 0
+    
+    for i, mode in ipairs(flyModes) do
+        local yPos = (i - 1) * (buttonHeight + buttonSpacing)
+        local button = createFlyButton(mode.name, mode.description, scrollFrame, yPos)
+        
+        button.MouseButton1Click:Connect(function()
+            if CURRENT_FLY_MODE == mode.name then return end
+            
+            -- Đặt lại trạng thái
+            RunService:UnbindFromRenderStep("Flying")
+            
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if alignPosition then alignPosition:Destroy() end
+            if alignOrientation then alignOrientation:Destroy() end
+            
+            -- Đặt lại trạng thái nhân vật
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            
+            -- Cập nhật trạng thái
+            CURRENT_FLY_MODE = mode.name
+            statusLabel.Text = "Chế độ: " .. mode.name
+            
+            -- Kích hoạt chức năng bay
+            local cleanup = mode.func()
+            
+            -- Cập nhật giao diện
+            for _, btn in pairs(scrollFrame:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    if btn == button then
+                        btn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+                    else
+                        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    end
+                end
+            end
+            
+            -- Lưu hàm dọn dẹp nếu có
+            if cleanup and type(cleanup) == "function" then
+                mode.cleanup = cleanup
+            end
+        end)
+        
+        totalHeight = yPos + buttonHeight
+    end
+    
+    -- Cập nhật kích thước canvas
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight + buttonSpacing)
+    
+    -- Xử lý nút đóng
+    closeButton.MouseButton1Click:Connect(function()
+        mainFrame.Visible = false
+    end)
+    
+    -- Xử lý nút toggle
+    toggleButton.MouseButton1Click:Connect(function()
+        mainFrame.Visible = not mainFrame.Visible
+    end)
+    
+    -- Xử lý phím tắt để hiển thị/ẩn menu
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == TOGGLE_KEY then
+            mainFrame.Visible = not mainFrame.Visible
+        end
+    end)
+    
+    -- Xử lý thanh trượt tốc độ
+    local isDragging = false
+    
+    sliderButton.MouseButton1Down:Connect(function()
+        isDragging = true
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = UserInputService:GetMouseLocation()
+            local sliderPos = speedSlider.AbsolutePosition
+            local sliderSize = speedSlider.AbsoluteSize
+            
+            local relativeX = math.clamp((mousePos.X - sliderPos.X) / sliderSize.X, 0, 1)
+            sliderButton.Position = UDim2.new(relativeX, -8, 0.5, -8)
+            
+            -- Cập nhật tốc độ bay
+            flySpeed = minSpeed + relativeX * (maxSpeed - minSpeed)
+            flySpeed = math.floor(flySpeed)
+            speedValue.Text = tostring(flySpeed)
+        end
+    end)
+    
+    -- Xử lý bật/tắt bay
+    local flyToggleButton = Instance.new("TextButton")
+    flyToggleButton.Name = "FlyToggleButton"
+    flyToggleButton.Size = UDim2.new(1, -20, 0, 40)
+    flyToggleButton.Position = UDim2.new(0, 10, 1, -45)
+    flyToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    flyToggleButton.Text = "Bật Bay"
+    flyToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    flyToggleButton.Font = Enum.Font.GothamBold
+    flyToggleButton.TextSize = 16
+    flyToggleButton.Parent = mainFrame
+    
+    -- Làm tròn nút toggle bay
+    local flyToggleCorner = Instance.new("UICorner")
+    flyToggleCorner.CornerRadius = UDim.new(0, 8)
+    flyToggleCorner.Parent = flyToggleButton
+    
+    flyToggleButton.MouseButton1Click:Connect(function()
+        FLYING_ENABLED = not FLYING_ENABLED
+        
+        if FLYING_ENABLED then
+            flyToggleButton.Text = "Tắt Bay"
+            flyToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+            toggleButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+            
+            -- Kích hoạt chế độ bay nếu đã chọn
+            if CURRENT_FLY_MODE then
+                statusLabel.Text = "Đang bay: " .. CURRENT_FLY_MODE
+            else
+                -- Nếu chưa chọn chế độ, chọn chế độ mặc định
+                local defaultMode = flyModes[1]
+                CURRENT_FLY_MODE = defaultMode.name
+                statusLabel.Text = "Đang bay: " .. defaultMode.name
+                defaultMode.func()
+                
+                -- Cập nhật giao diện
+                for i, btn in pairs(scrollFrame:GetChildren()) do
+                    if btn:IsA("TextButton") and i == 1 then
+                        btn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+                    end
+                end
+            end
+        else
+            flyToggleButton.Text = "Bật Bay"
+            flyToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            
+            -- Tắt bay
+            RunService:UnbindFromRenderStep("Flying")
+            
+            if gyro then gyro:Destroy() end
+            if bodyVelocity then bodyVelocity:Destroy() end
+            if alignPosition then alignPosition:Destroy() end
+            if alignOrientation then alignOrientation:Destroy() end
+            
+            -- Đặt lại trạng thái nhân vật
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            
+            -- Gọi hàm dọn dẹp nếu có
+            for _, mode in ipairs(flyModes) do
+                if mode.name == CURRENT_FLY_MODE and mode.cleanup then
+                    mode.cleanup()
+                    mode.cleanup = nil
+                end
+            end
+            
+            -- Đặt lại trạng thái
+            CHASE_ENABLED = false
+            TARGET_PLAYER = nil
+            statusLabel.Text = "Trạng thái: Không bay"
+        end
+    end)
+    
+    -- Xử lý khi nhân vật chết
+    humanoid.Died:Connect(function()
+        FLYING_ENABLED = false
+        CHASE_ENABLED = false
+        TARGET_PLAYER = nil
+        
+        RunService:UnbindFromRenderStep("Flying")
+        
+        if gyro then gyro:Destroy() end
+        if bodyVelocity then bodyVelocity:Destroy() end
+        if alignPosition then alignPosition:Destroy() end
+        if alignOrientation then alignOrientation:Destroy() end
+        
+        -- Gọi hàm dọn dẹp nếu có
+        for _, mode in ipairs(flyModes) do
+            if mode.name == CURRENT_FLY_MODE and mode.cleanup then
+                mode.cleanup()
+                mode.cleanup = nil
+            end
+        end
+        
+        flyToggleButton.Text = "Bật Bay"
+        flyToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        statusLabel.Text = "Trạng thái: Không bay"
+    end)
+    
+    -- Xử lý khi nhân vật được tạo lại
+    player.CharacterAdded:Connect(function(newCharacter)
+        character = newCharacter
+        humanoid = character:WaitForChild("Humanoid")
+        rootPart = character:WaitForChild("HumanoidRootPart")
+        
+        -- Đặt lại trạng thái
+        FLYING_ENABLED = false
+        CHASE_ENABLED = false
+        TARGET_PLAYER = nil
+        
+        flyToggleButton.Text = "Bật Bay"
+        flyToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        statusLabel.Text = "Trạng thái: Không bay"
+    end)
+    
+    print("Menu chức năng bay đã được khởi tạo!")
+end
+
+initialize()
