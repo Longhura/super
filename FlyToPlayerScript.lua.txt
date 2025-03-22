@@ -1420,7 +1420,7 @@ local function toggleAutoRun()
                     
                     -- If in emergency mode, keep flying up
                     if isInEmergency and character:FindFirstChild("HumanoidRootPart") then
-                        character.HumanoidRootPart.Velocity = Vector3.new(0, 200, 0)
+                        character.HumanoidRootPart.Velocity = Vector3.new(0, 2000, 0)
                     end
                 end
             end
