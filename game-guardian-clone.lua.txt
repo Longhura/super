@@ -1,0 +1,1943 @@
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Variables
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+
+local memoryValues = {}
+local searchResults = {}
+local searchHistory = {}
+local speedHackEnabled = false
+local originalWalkSpeed = Humanoid.WalkSpeed
+local originalJumpPower = Humanoid.JumpPower
+local speedMultiplier = 2
+local jumpMultiplier = 2
+local selectedProcess = "Roblox"
+local searchType = "Exact"
+local valueType = "Dword"
+local isMinimized = false
+local isDragging = false
+local dragOffset = Vector2.new(0, 0)
+local currentTab = "Search"
+local freezeLoop = nil
+local frozenValues = {}
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GameGuardianClone"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = game:GetService("CoreGui") -- Use CoreGui for better executor compatibility
+
+-- Create Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+-- Round corners
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+-- Round corners for title bar (only top corners)
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = TitleBar
+
+-- Fix for title bar corners (only top)
+local TitleBarFix = Instance.new("Frame")
+TitleBarFix.Name = "TitleBarFix"
+TitleBarFix.Size = UDim2.new(1, 0, 0.5, 0)
+TitleBarFix.Position = UDim2.new(0, 0, 0.5, 0)
+TitleBarFix.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TitleBarFix.BorderSizePixel = 0
+TitleBarFix.Parent = TitleBar
+
+-- Game Guardian Logo
+local Logo = Instance.new("TextLabel")
+Logo.Name = "Logo"
+Logo.Size = UDim2.new(0, 30, 0, 30)
+Logo.Position = UDim2.new(0, 5, 0, 0)
+Logo.BackgroundTransparency = 1
+Logo.Text = "GG"
+Logo.TextColor3 = Color3.fromRGB(0, 200, 255)
+Logo.TextSize = 18
+Logo.Font = Enum.Font.GothamBold
+Logo.Parent = TitleBar
+
+-- Title Text
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.Size = UDim2.new(1, -80, 1, 0)
+TitleText.Position = UDim2.new(0, 40, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "Game Guardian"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextSize = 14
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Parent = TitleBar
+
+-- Minimize Button
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
+MinimizeButton.Position = UDim2.new(1, -55, 0, 2)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 18
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.Parent = TitleBar
+
+-- Round corners for minimize button
+local MinimizeCorner = Instance.new("UICorner")
+MinimizeCorner.CornerRadius = UDim.new(0, 4)
+MinimizeCorner.Parent = MinimizeButton
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -30, 0, 2)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Text = "×"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = TitleBar
+
+-- Round corners for close button
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
+
+-- Process Selection Bar
+local ProcessBar = Instance.new("Frame")
+ProcessBar.Name = "ProcessBar"
+ProcessBar.Size = UDim2.new(1, 0, 0, 30)
+ProcessBar.Position = UDim2.new(0, 0, 0, 30)
+ProcessBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ProcessBar.BorderSizePixel = 0
+ProcessBar.Parent = MainFrame
+
+-- Process Icon
+local ProcessIcon = Instance.new("TextLabel")
+ProcessIcon.Name = "ProcessIcon"
+ProcessIcon.Size = UDim2.new(0, 25, 0, 25)
+ProcessIcon.Position = UDim2.new(0, 5, 0, 2)
+ProcessIcon.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ProcessIcon.Text = "R"
+ProcessIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+ProcessIcon.TextSize = 14
+ProcessIcon.Font = Enum.Font.GothamBold
+ProcessIcon.Parent = ProcessBar
+
+-- Round corners for process icon
+local ProcessIconCorner = Instance.new("UICorner")
+ProcessIconCorner.CornerRadius = UDim.new(0, 4)
+ProcessIconCorner.Parent = ProcessIcon
+
+-- Process Text
+local ProcessText = Instance.new("TextLabel")
+ProcessText.Name = "ProcessText"
+ProcessText.Size = UDim2.new(1, -70, 1, 0)
+ProcessText.Position = UDim2.new(0, 35, 0, 0)
+ProcessText.BackgroundTransparency = 1
+ProcessText.Text = "Roblox"
+ProcessText.TextColor3 = Color3.fromRGB(255, 255, 255)
+ProcessText.TextSize = 12
+ProcessText.Font = Enum.Font.Gotham
+ProcessText.TextXAlignment = Enum.TextXAlignment.Left
+ProcessText.Parent = ProcessBar
+
+-- Process Select Button
+local ProcessSelectButton = Instance.new("TextButton")
+ProcessSelectButton.Name = "ProcessSelectButton"
+ProcessSelectButton.Size = UDim2.new(0, 25, 0, 25)
+ProcessSelectButton.Position = UDim2.new(1, -30, 0, 2)
+ProcessSelectButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ProcessSelectButton.Text = "▼"
+ProcessSelectButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ProcessSelectButton.TextSize = 12
+ProcessSelectButton.Font = Enum.Font.GothamBold
+ProcessSelectButton.Parent = ProcessBar
+
+-- Round corners for process select button
+local ProcessSelectCorner = Instance.new("UICorner")
+ProcessSelectCorner.CornerRadius = UDim.new(0, 4)
+ProcessSelectCorner.Parent = ProcessSelectButton
+
+-- Tab Bar
+local TabBar = Instance.new("Frame")
+TabBar.Name = "TabBar"
+TabBar.Size = UDim2.new(1, 0, 0, 30)
+TabBar.Position = UDim2.new(0, 0, 0, 60)
+TabBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+
+-- Create Tab Buttons
+local function CreateTabButton(name, text, position)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Size = UDim2.new(0.25, 0, 1, 0)
+    button.Position = position
+    button.BackgroundTransparency = 1
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(200, 200, 200)
+    button.TextSize = 12
+    button.Font = Enum.Font.Gotham
+    button.Parent = TabBar
+    
+    local indicator = Instance.new("Frame")
+    indicator.Name = "Indicator"
+    indicator.Size = UDim2.new(1, 0, 0, 2)
+    indicator.Position = UDim2.new(0, 0, 1, -2)
+    indicator.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    indicator.BorderSizePixel = 0
+    indicator.Visible = false
+    indicator.Parent = button
+    
+    return button
+end
+
+local SearchTab = CreateTabButton("SearchTab", "SEARCH", UDim2.new(0, 0, 0, 0))
+local SavedTab = CreateTabButton("SavedTab", "SAVED", UDim2.new(0.25, 0, 0, 0))
+local SpeedTab = CreateTabButton("SpeedTab", "SPEED", UDim2.new(0.5, 0, 0, 0))
+local SettingsTab = CreateTabButton("SettingsTab", "SETTINGS", UDim2.new(0.75, 0, 0, 0))
+
+-- Content Container
+local ContentContainer = Instance.new("Frame")
+ContentContainer.Name = "ContentContainer"
+ContentContainer.Size = UDim2.new(1, 0, 1, -90)
+ContentContainer.Position = UDim2.new(0, 0, 0, 90)
+ContentContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ContentContainer.BorderSizePixel = 0
+ContentContainer.ClipsDescendants = true
+ContentContainer.Parent = MainFrame
+
+-- Search Tab Content
+local SearchContent = Instance.new("Frame")
+SearchContent.Name = "SearchContent"
+SearchContent.Size = UDim2.new(1, 0, 1, 0)
+SearchContent.BackgroundTransparency = 1
+SearchContent.Visible = true
+SearchContent.Parent = ContentContainer
+
+-- Value Input Frame
+local ValueInputFrame = Instance.new("Frame")
+ValueInputFrame.Name = "ValueInputFrame"
+ValueInputFrame.Size = UDim2.new(1, -20, 0, 40)
+ValueInputFrame.Position = UDim2.new(0, 10, 0, 10)
+ValueInputFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ValueInputFrame.Parent = SearchContent
+
+-- Round corners for value input frame
+local ValueInputCorner = Instance.new("UICorner")
+ValueInputCorner.CornerRadius = UDim.new(0, 6)
+ValueInputCorner.Parent = ValueInputFrame
+
+-- Value Input
+local ValueInput = Instance.new("TextBox")
+ValueInput.Name = "ValueInput"
+ValueInput.Size = UDim2.new(1, -20, 1, -10)
+ValueInput.Position = UDim2.new(0, 10, 0, 5)
+ValueInput.BackgroundTransparency = 1
+ValueInput.PlaceholderText = "Enter value to search..."
+ValueInput.Text = ""
+ValueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+ValueInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+ValueInput.TextSize = 14
+ValueInput.Font = Enum.Font.Gotham
+ValueInput.ClearTextOnFocus = false
+ValueInput.Parent = ValueInputFrame
+
+-- Search Options Frame
+local SearchOptionsFrame = Instance.new("Frame")
+SearchOptionsFrame.Name = "SearchOptionsFrame"
+SearchOptionsFrame.Size = UDim2.new(1, -20, 0, 40)
+SearchOptionsFrame.Position = UDim2.new(0, 10, 0, 60)
+SearchOptionsFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+SearchOptionsFrame.Parent = SearchContent
+
+-- Round corners for search options frame
+local SearchOptionsCorner = Instance.new("UICorner")
+SearchOptionsCorner.CornerRadius = UDim.new(0, 6)
+SearchOptionsCorner.Parent = SearchOptionsFrame
+
+-- Value Type Button
+local ValueTypeButton = Instance.new("TextButton")
+ValueTypeButton.Name = "ValueTypeButton"
+ValueTypeButton.Size = UDim2.new(0.48, 0, 1, -10)
+ValueTypeButton.Position = UDim2.new(0, 5, 0, 5)
+ValueTypeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ValueTypeButton.Text = "Dword"
+ValueTypeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ValueTypeButton.TextSize = 12
+ValueTypeButton.Font = Enum.Font.Gotham
+ValueTypeButton.Parent = SearchOptionsFrame
+
+-- Round corners for value type button
+local ValueTypeCorner = Instance.new("UICorner")
+ValueTypeCorner.CornerRadius = UDim.new(0, 4)
+ValueTypeCorner.Parent = ValueTypeButton
+
+-- Search Type Button
+local SearchTypeButton = Instance.new("TextButton")
+SearchTypeButton.Name = "SearchTypeButton"
+SearchTypeButton.Size = UDim2.new(0.48, 0, 1, -10)
+SearchTypeButton.Position = UDim2.new(0.52, 0, 0, 5)
+SearchTypeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SearchTypeButton.Text = "Exact"
+SearchTypeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchTypeButton.TextSize = 12
+SearchTypeButton.Font = Enum.Font.Gotham
+SearchTypeButton.Parent = SearchOptionsFrame
+
+-- Round corners for search type button
+local SearchTypeCorner = Instance.new("UICorner")
+SearchTypeCorner.CornerRadius = UDim.new(0, 4)
+SearchTypeCorner.Parent = SearchTypeButton
+
+-- Search Button
+local SearchButton = Instance.new("TextButton")
+SearchButton.Name = "SearchButton"
+SearchButton.Size = UDim2.new(1, -20, 0, 40)
+SearchButton.Position = UDim2.new(0, 10, 0, 110)
+SearchButton.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+SearchButton.Text = "NEW SEARCH"
+SearchButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchButton.TextSize = 14
+SearchButton.Font = Enum.Font.GothamBold
+SearchButton.Parent = SearchContent
+
+-- Round corners for search button
+local SearchButtonCorner = Instance.new("UICorner")
+SearchButtonCorner.CornerRadius = UDim.new(0, 6)
+SearchButtonCorner.Parent = SearchButton
+
+-- Refine Search Buttons Frame
+local RefineButtonsFrame = Instance.new("Frame")
+RefineButtonsFrame.Name = "RefineButtonsFrame"
+RefineButtonsFrame.Size = UDim2.new(1, -20, 0, 40)
+RefineButtonsFrame.Position = UDim2.new(0, 10, 0, 160)
+RefineButtonsFrame.BackgroundTransparency = 1
+RefineButtonsFrame.Visible = false
+RefineButtonsFrame.Parent = SearchContent
+
+-- Create Refine Buttons
+local function CreateRefineButton(name, text, position, color)
+    local button = Instance.new("TextButton")
+    button.Name = name
+    button.Size = UDim2.new(0.32, 0, 1, 0)
+    button.Position = position
+    button.BackgroundColor3 = color
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 12
+    button.Font = Enum.Font.Gotham
+    button.Parent = RefineButtonsFrame
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 4)
+    buttonCorner.Parent = button
+    
+    return button
+end
+
+local IncreasedButton = CreateRefineButton("IncreasedButton", "INCREASED", UDim2.new(0, 0, 0, 0), Color3.fromRGB(0, 150, 0))
+local DecreasedButton = CreateRefineButton("DecreasedButton", "DECREASED", UDim2.new(0.34, 0, 0, 0), Color3.fromRGB(150, 0, 0))
+local SameButton = CreateRefineButton("SameButton", "SAME", UDim2.new(0.68, 0, 0, 0), Color3.fromRGB(0, 100, 150))
+
+-- Results Label
+local ResultsLabel = Instance.new("TextLabel")
+ResultsLabel.Name = "ResultsLabel"
+ResultsLabel.Size = UDim2.new(1, -20, 0, 30)
+ResultsLabel.Position = UDim2.new(0, 10, 0, 210)
+ResultsLabel.BackgroundTransparency = 1
+ResultsLabel.Text = "Search Results (0)"
+ResultsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ResultsLabel.TextSize = 14
+ResultsLabel.Font = Enum.Font.GothamBold
+ResultsLabel.TextXAlignment = Enum.TextXAlignment.Left
+ResultsLabel.Parent = SearchContent
+
+-- Results Frame
+local ResultsFrame = Instance.new("ScrollingFrame")
+ResultsFrame.Name = "ResultsFrame"
+ResultsFrame.Size = UDim2.new(1, -20, 1, -250)
+ResultsFrame.Position = UDim2.new(0, 10, 0, 240)
+ResultsFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ResultsFrame.BorderSizePixel = 0
+ResultsFrame.ScrollBarThickness = 4
+ResultsFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+ResultsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ResultsFrame.Parent = SearchContent
+
+-- Round corners for results frame
+local ResultsCorner = Instance.new("UICorner")
+ResultsCorner.CornerRadius = UDim.new(0, 6)
+ResultsCorner.Parent = ResultsFrame
+
+-- List Layout for Results
+local ResultsLayout = Instance.new("UIListLayout")
+ResultsLayout.Padding = UDim.new(0, 5)
+ResultsLayout.SortOrder = Enum.SortOrder.Name
+ResultsLayout.Parent = ResultsFrame
+
+-- Padding for Results
+local ResultsPadding = Instance.new("UIPadding")
+ResultsPadding.PaddingLeft = UDim.new(0, 5)
+ResultsPadding.PaddingRight = UDim.new(0, 5)
+ResultsPadding.PaddingTop = UDim.new(0, 5)
+ResultsPadding.PaddingBottom = UDim.new(0, 5)
+ResultsPadding.Parent = ResultsFrame
+
+-- Saved Tab Content
+local SavedContent = Instance.new("Frame")
+SavedContent.Name = "SavedContent"
+SavedContent.Size = UDim2.new(1, 0, 1, 0)
+SavedContent.BackgroundTransparency = 1
+SavedContent.Visible = false
+SavedContent.Parent = ContentContainer
+
+-- Saved Label
+local SavedLabel = Instance.new("TextLabel")
+SavedLabel.Name = "SavedLabel"
+SavedLabel.Size = UDim2.new(1, -20, 0, 30)
+SavedLabel.Position = UDim2.new(0, 10, 0, 10)
+SavedLabel.BackgroundTransparency = 1
+SavedLabel.Text = "Saved Values (0)"
+SavedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SavedLabel.TextSize = 14
+SavedLabel.Font = Enum.Font.GothamBold
+SavedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SavedLabel.Parent = SavedContent
+
+-- Saved Frame
+local SavedFrame = Instance.new("ScrollingFrame")
+SavedFrame.Name = "SavedFrame"
+SavedFrame.Size = UDim2.new(1, -20, 1, -50)
+SavedFrame.Position = UDim2.new(0, 10, 0, 40)
+SavedFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+SavedFrame.BorderSizePixel = 0
+SavedFrame.ScrollBarThickness = 4
+SavedFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+SavedFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+SavedFrame.Parent = SavedContent
+
+-- Round corners for saved frame
+local SavedCorner = Instance.new("UICorner")
+SavedCorner.CornerRadius = UDim.new(0, 6)
+SavedCorner.Parent = SavedFrame
+
+-- List Layout for Saved
+local SavedLayout = Instance.new("UIListLayout")
+SavedLayout.Padding = UDim.new(0, 5)
+SavedLayout.SortOrder = Enum.SortOrder.Name
+SavedLayout.Parent = SavedFrame
+
+-- Padding for Saved
+local SavedPadding = Instance.new("UIPadding")
+SavedPadding.PaddingLeft = UDim.new(0, 5)
+SavedPadding.PaddingRight = UDim.new(0, 5)
+SavedPadding.PaddingTop = UDim.new(0, 5)
+SavedPadding.PaddingBottom = UDim.new(0, 5)
+SavedPadding.Parent = SavedFrame
+
+-- Speed Tab Content
+local SpeedContent = Instance.new("Frame")
+SpeedContent.Name = "SpeedContent"
+SpeedContent.Size = UDim2.new(1, 0, 1, 0)
+SpeedContent.BackgroundTransparency = 1
+SpeedContent.Visible = false
+SpeedContent.Parent = ContentContainer
+
+-- Speed Title
+local SpeedTitle = Instance.new("TextLabel")
+SpeedTitle.Name = "SpeedTitle"
+SpeedTitle.Size = UDim2.new(1, -20, 0, 30)
+SpeedTitle.Position = UDim2.new(0, 10, 0, 10)
+SpeedTitle.BackgroundTransparency = 1
+SpeedTitle.Text = "Speed Hack"
+SpeedTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedTitle.TextSize = 16
+SpeedTitle.Font = Enum.Font.GothamBold
+SpeedTitle.TextXAlignment = Enum.TextXAlignment.Left
+SpeedTitle.Parent = SpeedContent
+
+-- Speed Slider Frame
+local SpeedSliderFrame = Instance.new("Frame")
+SpeedSliderFrame.Name = "SpeedSliderFrame"
+SpeedSliderFrame.Size = UDim2.new(1, -20, 0, 60)
+SpeedSliderFrame.Position = UDim2.new(0, 10, 0, 50)
+SpeedSliderFrame.BackgroundTransparency = 1
+SpeedSliderFrame.Parent = SpeedContent
+
+-- Speed Label
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Name = "SpeedLabel"
+SpeedLabel.Size = UDim2.new(1, -60, 0, 20)
+SpeedLabel.Position = UDim2.new(0, 0, 0, 0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Speed Multiplier:"
+SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedLabel.TextSize = 14
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+SpeedLabel.Parent = SpeedSliderFrame
+
+-- Speed Value
+local SpeedValue = Instance.new("TextLabel")
+SpeedValue.Name = "SpeedValue"
+SpeedValue.Size = UDim2.new(0, 50, 0, 20)
+SpeedValue.Position = UDim2.new(1, -50, 0, 0)
+SpeedValue.BackgroundTransparency = 1
+SpeedValue.Text = "2.0x"
+SpeedValue.TextColor3 = Color3.fromRGB(0, 200, 255)
+SpeedValue.TextSize = 14
+SpeedValue.Font = Enum.Font.GothamBold
+SpeedValue.TextXAlignment = Enum.TextXAlignment.Right
+SpeedValue.Parent = SpeedSliderFrame
+
+-- Speed Slider
+local SpeedSlider = Instance.new("Frame")
+SpeedSlider.Name = "SpeedSlider"
+SpeedSlider.Size = UDim2.new(1, 0, 0, 6)
+SpeedSlider.Position = UDim2.new(0, 0, 0, 30)
+SpeedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedSlider.BorderSizePixel = 0
+SpeedSlider.Parent = SpeedSliderFrame
+
+-- Round corners for speed slider
+local SpeedSliderCorner = Instance.new("UICorner")
+SpeedSliderCorner.CornerRadius = UDim.new(0, 3)
+SpeedSliderCorner.Parent = SpeedSlider
+
+-- Speed Knob
+local SpeedKnob = Instance.new("TextButton")
+SpeedKnob.Name = "SpeedKnob"
+SpeedKnob.Size = UDim2.new(0, 16, 0, 16)
+SpeedKnob.Position = UDim2.new(0.2, -8, 0, -5)
+SpeedKnob.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+SpeedKnob.Text = ""
+SpeedKnob.Parent = SpeedSlider
+
+-- Round corners for speed knob
+local SpeedKnobCorner = Instance.new("UICorner")
+SpeedKnobCorner.CornerRadius = UDim.new(0, 8)
+SpeedKnobCorner.Parent = SpeedKnob
+
+-- Jump Slider Frame
+local JumpSliderFrame = Instance.new("Frame")
+JumpSliderFrame.Name = "JumpSliderFrame"
+JumpSliderFrame.Size = UDim2.new(1, -20, 0, 60)
+JumpSliderFrame.Position = UDim2.new(0, 10, 0, 120)
+JumpSliderFrame.BackgroundTransparency = 1
+JumpSliderFrame.Parent = SpeedContent
+
+-- Jump Label
+local JumpLabel = Instance.new("TextLabel")
+JumpLabel.Name = "JumpLabel"
+JumpLabel.Size = UDim2.new(1, -60, 0, 20)
+JumpLabel.Position = UDim2.new(0, 0, 0, 0)
+JumpLabel.BackgroundTransparency = 1
+JumpLabel.Text = "Jump Multiplier:"
+JumpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+JumpLabel.TextSize = 14
+JumpLabel.Font = Enum.Font.Gotham
+JumpLabel.TextXAlignment = Enum.TextXAlignment.Left
+JumpLabel.Parent = JumpSliderFrame
+
+-- Jump Value
+local JumpValue = Instance.new("TextLabel")
+JumpValue.Name = "JumpValue"
+JumpValue.Size = UDim2.new(0, 50, 0, 20)
+JumpValue.Position = UDim2.new(1, -50, 0, 0)
+JumpValue.BackgroundTransparency = 1
+JumpValue.Text = "2.0x"
+JumpValue.TextColor3 = Color3.fromRGB(0, 200, 255)
+JumpValue.TextSize = 14
+JumpValue.Font = Enum.Font.GothamBold
+JumpValue.TextXAlignment = Enum.TextXAlignment.Right
+JumpValue.Parent = JumpSliderFrame
+
+-- Jump Slider
+local JumpSlider = Instance.new("Frame")
+JumpSlider.Name = "JumpSlider"
+JumpSlider.Size = UDim2.new(1, 0, 0, 6)
+JumpSlider.Position = UDim2.new(0, 0, 0, 30)
+JumpSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+JumpSlider.BorderSizePixel = 0
+JumpSlider.Parent = JumpSliderFrame
+
+-- Round corners for jump slider
+local JumpSliderCorner = Instance.new("UICorner")
+JumpSliderCorner.CornerRadius = UDim.new(0, 3)
+JumpSliderCorner.Parent = JumpSlider
+
+-- Jump Knob
+local JumpKnob = Instance.new("TextButton")
+JumpKnob.Name = "JumpKnob"
+JumpKnob.Size = UDim2.new(0, 16, 0, 16)
+JumpKnob.Position = UDim2.new(0.2, -8, 0, -5)
+JumpKnob.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+JumpKnob.Text = ""
+JumpKnob.Parent = JumpSlider
+
+-- Round corners for jump knob
+local JumpKnobCorner = Instance.new("UICorner")
+JumpKnobCorner.CornerRadius = UDim.new(0, 8)
+JumpKnobCorner.Parent = JumpKnob
+
+-- Speed Toggle Button
+local SpeedToggleButton = Instance.new("TextButton")
+SpeedToggleButton.Name = "SpeedToggleButton"
+SpeedToggleButton.Size = UDim2.new(1, -20, 0, 40)
+SpeedToggleButton.Position = UDim2.new(0, 10, 0, 190)
+SpeedToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SpeedToggleButton.Text = "ENABLE SPEED HACK"
+SpeedToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedToggleButton.TextSize = 14
+SpeedToggleButton.Font = Enum.Font.GothamBold
+SpeedToggleButton.Parent = SpeedContent
+
+-- Round corners for speed toggle button
+local SpeedToggleCorner = Instance.new("UICorner")
+SpeedToggleCorner.CornerRadius = UDim.new(0, 6)
+SpeedToggleCorner.Parent = SpeedToggleButton
+
+-- Settings Tab Content
+local SettingsContent = Instance.new("Frame")
+SettingsContent.Name = "SettingsContent"
+SettingsContent.Size = UDim2.new(1, 0, 1, 0)
+SettingsContent.BackgroundTransparency = 1
+SettingsContent.Visible = false
+SettingsContent.Parent = ContentContainer
+
+-- Settings Title
+local SettingsTitle = Instance.new("TextLabel")
+SettingsTitle.Name = "SettingsTitle"
+SettingsTitle.Size = UDim2.new(1, -20, 0, 30)
+SettingsTitle.Position = UDim2.new(0, 10, 0, 10)
+SettingsTitle.BackgroundTransparency = 1
+SettingsTitle.Text = "Settings"
+SettingsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+SettingsTitle.TextSize = 16
+SettingsTitle.Font = Enum.Font.GothamBold
+SettingsTitle.TextXAlignment = Enum.TextXAlignment.Left
+SettingsTitle.Parent = SettingsContent
+
+-- Theme Option
+local ThemeOption = Instance.new("Frame")
+ThemeOption.Name = "ThemeOption"
+ThemeOption.Size = UDim2.new(1, -20, 0, 40)
+ThemeOption.Position = UDim2.new(0, 10, 0, 50)
+ThemeOption.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ThemeOption.Parent = SettingsContent
+
+-- Round corners for theme option
+local ThemeOptionCorner = Instance.new("UICorner")
+ThemeOptionCorner.CornerRadius = UDim.new(0, 6)
+ThemeOptionCorner.Parent = ThemeOption
+
+-- Theme Label
+local ThemeLabel = Instance.new("TextLabel")
+ThemeLabel.Name = "ThemeLabel"
+ThemeLabel.Size = UDim2.new(0.7, 0, 1, 0)
+ThemeLabel.Position = UDim2.new(0, 10, 0, 0)
+ThemeLabel.BackgroundTransparency = 1
+ThemeLabel.Text = "Dark Theme"
+ThemeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ThemeLabel.TextSize = 14
+ThemeLabel.Font = Enum.Font.Gotham
+ThemeLabel.TextXAlignment = Enum.TextXAlignment.Left
+ThemeLabel.Parent = ThemeOption
+
+-- Theme Toggle
+local ThemeToggle = Instance.new("Frame")
+ThemeToggle.Name = "ThemeToggle"
+ThemeToggle.Size = UDim2.new(0, 40, 0, 20)
+ThemeToggle.Position = UDim2.new(1, -50, 0.5, -10)
+ThemeToggle.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+ThemeToggle.Parent = ThemeOption
+
+-- Round corners for theme toggle
+local ThemeToggleCorner = Instance.new("UICorner")
+ThemeToggleCorner.CornerRadius = UDim.new(0, 10)
+ThemeToggleCorner.Parent = ThemeToggle
+
+-- Theme Toggle Knob
+local ThemeToggleKnob = Instance.new("Frame")
+ThemeToggleKnob.Name = "ThemeToggleKnob"
+ThemeToggleKnob.Size = UDim2.new(0, 16, 0, 16)
+ThemeToggleKnob.Position = UDim2.new(1, -18, 0.5, -8)
+ThemeToggleKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ThemeToggleKnob.Parent = ThemeToggle
+
+-- Round corners for theme toggle knob
+local ThemeToggleKnobCorner = Instance.new("UICorner")
+ThemeToggleKnobCorner.CornerRadius = UDim.new(0, 8)
+ThemeToggleKnobCorner.Parent = ThemeToggleKnob
+
+-- About Option
+local AboutOption = Instance.new("Frame")
+AboutOption.Name = "AboutOption"
+AboutOption.Size = UDim2.new(1, -20, 0, 40)
+AboutOption.Position = UDim2.new(0, 10, 0, 100)
+AboutOption.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+AboutOption.Parent = SettingsContent
+
+-- Round corners for about option
+local AboutOptionCorner = Instance.new("UICorner")
+AboutOptionCorner.CornerRadius = UDim.new(0, 6)
+AboutOptionCorner.Parent = AboutOption
+
+-- About Label
+local AboutLabel = Instance.new("TextLabel")
+AboutLabel.Name = "AboutLabel"
+AboutLabel.Size = UDim2.new(0.7, 0, 1, 0)
+AboutLabel.Position = UDim2.new(0, 10, 0, 0)
+AboutLabel.BackgroundTransparency = 1
+AboutLabel.Text = "About"
+AboutLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+AboutLabel.TextSize = 14
+AboutLabel.Font = Enum.Font.Gotham
+AboutLabel.TextXAlignment = Enum.TextXAlignment.Left
+AboutLabel.Parent = AboutOption
+
+-- About Arrow
+local AboutArrow = Instance.new("TextLabel")
+AboutArrow.Name = "AboutArrow"
+AboutArrow.Size = UDim2.new(0, 20, 1, 0)
+AboutArrow.Position = UDim2.new(1, -30, 0, 0)
+AboutArrow.BackgroundTransparency = 1
+AboutArrow.Text = ">"
+AboutArrow.TextColor3 = Color3.fromRGB(150, 150, 150)
+AboutArrow.TextSize = 14
+AboutArrow.Font = Enum.Font.GothamBold
+AboutArrow.Parent = AboutOption
+
+-- Version Label
+local VersionLabel = Instance.new("TextLabel")
+VersionLabel.Name = "VersionLabel"
+VersionLabel.Size = UDim2.new(1, -20, 0, 20)
+VersionLabel.Position = UDim2.new(0, 10, 1, -30)
+VersionLabel.BackgroundTransparency = 1
+VersionLabel.Text = "Game Guardian Clone v1.0"
+VersionLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+VersionLabel.TextSize = 12
+VersionLabel.Font = Enum.Font.Gotham
+VersionLabel.TextXAlignment = Enum.TextXAlignment.Center
+VersionLabel.Parent = SettingsContent
+
+-- Minimized Button (initially hidden)
+local MinimizedButton = Instance.new("TextButton")
+MinimizedButton.Name = "MinimizedButton"
+MinimizedButton.Size = UDim2.new(0, 50, 0, 50)
+MinimizedButton.Position = UDim2.new(0, 20, 0.5, -25)
+MinimizedButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MinimizedButton.Text = "GG"
+MinimizedButton.TextColor3 = Color3.fromRGB(0, 200, 255)
+MinimizedButton.TextSize = 18
+MinimizedButton.Font = Enum.Font.GothamBold
+MinimizedButton.Visible = false
+MinimizedButton.Parent = ScreenGui
+
+-- Round corners for minimized button
+local MinimizedCorner = Instance.new("UICorner")
+MinimizedCorner.CornerRadius = UDim.new(0, 25)
+MinimizedCorner.Parent = MinimizedButton
+
+-- Value Type Menu (initially hidden)
+local ValueTypeMenu = Instance.new("Frame")
+ValueTypeMenu.Name = "ValueTypeMenu"
+ValueTypeMenu.Size = UDim2.new(0, 150, 0, 200)
+ValueTypeMenu.Position = UDim2.new(0, 15, 0, 105)
+ValueTypeMenu.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ValueTypeMenu.BorderSizePixel = 0
+ValueTypeMenu.Visible = false
+ValueTypeMenu.ZIndex = 10
+ValueTypeMenu.Parent = ScreenGui
+
+-- Round corners for value type menu
+local ValueTypeMenuCorner = Instance.new("UICorner")
+ValueTypeMenuCorner.CornerRadius = UDim.new(0, 6)
+ValueTypeMenuCorner.Parent = ValueTypeMenu
+
+-- Value Type Options
+local valueTypeOptions = {"Dword", "Float", "Double", "Byte", "Word", "Qword", "XOR"}
+
+for i, option in ipairs(valueTypeOptions) do
+    local optionButton = Instance.new("TextButton")
+    optionButton.Name = option .. "Option"
+    optionButton.Size = UDim2.new(1, -10, 0, 25)
+    optionButton.Position = UDim2.new(0, 5, 0, (i-1) * 28 + 5)
+    optionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    optionButton.Text = option
+    optionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    optionButton.TextSize = 12
+    optionButton.Font = Enum.Font.Gotham
+    optionButton.ZIndex = 10
+    optionButton.Parent = ValueTypeMenu
+    
+    local optionCorner = Instance.new("UICorner")
+    optionCorner.CornerRadius = UDim.new(0, 4)
+    optionCorner.Parent = optionButton
+end
+
+-- Search Type Menu (initially hidden)
+local SearchTypeMenu = Instance.new("Frame")
+SearchTypeMenu.Name = "SearchTypeMenu"
+SearchTypeMenu.Size = UDim2.new(0, 150, 0, 170)
+SearchTypeMenu.Position = UDim2.new(0, 140, 0, 105)
+SearchTypeMenu.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SearchTypeMenu.BorderSizePixel = 0
+SearchTypeMenu.Visible = false
+SearchTypeMenu.ZIndex = 10
+SearchTypeMenu.Parent = ScreenGui
+
+-- Round corners for search type menu
+local SearchTypeMenuCorner = Instance.new("UICorner")
+SearchTypeMenuCorner.CornerRadius = UDim.new(0, 6)
+SearchTypeMenuCorner.Parent = SearchTypeMenu
+
+-- Search Type Options
+local searchTypeOptions = {"Exact", "Range", "Unknown", "Greater", "Less", "Not Equal"}
+
+for i, option in ipairs(searchTypeOptions) do
+    local optionButton = Instance.new("TextButton")
+    optionButton.Name = option .. "Option"
+    optionButton.Size = UDim2.new(1, -10, 0, 25)
+    optionButton.Position = UDim2.new(0, 5, 0, (i-1) * 28 + 5)
+    optionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    optionButton.Text = option
+    optionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    optionButton.TextSize = 12
+    optionButton.Font = Enum.Font.Gotham
+    optionButton.ZIndex = 10
+    optionButton.Parent = SearchTypeMenu
+    
+    local optionCorner = Instance.new("UICorner")
+    optionCorner.CornerRadius = UDim.new(0, 4)
+    optionCorner.Parent = optionButton
+end
+
+-- Process Menu (initially hidden)
+local ProcessMenu = Instance.new("Frame")
+ProcessMenu.Name = "ProcessMenu"
+ProcessMenu.Size = UDim2.new(0, 200, 0, 200)
+ProcessMenu.Position = UDim2.new(0, 50, 0, 65)
+ProcessMenu.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ProcessMenu.BorderSizePixel = 0
+ProcessMenu.Visible = false
+ProcessMenu.ZIndex = 10
+ProcessMenu.Parent = ScreenGui
+
+-- Round corners for process menu
+local ProcessMenuCorner = Instance.new("UICorner")
+ProcessMenuCorner.CornerRadius = UDim.new(0, 6)
+ProcessMenuCorner.Parent = ProcessMenu
+
+-- Process Menu Title
+local ProcessMenuTitle = Instance.new("TextLabel")
+ProcessMenuTitle.Name = "ProcessMenuTitle"
+ProcessMenuTitle.Size = UDim2.new(1, 0, 0, 30)
+ProcessMenuTitle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ProcessMenuTitle.Text = "Select Process"
+ProcessMenuTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ProcessMenuTitle.TextSize = 14
+ProcessMenuTitle.Font = Enum.Font.GothamBold
+ProcessMenuTitle.ZIndex = 10
+ProcessMenuTitle.Parent = ProcessMenu
+
+-- Round corners for process menu title (only top)
+local ProcessMenuTitleCorner = Instance.new("UICorner")
+ProcessMenuTitleCorner.CornerRadius = UDim.new(0, 6)
+ProcessMenuTitleCorner.Parent = ProcessMenuTitle
+
+-- Fix for process menu title corners (only top)
+local ProcessMenuTitleFix = Instance.new("Frame")
+ProcessMenuTitleFix.Name = "ProcessMenuTitleFix"
+ProcessMenuTitleFix.Size = UDim2.new(1, 0, 0.5, 0)
+ProcessMenuTitleFix.Position = UDim2.new(0, 0, 0.5, 0)
+ProcessMenuTitleFix.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ProcessMenuTitleFix.BorderSizePixel = 0
+ProcessMenuTitleFix.ZIndex = 10
+ProcessMenuTitleFix.Parent = ProcessMenuTitle
+
+-- Process List
+local ProcessList = Instance.new("ScrollingFrame")
+ProcessList.Name = "ProcessList"
+ProcessList.Size = UDim2.new(1, -10, 1, -40)
+ProcessList.Position = UDim2.new(0, 5, 0, 35)
+ProcessList.BackgroundTransparency = 1
+ProcessList.ScrollBarThickness = 4
+ProcessList.ScrollBarImageColor3 = Color3.fromRGB(0, 150, 200)
+ProcessList.CanvasSize = UDim2.new(0, 0, 0, 0)
+ProcessList.ZIndex = 10
+ProcessList.Parent = ProcessMenu
+
+-- Process Options
+local processOptions = {"Roblox", "Minecraft", "PUBG Mobile", "Free Fire", "Among Us", "Genshin Impact"}
+
+for i, option in ipairs(processOptions) do
+    local processButton = Instance.new("TextButton")
+    processButton.Name = option .. "Process"
+    processButton.Size = UDim2.new(1, -10, 0, 30)
+    processButton.Position = UDim2.new(0, 5, 0, (i-1) * 35 + 5)
+    processButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    processButton.Text = option
+    processButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    processButton.TextSize = 12
+    processButton.Font = Enum.Font.Gotham
+    processButton.TextXAlignment = Enum.TextXAlignment.Left
+    processButton.ZIndex = 10
+    processButton.Parent = ProcessList
+    
+    -- Add padding
+    local processPadding = Instance.new("UIPadding")
+    processPadding.PaddingLeft = UDim.new(0, 10)
+    processPadding.Parent = processButton
+    
+    local processCorner = Instance.new("UICorner")
+    processCorner.CornerRadius = UDim.new(0, 4)
+    processCorner.Parent = processButton
+end
+
+-- Update canvas size for process list
+ProcessList.CanvasSize = UDim2.new(0, 0, 0, #processOptions * 35 + 5)
+
+-- Value Edit Dialog (initially hidden)
+local EditDialog = Instance.new("Frame")
+EditDialog.Name = "EditDialog"
+EditDialog.Size = UDim2.new(0, 250, 0, 150)
+EditDialog.Position = UDim2.new(0.5, -125, 0.5, -75)
+EditDialog.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+EditDialog.BorderSizePixel = 0
+EditDialog.Visible = false
+EditDialog.ZIndex = 10
+EditDialog.Parent = ScreenGui
+
+-- Round corners for edit dialog
+local EditDialogCorner = Instance.new("UICorner")
+EditDialogCorner.CornerRadius = UDim.new(0, 8)
+EditDialogCorner.Parent = EditDialog
+
+-- Edit Dialog Title
+local EditDialogTitle = Instance.new("TextLabel")
+EditDialogTitle.Name = "EditDialogTitle"
+EditDialogTitle.Size = UDim2.new(1, 0, 0, 30)
+EditDialogTitle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+EditDialogTitle.Text = "Edit Value"
+EditDialogTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+EditDialogTitle.TextSize = 14
+EditDialogTitle.Font = Enum.Font.GothamBold
+EditDialogTitle.ZIndex = 10
+EditDialogTitle.Parent = EditDialog
+
+-- Round corners for edit dialog title (only top)
+local EditDialogTitleCorner = Instance.new("UICorner")
+EditDialogTitleCorner.CornerRadius = UDim.new(0, 8)
+EditDialogTitleCorner.Parent = EditDialogTitle
+
+-- Fix for edit dialog title corners (only top)
+local EditDialogTitleFix = Instance.new("Frame")
+EditDialogTitleFix.Name = "EditDialogTitleFix"
+EditDialogTitleFix.Size = UDim2.new(1, 0, 0.5, 0)
+EditDialogTitleFix.Position = UDim2.new(0, 0, 0.5, 0)
+EditDialogTitleFix.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+EditDialogTitleFix.BorderSizePixel = 0
+EditDialogTitleFix.ZIndex = 10
+EditDialogTitleFix.Parent = EditDialogTitle
+
+-- Edit Dialog Input
+local EditDialogInput = Instance.new("TextBox")
+EditDialogInput.Name = "EditDialogInput"
+EditDialogInput.Size = UDim2.new(1, -20, 0, 40)
+EditDialogInput.Position = UDim2.new(0, 10, 0, 40)
+EditDialogInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+EditDialogInput.Text = ""
+EditDialogInput.PlaceholderText = "Enter new value..."
+EditDialogInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+EditDialogInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+EditDialogInput.TextSize = 14
+EditDialogInput.Font = Enum.Font.Gotham
+EditDialogInput.ZIndex = 10
+EditDialogInput.Parent = EditDialog
+
+-- Round corners for edit dialog input
+local EditDialogInputCorner = Instance.new("UICorner")
+EditDialogInputCorner.CornerRadius = UDim.new(0, 4)
+EditDialogInputCorner.Parent = EditDialogInput
+
+-- Edit Dialog Buttons
+local EditDialogOK = Instance.new("TextButton")
+EditDialogOK.Name = "EditDialogOK"
+EditDialogOK.Size = UDim2.new(0.48, 0, 0, 40)
+EditDialogOK.Position = UDim2.new(0, 10, 1, -50)
+EditDialogOK.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+EditDialogOK.Text = "OK"
+EditDialogOK.TextColor3 = Color3.fromRGB(255, 255, 255)
+EditDialogOK.TextSize = 14
+EditDialogOK.Font = Enum.Font.GothamBold
+EditDialogOK.ZIndex = 10
+EditDialogOK.Parent = EditDialog
+
+-- Round corners for edit dialog OK button
+local EditDialogOKCorner = Instance.new("UICorner")
+EditDialogOKCorner.CornerRadius = UDim.new(0, 4)
+EditDialogOKCorner.Parent = EditDialogOK
+
+-- Edit Dialog Cancel
+local EditDialogCancel = Instance.new("TextButton")
+EditDialogCancel.Name = "EditDialogCancel"
+EditDialogCancel.Size = UDim2.new(0.48, 0, 0, 40)
+EditDialogCancel.Position = UDim2.new(0.52, 0, 1, -50)
+EditDialogCancel.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+EditDialogCancel.Text = "CANCEL"
+EditDialogCancel.TextColor3 = Color3.fromRGB(255, 255, 255)
+EditDialogCancel.TextSize = 14
+EditDialogCancel.Font = Enum.Font.GothamBold
+EditDialogCancel.ZIndex = 10
+EditDialogCancel.Parent = EditDialog
+
+-- Round corners for edit dialog cancel button
+local EditDialogCancelCorner = Instance.new("UICorner")
+EditDialogCancelCorner.CornerRadius = UDim.new(0, 4)
+EditDialogCancelCorner.Parent = EditDialogCancel
+
+-- About Dialog (initially hidden)
+local AboutDialog = Instance.new("Frame")
+AboutDialog.Name = "AboutDialog"
+AboutDialog.Size = UDim2.new(0, 250, 0, 200)
+AboutDialog.Position = UDim2.new(0.5, -125, 0.5, -100)
+AboutDialog.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+AboutDialog.BorderSizePixel = 0
+AboutDialog.Visible = false
+AboutDialog.ZIndex = 10
+AboutDialog.Parent = ScreenGui
+
+-- Round corners for about dialog
+local AboutDialogCorner = Instance.new("UICorner")
+AboutDialogCorner.CornerRadius = UDim.new(0, 8)
+AboutDialogCorner.Parent = AboutDialog
+
+-- About Dialog Title
+local AboutDialogTitle = Instance.new("TextLabel")
+AboutDialogTitle.Name = "AboutDialogTitle"
+AboutDialogTitle.Size = UDim2.new(1, 0, 0, 30)
+AboutDialogTitle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AboutDialogTitle.Text = "About"
+AboutDialogTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AboutDialogTitle.TextSize = 14
+AboutDialogTitle.Font = Enum.Font.GothamBold
+AboutDialogTitle.ZIndex = 10
+AboutDialogTitle.Parent = AboutDialog
+
+-- Round corners for about dialog title (only top)
+local AboutDialogTitleCorner = Instance.new("UICorner")
+AboutDialogTitleCorner.CornerRadius = UDim.new(0, 8)
+AboutDialogTitleCorner.Parent = AboutDialogTitle
+
+-- Fix for about dialog title corners (only top)
+local AboutDialogTitleFix = Instance.new("Frame")
+AboutDialogTitleFix.Name = "AboutDialogTitleFix"
+AboutDialogTitleFix.Size = UDim2.new(1, 0, 0.5, 0)
+AboutDialogTitleFix.Position = UDim2.new(0, 0, 0.5, 0)
+AboutDialogTitleFix.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+AboutDialogTitleFix.BorderSizePixel = 0
+AboutDialogTitleFix.ZIndex = 10
+AboutDialogTitleFix.Parent = AboutDialogTitle
+
+-- About Dialog Content
+local AboutDialogContent = Instance.new("TextLabel")
+AboutDialogContent.Name = "AboutDialogContent"
+AboutDialogContent.Size = UDim2.new(1, -20, 1, -80)
+AboutDialogContent.Position = UDim2.new(0, 10, 0, 40)
+AboutDialogContent.BackgroundTransparency = 1
+AboutDialogContent.Text = "Game Guardian Clone v1.0\n\nA Roblox implementation of the Game Guardian memory editor.\n\nThis script allows you to scan and modify values in the game environment."
+AboutDialogContent.TextColor3 = Color3.fromRGB(255, 255, 255)
+AboutDialogContent.TextSize = 12
+AboutDialogContent.Font = Enum.Font.Gotham
+AboutDialogContent.TextWrapped = true
+AboutDialogContent.TextXAlignment = Enum.TextXAlignment.Left
+AboutDialogContent.TextYAlignment = Enum.TextYAlignment.Top
+AboutDialogContent.ZIndex = 10
+AboutDialogContent.Parent = AboutDialog
+
+-- About Dialog Close Button
+local AboutDialogClose = Instance.new("TextButton")
+AboutDialogClose.Name = "AboutDialogClose"
+AboutDialogClose.Size = UDim2.new(0.8, 0, 0, 40)
+AboutDialogClose.Position = UDim2.new(0.1, 0, 1, -50)
+AboutDialogClose.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+AboutDialogClose.Text = "CLOSE"
+AboutDialogClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+AboutDialogClose.TextSize = 14
+AboutDialogClose.Font = Enum.Font.GothamBold
+AboutDialogClose.ZIndex = 10
+AboutDialogClose.Parent = AboutDialog
+
+-- Round corners for about dialog close button
+local AboutDialogCloseCorner = Instance.new("UICorner")
+AboutDialogCloseCorner.CornerRadius = UDim.new(0, 4)
+AboutDialogCloseCorner.Parent = AboutDialogClose
+
+-- Functions
+-- Function to switch tabs
+local function SwitchTab(tabName)
+    -- Update tab indicators
+    SearchTab.Indicator.Visible = (tabName == "Search")
+    SavedTab.Indicator.Visible = (tabName == "Saved")
+    SpeedTab.Indicator.Visible = (tabName == "Speed")
+    SettingsTab.Indicator.Visible = (tabName == "Settings")
+    
+    -- Update tab text colors
+    SearchTab.TextColor3 = (tabName == "Search") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    SavedTab.TextColor3 = (tabName == "Saved") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    SpeedTab.TextColor3 = (tabName == "Speed") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    SettingsTab.TextColor3 = (tabName == "Settings") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    
+    -- Update content visibility
+    SearchContent.Visible = (tabName == "Search")
+    SavedContent.Visible = (tabName == "Saved")
+    SpeedContent.Visible = (tabName == "Speed")
+    SettingsContent.Visible = (tabName == "Settings")
+    
+    -- Update current tab
+    currentTab = tabName
+    
+    -- Hide menus
+    ValueTypeMenu.Visible = false
+    SearchTypeMenu.Visible = false
+    ProcessMenu.Visible = false
+end
+
+-- Function to toggle minimized state
+local function ToggleMinimized()
+    isMinimized = not isMinimized
+    
+    MainFrame.Visible = not isMinimized
+    MinimizedButton.Visible = isMinimized
+    
+    -- Hide all menus when minimizing
+    ValueTypeMenu.Visible = false
+    SearchTypeMenu.Visible = false
+    ProcessMenu.Visible = false
+    EditDialog.Visible = false
+    
+    AboutDialog.Visible = false
+end
+
+-- Function to search for values
+local function SearchForValues(isNewSearch)
+    -- Get search value
+    local searchValue = ValueInput.Text
+    if searchValue == "" then return end
+    
+    -- Convert to number if possible
+    local numValue = tonumber(searchValue)
+    
+    -- Clear previous results if new search
+    if isNewSearch then
+        searchResults = {}
+        for _, child in pairs(ResultsFrame:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+    end
+    
+    -- Show refine buttons if not a new search
+    RefineButtonsFrame.Visible = not isNewSearch
+    
+    -- Simulate memory scan (in Roblox we can't actually scan memory)
+    local count = 0
+    
+    -- Different scan behavior based on whether it's a new search or refining
+    if isNewSearch then
+        -- Scan for properties in workspace that match the value
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                -- Check various properties
+                local properties = {
+                    Transparency = obj.Transparency,
+                    Reflectance = obj.Reflectance,
+                    Size_X = obj.Size.X,
+                    Size_Y = obj.Size.Y,
+                    Size_Z = obj.Size.Z,
+                    Position_X = obj.Position.X,
+                    Position_Y = obj.Position.Y,
+                    Position_Z = obj.Position.Z
+                }
+                
+                for propName, propValue in pairs(properties) do
+                    if numValue and CompareValues(propValue, numValue, searchType) then
+                        count = count + 1
+                        
+                        -- Store result
+                        local resultId = obj:GetFullName() .. "_" .. propName
+                        searchResults[resultId] = {
+                            object = obj,
+                            property = propName,
+                            value = propValue,
+                            originalValue = propValue
+                        }
+                        
+                        -- Create result button
+                        CreateResultButton(resultId, obj:GetFullName(), propName, propValue)
+                    end
+                end
+            end
+        end
+        
+        -- Also scan humanoid properties
+        if Character and Character:FindFirstChild("Humanoid") then
+            local humanoid = Character.Humanoid
+            local properties = {
+                WalkSpeed = humanoid.WalkSpeed,
+                JumpPower = humanoid.JumpPower,
+                Health = humanoid.Health,
+                MaxHealth = humanoid.MaxHealth
+            }
+            
+            for propName, propValue in pairs(properties) do
+                if numValue and CompareValues(propValue, numValue, searchType) then
+                    count = count + 1
+                    
+                    -- Store result
+                    local resultId = "Humanoid_" .. propName
+                    searchResults[resultId] = {
+                        object = humanoid,
+                        property = propName,
+                        value = propValue,
+                        originalValue = propValue
+                    }
+                    
+                    -- Create result button
+                    CreateResultButton(resultId, "Humanoid", propName, propValue)
+                end
+            end
+        end
+        
+        -- Store search history for refinement
+        searchHistory = {
+            value = numValue,
+            results = table.clone(searchResults)
+        }
+    else
+        -- Refine existing results
+        for resultId, result in pairs(searchHistory.results) do
+            local obj = result.object
+            if obj and obj:IsDescendantOf(game) then
+                local propName = result.property
+                local currentValue = GetPropertyValue(obj, propName)
+                local originalValue = result.value
+                
+                -- Check if the value matches the refinement criteria
+                local matches = false
+                
+                if searchType == "Exact" and numValue then
+                    matches = CompareValues(currentValue, numValue, "Exact")
+                elseif searchType == "Increased" then
+                    matches = currentValue > originalValue
+                elseif searchType == "Decreased" then
+                    matches = currentValue < originalValue
+                elseif searchType == "Same" then
+                    matches = currentValue == originalValue
+                elseif numValue then
+                    matches = CompareValues(currentValue, numValue, searchType)
+                end
+                
+                if matches then
+                    count = count + 1
+                    
+                    -- Store result
+                    searchResults[resultId] = {
+                        object = obj,
+                        property = propName,
+                        value = currentValue,
+                        originalValue = originalValue
+                    }
+                    
+                    -- Create result button
+                    CreateResultButton(resultId, obj:GetFullName(), propName, currentValue)
+                end
+            end
+        end
+        
+        -- Update search history
+        searchHistory.results = table.clone(searchResults)
+    end
+    
+    -- Update canvas size
+    ResultsFrame.CanvasSize = UDim2.new(0, 0, 0, count * 45)
+    
+    -- Update results label
+    ResultsLabel.Text = "Search Results (" .. count .. ")"
+    
+    -- Update search button text
+    if isNewSearch then
+        SearchButton.Text = "REFINE SEARCH"
+    end
+end
+
+-- Function to compare values based on search type
+local function CompareValues(value, target, compareType)
+    if compareType == "Exact" then
+        return math.abs(value - target) < 0.001
+    elseif compareType == "Range" then
+        return math.abs(value - target) <= 1
+    elseif compareType == "Greater" then
+        return value > target
+    elseif compareType == "Less" then
+        return value < target
+    elseif compareType == "Not Equal" then
+        return math.abs(value - target) >= 0.001
+    else
+        return math.abs(value - target) < 0.001
+    end
+end
+
+-- Function to get property value safely
+local function GetPropertyValue(obj, propName)
+    if propName == "Size_X" then
+        return obj.Size.X
+    elseif propName == "Size_Y" then
+        return obj.Size.Y
+    elseif propName == "Size_Z" then
+        return obj.Size.Z
+    elseif propName == "Position_X" then
+        return obj.Position.X
+    elseif propName == "Position_Y" then
+        return obj.Position.Y
+    elseif propName == "Position_Z" then
+        return obj.Position.Z
+    else
+        return obj[propName]
+    end
+end
+
+-- Function to set property value safely
+local function SetPropertyValue(obj, propName, value)
+    if propName == "Size_X" then
+        obj.Size = Vector3.new(value, obj.Size.Y, obj.Size.Z)
+    elseif propName == "Size_Y" then
+        obj.Size = Vector3.new(obj.Size.X, value, obj.Size.Z)
+    elseif propName == "Size_Z" then
+        obj.Size = Vector3.new(obj.Size.X, obj.Size.Y, value)
+    elseif propName == "Position_X" then
+        obj.Position = Vector3.new(value, obj.Position.Y, obj.Position.Z)
+    elseif propName == "Position_Y" then
+        obj.Position = Vector3.new(obj.Position.X, value, obj.Position.Z)
+    elseif propName == "Position_Z" then
+        obj.Position = Vector3.new(obj.Position.X, obj.Position.Y, value)
+    else
+        obj[propName] = value
+    end
+end
+
+-- Function to create result button
+local function CreateResultButton(id, objName, propName, value)
+    local resultButton = Instance.new("TextButton")
+    resultButton.Name = id .. "_Button"
+    resultButton.Size = UDim2.new(1, -10, 0, 40)
+    resultButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    resultButton.Text = ""
+    resultButton.Parent = ResultsFrame
+    
+    -- Round corners for result button
+    local resultCorner = Instance.new("UICorner")
+    resultCorner.CornerRadius = UDim.new(0, 4)
+    resultCorner.Parent = resultButton
+    
+    -- Object name label
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(1, -110, 0, 20)
+    nameLabel.Position = UDim2.new(0, 10, 0, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = string.sub(objName, 1, 20) .. (string.len(objName) > 20 and "..." or "")
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextSize = 12
+    nameLabel.Font = Enum.Font.Gotham
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = resultButton
+    
+    -- Property name label
+    local propLabel = Instance.new("TextLabel")
+    propLabel.Name = "PropLabel"
+    propLabel.Size = UDim2.new(1, -110, 0, 20)
+    propLabel.Position = UDim2.new(0, 10, 0, 20)
+    propLabel.BackgroundTransparency = 1
+    propLabel.Text = propName
+    propLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    propLabel.TextSize = 10
+    propLabel.Font = Enum.Font.Gotham
+    propLabel.TextXAlignment = Enum.TextXAlignment.Left
+    propLabel.Parent = resultButton
+    
+    -- Value label
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Name = "ValueLabel"
+    valueLabel.Size = UDim2.new(0, 90, 0, 40)
+    valueLabel.Position = UDim2.new(1, -100, 0, 0)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Text = tostring(math.floor(value * 1000) / 1000)
+    valueLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    valueLabel.TextSize = 12
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.Parent = resultButton
+    
+    -- Freeze button
+    local freezeButton = Instance.new("TextButton")
+    freezeButton.Name = "FreezeButton"
+    freezeButton.Size = UDim2.new(0, 30, 0, 30)
+    freezeButton.Position = UDim2.new(1, -35, 0.5, -15)
+    freezeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    freezeButton.Text = "❄️"
+    freezeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    freezeButton.TextSize = 14
+    freezeButton.Font = Enum.Font.GothamBold
+    freezeButton.Parent = resultButton
+    
+    -- Round corners for freeze button
+    local freezeCorner = Instance.new("UICorner")
+    freezeCorner.CornerRadius = UDim.new(0, 4)
+    freezeCorner.Parent = freezeButton
+    
+    -- Connect result button click
+    resultButton.MouseButton1Click:Connect(function()
+        -- Show edit dialog
+        EditDialog.Visible = true
+        EditDialogInput.Text = tostring(value)
+        
+        -- Store selected result for editing
+        EditDialog.ResultId = id
+    end)
+    
+    -- Connect freeze button click
+    freezeButton.MouseButton1Click:Connect(function()
+        -- Toggle freeze state
+        if frozenValues[id] then
+            frozenValues[id] = nil
+            freezeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        else
+            frozenValues[id] = searchResults[id]
+            freezeButton.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+        end
+    end)
+    
+    -- Set freeze button color if already frozen
+    if frozenValues[id] then
+        freezeButton.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+    end
+end
+
+-- Function to toggle speed hack
+local function ToggleSpeedHack()
+    speedHackEnabled = not speedHackEnabled
+    
+    if speedHackEnabled then
+        SpeedToggleButton.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+        SpeedToggleButton.Text = "DISABLE SPEED HACK"
+        Humanoid.WalkSpeed = originalWalkSpeed * speedMultiplier
+        Humanoid.JumpPower = originalJumpPower * jumpMultiplier
+    else
+        SpeedToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        SpeedToggleButton.Text = "ENABLE SPEED HACK"
+        Humanoid.WalkSpeed = originalWalkSpeed
+        Humanoid.JumpPower = originalJumpPower
+    end
+end
+
+-- Function to show notification
+local function ShowNotification(text, duration)
+    local notification = Instance.new("Frame")
+    notification.Name = "Notification"
+    notification.Size = UDim2.new(0, 250, 0, 60)
+    notification.Position = UDim2.new(0.5, -125, 0.8, 0)
+    notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    notification.BorderSizePixel = 0
+    notification.Parent = ScreenGui
+    
+    local notifCorner = Instance.new("UICorner")
+    notifCorner.CornerRadius = UDim.new(0, 8)
+    notifCorner.Parent = notification
+    
+    local notifText = Instance.new("TextLabel")
+    notifText.Size = UDim2.new(1, -20, 1, -20)
+    notifText.Position = UDim2.new(0, 10, 0, 10)
+    notifText.BackgroundTransparency = 1
+    notifText.Text = text
+    notifText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notifText.TextSize = 14
+    notifText.Font = Enum.Font.Gotham
+    notifText.TextWrapped = true
+    notifText.Parent = notification
+    
+    -- Animate in
+    notification.Position = UDim2.new(0.5, -125, 1.1, 0)
+    local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(notification, tweenInfo, {Position = UDim2.new(0.5, -125, 0.8, 0)})
+    tween:Play()
+    
+    -- Remove after duration
+    task.delay(duration, function()
+        local fadeOut = TweenService:Create(notification, tweenInfo, {Position = UDim2.new(0.5, -125, 1.1, 0)})
+        fadeOut:Play()
+        fadeOut.Completed:Connect(function()
+            notification:Destroy()
+        end)
+    end)
+end
+
+-- Connect slider functionality
+local isDraggingSpeed = false
+local isDraggingJump = false
+
+SpeedKnob.MouseButton1Down:Connect(function()
+    isDraggingSpeed = true
+end)
+
+JumpKnob.MouseButton1Down:Connect(function()
+    isDraggingJump = true
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDraggingSpeed = false
+        isDraggingJump = false
+    end
+end)
+
+SpeedSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDraggingSpeed = true
+        
+        -- Update slider position based on input
+        local sliderPosition = input.Position.X
+        local sliderAbsolutePosition = SpeedSlider.AbsolutePosition.X
+        local sliderAbsoluteSize = SpeedSlider.AbsoluteSize.X
+        
+        local relativePosition = math.clamp((sliderPosition - sliderAbsolutePosition) / sliderAbsoluteSize, 0, 1)
+        SpeedKnob.Position = UDim2.new(relativePosition, -8, 0, -5)
+        
+        -- Update speed value (1-10x)
+        speedMultiplier = 1 + relativePosition * 9
+        SpeedValue.Text = string.format("%.1fx", speedMultiplier)
+        
+        -- Update speed if enabled
+        if speedHackEnabled then
+            Humanoid.WalkSpeed = originalWalkSpeed * speedMultiplier
+        end
+    end
+end)
+
+JumpSlider.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDraggingJump = true
+        
+        -- Update slider position based on input
+        local sliderPosition = input.Position.X
+        local sliderAbsolutePosition = JumpSlider.AbsolutePosition.X
+        local sliderAbsoluteSize = JumpSlider.AbsoluteSize.X
+        
+        local relativePosition = math.clamp((sliderPosition - sliderAbsolutePosition) / sliderAbsoluteSize, 0, 1)
+        JumpKnob.Position = UDim2.new(relativePosition, -8, 0, -5)
+        
+        -- Update jump value (1-5x)
+        jumpMultiplier = 1 + relativePosition * 4
+        JumpValue.Text = string.format("%.1fx", jumpMultiplier)
+        
+        -- Update jump if enabled
+        if speedHackEnabled then
+            Humanoid.JumpPower = originalJumpPower * jumpMultiplier
+        end
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if isDraggingSpeed and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        -- Update slider position based on input
+        local sliderPosition = input.Position.X
+        local sliderAbsolutePosition = SpeedSlider.AbsolutePosition.X
+        local sliderAbsoluteSize = SpeedSlider.AbsoluteSize.X
+        
+        local relativePosition = math.clamp((sliderPosition - sliderAbsolutePosition) / sliderAbsoluteSize, 0, 1)
+        SpeedKnob.Position = UDim2.new(relativePosition, -8, 0, -5)
+        
+        -- Update speed value (1-10x)
+        speedMultiplier = 1 + relativePosition * 9
+        SpeedValue.Text = string.format("%.1fx", speedMultiplier)
+        
+        -- Update speed if enabled
+        if speedHackEnabled then
+            Humanoid.WalkSpeed = originalWalkSpeed * speedMultiplier
+        end
+    elseif isDraggingJump and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        -- Update slider position based on input
+        local sliderPosition = input.Position.X
+        local sliderAbsolutePosition = JumpSlider.AbsolutePosition.X
+        local sliderAbsoluteSize = JumpSlider.AbsoluteSize.X
+        
+        local relativePosition = math.clamp((sliderPosition - sliderAbsolutePosition) / sliderAbsoluteSize, 0, 1)
+        JumpKnob.Position = UDim2.new(relativePosition, -8, 0, -5)
+        
+        -- Update jump value (1-5x)
+        jumpMultiplier = 1 + relativePosition * 4
+        JumpValue.Text = string.format("%.1fx", jumpMultiplier)
+        
+        -- Update jump if enabled
+        if speedHackEnabled then
+            Humanoid.JumpPower = originalJumpPower * jumpMultiplier
+        end
+    end
+end)
+
+-- Connect dragging functionality for main window
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        dragOffset = UserInputService:GetMouseLocation() - MainFrame.AbsolutePosition
+    end
+end)
+
+TitleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        isDragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local newPosition = UDim2.new(0, UserInputService:GetMouseLocation().X - dragOffset.X, 0, UserInputService:GetMouseLocation().Y - dragOffset.Y)
+        MainFrame.Position = newPosition
+    end
+end)
+
+-- Connect tab buttons
+SearchTab.MouseButton1Click:Connect(function()
+    SwitchTab("Search")
+end)
+
+SavedTab.MouseButton1Click:Connect(function()
+    SwitchTab("Saved")
+end)
+
+SpeedTab.MouseButton1Click:Connect(function()
+    SwitchTab("Speed")
+end)
+
+SettingsTab.MouseButton1Click:Connect(function()
+    SwitchTab("Settings")
+end)
+
+-- Connect value type button
+ValueTypeButton.MouseButton1Click:Connect(function()
+    ValueTypeMenu.Visible = not ValueTypeMenu.Visible
+    SearchTypeMenu.Visible = false
+    ProcessMenu.Visible = false
+end)
+
+-- Connect search type button
+SearchTypeButton.MouseButton1Click:Connect(function()
+    SearchTypeMenu.Visible = not SearchTypeMenu.Visible
+    ValueTypeMenu.Visible = false
+    ProcessMenu.Visible = false
+end)
+
+-- Connect process select button
+ProcessSelectButton.MouseButton1Click:Connect(function()
+    ProcessMenu.Visible = not ProcessMenu.Visible
+    ValueTypeMenu.Visible = false
+    SearchTypeMenu.Visible = false
+end)
+
+-- Connect value type options
+for _, option in ipairs(valueTypeOptions) do
+    local optionButton = ValueTypeMenu:FindFirstChild(option .. "Option")
+    if optionButton then
+        optionButton.MouseButton1Click:Connect(function()
+            valueType = option
+            ValueTypeButton.Text = option
+            ValueTypeMenu.Visible = false
+        end)
+    end
+end
+
+-- Connect search type options
+for _, option in ipairs(searchTypeOptions) do
+    local optionButton = SearchTypeMenu:FindFirstChild(option .. "Option")
+    if optionButton then
+        optionButton.MouseButton1Click:Connect(function()
+            searchType = option
+            SearchTypeButton.Text = option
+            SearchTypeMenu.Visible = false
+        end)
+    end
+end
+
+-- Connect process options
+for _, option in ipairs(processOptions) do
+    local processButton = ProcessList:FindFirstChild(option .. "Process")
+    if processButton then
+        processButton.MouseButton1Click:Connect(function()
+            selectedProcess = option
+            ProcessText.Text = option
+            ProcessIcon.Text = string.sub(option, 1, 1)
+            ProcessMenu.Visible = false
+        end)
+    end
+end
+
+-- Connect search button
+SearchButton.MouseButton1Click:Connect(function()
+    SearchForValues(SearchButton.Text == "NEW SEARCH")
+end)
+
+-- Connect refine buttons
+IncreasedButton.MouseButton1Click:Connect(function()
+    searchType = "Increased"
+    SearchForValues(false)
+end)
+
+DecreasedButton.MouseButton1Click:Connect(function()
+    searchType = "Decreased"
+    SearchForValues(false)
+end)
+
+SameButton.MouseButton1Click:Connect(function()
+    searchType = "Same"
+    SearchForValues(false)
+end)
+
+-- Connect edit dialog buttons
+EditDialogOK.MouseButton1Click:Connect(function()
+    local resultId = EditDialog.ResultId
+    local newValue = tonumber(EditDialogInput.Text)
+    
+    if resultId and newValue and searchResults[resultId] then
+        local result = searchResults[resultId]
+        
+        -- Update the value
+        pcall(function()
+            SetPropertyValue(result.object, result.property, newValue)
+        end)
+        
+        -- Update the result in memory
+        result.value = newValue
+        
+        -- Update the UI
+        local resultButton = ResultsFrame:FindFirstChild(resultId .. "_Button")
+        if resultButton and resultButton:FindFirstChild("ValueLabel") then
+            resultButton.ValueLabel.Text = tostring(math.floor(newValue * 1000) / 1000)
+        end
+        
+        -- Add to saved values if not already there
+        if not frozenValues[resultId] then
+            -- Create a saved value entry
+            local savedButton = Instance.new("TextButton")
+            savedButton.Name = resultId .. "_Saved"
+            savedButton.Size = UDim2.new(1, -10, 0, 40)
+            savedButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            savedButton.Text = ""
+            savedButton.Parent = SavedFrame
+            
+            -- Round corners for saved button
+            local savedCorner = Instance.new("UICorner")
+            savedCorner.CornerRadius = UDim.new(0, 4)
+            savedCorner.Parent = savedButton
+            
+            -- Object name label
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Name = "NameLabel"
+            nameLabel.Size = UDim2.new(1, -110, 0, 20)
+            nameLabel.Position = UDim2.new(0, 10, 0, 0)
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Text = string.sub(result.object:GetFullName(), 1, 20) .. (string.len(result.object:GetFullName()) > 20 and "..." or "")
+            nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            nameLabel.TextSize = 12
+            nameLabel.Font = Enum.Font.Gotham
+            nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            nameLabel.Parent = savedButton
+            
+            -- Property name label
+            local propLabel = Instance.new("TextLabel")
+            propLabel.Name = "PropLabel"
+            propLabel.Size = UDim2.new(1, -110, 0, 20)
+            propLabel.Position = UDim2.new(0, 10, 0, 20)
+            propLabel.BackgroundTransparency = 1
+            propLabel.Text = result.property
+            propLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+            propLabel.TextSize = 10
+            propLabel.Font = Enum.Font.Gotham
+            propLabel.TextXAlignment = Enum.TextXAlignment.Left
+            propLabel.Parent = savedButton
+            
+            -- Value label
+            local valueLabel = Instance.new("TextLabel")
+            valueLabel.Name = "ValueLabel"
+            valueLabel.Size = UDim2.new(0, 90, 0, 40)
+            valueLabel.Position = UDim2.new(1, -100, 0, 0)
+            valueLabel.BackgroundTransparency = 1
+            valueLabel.Text = tostring(math.floor(newValue * 1000) / 1000)
+            valueLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+            valueLabel.TextSize = 12
+            valueLabel.Font = Enum.Font.GothamBold
+            valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+            valueLabel.Parent = savedButton
+            
+            -- Delete button
+            local deleteButton = Instance.new("TextButton")
+            deleteButton.Name = "DeleteButton"
+            deleteButton.Size = UDim2.new(0, 30, 0, 30)
+            deleteButton.Position = UDim2.new(1, -35, 0.5, -15)
+            deleteButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+            deleteButton.Text = "×"
+            deleteButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            deleteButton.TextSize = 18
+            deleteButton.Font = Enum.Font.GothamBold
+            deleteButton.Parent = savedButton
+            
+            -- Round corners for delete button
+            local deleteCorner = Instance.new("UICorner")
+            deleteCorner.CornerRadius = UDim.new(0, 4)
+            deleteCorner.Parent = deleteButton
+            
+            -- Connect delete button
+            deleteButton.MouseButton1Click:Connect(function()
+                savedButton:Destroy()
+                
+                -- Update saved count
+                local savedCount = 0
+                for _, child in pairs(SavedFrame:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        savedCount = savedCount + 1
+                    end
+                end
+                SavedLabel.Text = "Saved Values (" .. savedCount .. ")"
+            end)
+            
+            -- Update saved count
+            local savedCount = 0
+            for _, child in pairs(SavedFrame:GetChildren()) do
+                if child:IsA("TextButton") then
+                    savedCount = savedCount + 1
+                end
+            end
+            SavedLabel.Text = "Saved Values (" .. savedCount .. ")"
+        end
+    end
+    
+    EditDialog.Visible = false
+end)
+
+EditDialogCancel.MouseButton1Click:Connect(function()
+    EditDialog.Visible = false
+end)
+
+-- Connect about option
+AboutOption.MouseButton1Click:Connect(function()
+    AboutDialog.Visible = true
+end)
+
+-- Connect about dialog close button
+AboutDialogClose.MouseButton1Click:Connect(function()
+    AboutDialog.Visible = false
+end)
+
+-- Connect theme toggle
+ThemeToggle.MouseButton1Click:Connect(function()
+    -- Toggle theme (not implemented fully)
+    local isLightTheme = ThemeToggleKnob.Position.X.Scale < 0.5
+    
+    if isLightTheme then
+        ThemeToggleKnob.Position = UDim2.new(1, -18, 0.5, -8)
+    else
+        ThemeToggleKnob.Position = UDim2.new(0, 2, 0.5, -8)
+        ThemeToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    end
+end)
+
+-- Connect minimize button
+MinimizeButton.MouseButton1Click:Connect(function()
+    ToggleMinimized()
+end)
+
+-- Connect minimized button
+MinimizedButton.MouseButton1Click:Connect(function()
+    ToggleMinimized()
+end)
+
+-- Connect close button
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    
+    -- Reset speed if enabled
+    if speedHackEnabled then
+        Humanoid.WalkSpeed = originalWalkSpeed
+        Humanoid.JumpPower = originalJumpPower
+    end
+end)
+
+-- Start freeze loop
+freezeLoop = RunService.Heartbeat:Connect(function()
+    for id, result in pairs(frozenValues) do
+        if result.object and result.object:IsDescendantOf(game) then
+            pcall(function()
+                SetPropertyValue(result.object, result.property, result.value)
+            end)
+        else
+            -- Remove if object no longer exists
+            frozenValues[id] = nil
+        end
+    end
+end)
+
+-- Handle chat commands
+Player.Chatted:Connect(function(message)
+    if message:lower() == "/gg" then
+        ToggleMinimized()
+    elseif message:lower() == "/ggclose" then
+        ScreenGui:Destroy()
+        
+        -- Reset speed if enabled
+        if speedHackEnabled then
+            Humanoid.WalkSpeed = originalWalkSpeed
+            Humanoid.JumpPower = originalJumpPower
+        end
+        
+        -- Disconnect freeze loop
+        if freezeLoop then
+            freezeLoop:Disconnect()
+        end
+    end
+end)
+
+-- Initialize
+SwitchTab("Search")
+ShowNotification("Game Guardian Clone loaded! Type /gg to minimize, /ggclose to exit.", 5)
