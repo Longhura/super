@@ -128,183 +128,6 @@ FlyButton.TextSize = 14
 FlyButton.Font = Enum.Font.GothamSemibold
 FlyButton.Parent = FlyToggle
 
--- Add this right after the FlyToggle section in your ContentFrame
-
--- Auto Fly Toggle
-local AutoFlyToggle = Instance.new("Frame")
-AutoFlyToggle.Name = "AutoFlyToggle"
-AutoFlyToggle.Size = UDim2.new(1, 0, 0, 30)
-AutoFlyToggle.Position = UDim2.new(0, 0, 0, 40) -- Position it right below the FlyToggle
-AutoFlyToggle.BackgroundTransparency = 1
-AutoFlyToggle.Parent = ContentFrame
-
-local AutoFlyLabel = Instance.new("TextLabel")
-AutoFlyLabel.Name = "AutoFlyLabel"
-AutoFlyLabel.Size = UDim2.new(0.7, 0, 1, 0)
-AutoFlyLabel.BackgroundTransparency = 1
-AutoFlyLabel.Text = "Auto Fly to Target"
-AutoFlyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoFlyLabel.TextSize = 16
-AutoFlyLabel.Font = Enum.Font.Gotham
-AutoFlyLabel.TextXAlignment = Enum.TextXAlignment.Left
-AutoFlyLabel.Parent = AutoFlyToggle
-
-local AutoFlyButton = Instance.new("TextButton")
-AutoFlyButton.Name = "AutoFlyButton"
-AutoFlyButton.Size = UDim2.new(0.3, -10, 1, -10)
-AutoFlyButton.Position = UDim2.new(0.7, 0, 0, 5)
-AutoFlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-AutoFlyButton.BorderSizePixel = 0
-AutoFlyButton.Text = "OFF"
-AutoFlyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoFlyButton.TextSize = 14
-AutoFlyButton.Font = Enum.Font.GothamSemibold
-AutoFlyButton.Parent = AutoFlyToggle
-
--- Add this to your variables section
-local autoFlyEnabled = false
-local autoFlyConnection = nil
-local bodyGyro, bodyVelocity
-
--- Add this function to toggle Auto Fly
-local function toggleAutoFly()
-    autoFlyEnabled = not autoFlyEnabled
-    
-    if autoFlyEnabled then
-        AutoFlyButton.Text = "ON"
-        AutoFlyButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if selectedPlayer then
-            -- Disable regular flying if it's on
-            if flyEnabled and flyConnection then
-                flyConnection:Disconnect()
-                flyConnection = nil
-            end
-            
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local hrp = character.HumanoidRootPart
-                
-                -- Create BodyGyro and BodyVelocity for smoother flying
-                if bodyGyro then bodyGyro:Destroy() end
-                if bodyVelocity then bodyVelocity:Destroy() end
-                
-                bodyGyro = Instance.new("BodyGyro")
-                bodyGyro.Name = "FlyGyro"
-                bodyGyro.P = 9e4
-                bodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-                bodyGyro.CFrame = hrp.CFrame
-                bodyGyro.Parent = hrp
-                
-                bodyVelocity = Instance.new("BodyVelocity")
-                bodyVelocity.Name = "FlyVelocity"
-                bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                bodyVelocity.Velocity = Vector3.new(0, 0.1, 0)
-                bodyVelocity.Parent = hrp
-                
-                -- Create connection for continuous flying
-                if autoFlyConnection then
-                    autoFlyConnection:Disconnect()
-                end
-                
-                autoFlyConnection = RunService.Heartbeat:Connect(function()
-                    if not character or not character:FindFirstChild("HumanoidRootPart") or not selectedPlayer or not selectedPlayer.Character or not selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-                    
-                    local targetPos = selectedPlayer.Character.HumanoidRootPart.Position
-                    
-                    -- Get offset from inputs
-                    local offsetX = tonumber(XInput.Text) or 0
-                    local offsetY = tonumber(YInput.Text) or 0
-                    local offsetZ = tonumber(ZInput.Text) or 0
-                    targetPos = targetPos + Vector3.new(offsetX, offsetY, offsetZ)
-                    
-                    -- Get speed from input
-                    local speed = tonumber(SpeedInput.Text) or 50
-                    
-                    -- Calculate direction and apply velocity
-                    local direction = (targetPos - hrp.Position).Unit
-                    bodyVelocity.Velocity = direction * speed
-                    
-                    -- Update orientation to face target
-                    bodyGyro.CFrame = CFrame.new(hrp.Position, targetPos)
-                end)
-            end
-        else
-            AutoFlyButton.Text = "OFF"
-            AutoFlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-            autoFlyEnabled = false
-            
-            -- Show notification to select a player
-            local notification = Instance.new("TextLabel")
-            notification.Size = UDim2.new(0, 200, 0, 30)
-            notification.Position = UDim2.new(0.5, -100, 0.8, 0)
-            notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            notification.TextColor3 = Color3.fromRGB(255, 255, 255)
-            notification.Text = "Please select a player first"
-            notification.Font = Enum.Font.GothamSemibold
-            notification.TextSize = 14
-            notification.Parent = ScreenGui
-            
-            -- Add corner
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 5)
-            corner.Parent = notification
-            
-            -- Remove after 3 seconds
-            game:GetService("Debris"):AddItem(notification, 3)
-            return
-        end
-    else
-        AutoFlyButton.Text = "OFF"
-        AutoFlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        -- Clean up
-        if autoFlyConnection then
-            autoFlyConnection:Disconnect()
-            autoFlyConnection = nil
-        end
-        
-        if bodyGyro then bodyGyro:Destroy() end
-        if bodyVelocity then bodyVelocity:Destroy() end
-        
-        -- Reset character state
-        local character = LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-        end
-    end
-end
-
--- Make corners rounded
-makeRounded(AutoFlyButton, 4)
-
--- Connect the button
-AutoFlyButton.MouseButton1Click:Connect(toggleAutoFly)
-
--- Add cleanup to the CloseButton event
-local oldCloseFunction = CloseButton.MouseButton1Click:Connect
-CloseButton.MouseButton1Click:Connect(function()
-    if autoFlyConnection then autoFlyConnection:Disconnect() end
-    if bodyGyro then bodyGyro:Destroy() end
-    if bodyVelocity then bodyVelocity:Destroy() end
-    oldCloseFunction()
-end)
-
--- Add cleanup to the character death event
-local oldHumanoidDiedFunction = Humanoid.Died:Connect
-Humanoid.Died:Connect(function()
-    autoFlyEnabled = false
-    if autoFlyConnection then autoFlyConnection:Disconnect() end
-    if bodyGyro then bodyGyro:Destroy() end
-    if bodyVelocity then bodyVelocity:Destroy() end
-    AutoFlyButton.Text = "OFF"
-    AutoFlyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    oldHumanoidDiedFunction()
-end)
-
--- Adjust the position of SpeedFrame to make room for the new button
-SpeedFrame.Position = UDim2.new(0, 0, 0, 50) -- Move it down to accommodate the new AutoFlyToggle
-
 -- Speed Input (Main Menu)
 local SpeedFrame = Instance.new("Frame")
 SpeedFrame.Name = "SpeedFrame"
@@ -400,7 +223,7 @@ PlayerListButton.Parent = CategoryFrame
 -- Movement Sub-Menu
 local MovementMenu = Instance.new("Frame")
 MovementMenu.Name = "MovementMenu"
-MovementMenu.Size = UDim2.new(0, 250, 0, 200)
+MovementMenu.Size = UDim2.new(0, 250, 0, 240)
 MovementMenu.Position = UDim2.new(0, 310, 0, 100)
 MovementMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MovementMenu.BorderSizePixel = 0
@@ -549,10 +372,72 @@ AutoTeleportButton.TextSize = 14
 AutoTeleportButton.Font = Enum.Font.GothamSemibold
 AutoTeleportButton.Parent = AutoTeleportToggle
 
+-- FlyUp Toggle (New Feature)
+local FlyUpToggle = Instance.new("Frame")
+FlyUpToggle.Name = "FlyUpToggle"
+FlyUpToggle.Size = UDim2.new(1, 0, 0, 30)
+FlyUpToggle.Position = UDim2.new(0, 0, 0, 160)
+FlyUpToggle.BackgroundTransparency = 1
+FlyUpToggle.Parent = MovementContent
+
+local FlyUpLabel = Instance.new("TextLabel")
+FlyUpLabel.Name = "FlyUpLabel"
+FlyUpLabel.Size = UDim2.new(0.7, 0, 1, 0)
+FlyUpLabel.BackgroundTransparency = 1
+FlyUpLabel.Text = "Fly Upward Angle"
+FlyUpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyUpLabel.TextSize = 16
+FlyUpLabel.Font = Enum.Font.Gotham
+FlyUpLabel.TextXAlignment = Enum.TextXAlignment.Left
+FlyUpLabel.Parent = FlyUpToggle
+
+local FlyUpButton = Instance.new("TextButton")
+FlyUpButton.Name = "FlyUpButton"
+FlyUpButton.Size = UDim2.new(0.3, -10, 1, -10)
+FlyUpButton.Position = UDim2.new(0.7, 0, 0, 5)
+FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+FlyUpButton.BorderSizePixel = 0
+FlyUpButton.Text = "OFF"
+FlyUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FlyUpButton.TextSize = 14
+FlyUpButton.Font = Enum.Font.GothamSemibold
+FlyUpButton.Parent = FlyUpToggle
+
+-- Wall Penetration 360° Toggle (New Feature)
+local WallPenetrationToggle = Instance.new("Frame")
+WallPenetrationToggle.Name = "WallPenetrationToggle"
+WallPenetrationToggle.Size = UDim2.new(1, 0, 0, 30)
+WallPenetrationToggle.Position = UDim2.new(0, 0, 0, 200)
+WallPenetrationToggle.BackgroundTransparency = 1
+WallPenetrationToggle.Parent = MovementContent
+
+local WallPenetrationLabel = Instance.new("TextLabel")
+WallPenetrationLabel.Name = "WallPenetrationLabel"
+WallPenetrationLabel.Size = UDim2.new(0.7, 0, 1, 0)
+WallPenetrationLabel.BackgroundTransparency = 1
+WallPenetrationLabel.Text = "360° Wall Penetration"
+WallPenetrationLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallPenetrationLabel.TextSize = 16
+WallPenetrationLabel.Font = Enum.Font.Gotham
+WallPenetrationLabel.TextXAlignment = Enum.TextXAlignment.Left
+WallPenetrationLabel.Parent = WallPenetrationToggle
+
+local WallPenetrationButton = Instance.new("TextButton")
+WallPenetrationButton.Name = "WallPenetrationButton"
+WallPenetrationButton.Size = UDim2.new(0.3, -10, 1, -10)
+WallPenetrationButton.Position = UDim2.new(0.7, 0, 0, 5)
+WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+WallPenetrationButton.BorderSizePixel = 0
+WallPenetrationButton.Text = "OFF"
+WallPenetrationButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+WallPenetrationButton.TextSize = 14
+WallPenetrationButton.Font = Enum.Font.GothamSemibold
+WallPenetrationButton.Parent = WallPenetrationToggle
+
 -- Anti-Stun Sub-Menu
 local AntiStunMenu = Instance.new("Frame")
 AntiStunMenu.Name = "AntiStunMenu"
-AntiStunMenu.Size = UDim2.new(0, 250, 0, 230)
+AntiStunMenu.Size = UDim2.new(0, 250, 0, 120)
 AntiStunMenu.Position = UDim2.new(0, 310, 0, 100)
 AntiStunMenu.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 AntiStunMenu.BorderSizePixel = 0
@@ -639,7 +524,7 @@ NoStunV2Button.TextSize = 14
 NoStunV2Button.Font = Enum.Font.GothamSemibold
 NoStunV2Button.Parent = NoStunV2Toggle
 
--- Auto Run Toggle (Emergency Escape)
+-- Auto Run Toggle (New Feature)
 local AutoRunToggle = Instance.new("Frame")
 AutoRunToggle.Name = "AutoRunToggle"
 AutoRunToggle.Size = UDim2.new(1, 0, 0, 30)
@@ -669,68 +554,6 @@ AutoRunButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 AutoRunButton.TextSize = 14
 AutoRunButton.Font = Enum.Font.GothamSemibold
 AutoRunButton.Parent = AutoRunToggle
-
--- FlyUp Toggle (Angle Adjustment)
-local FlyUpToggle = Instance.new("Frame")
-FlyUpToggle.Name = "FlyUpToggle"
-FlyUpToggle.Size = UDim2.new(1, 0, 0, 30)
-FlyUpToggle.Position = UDim2.new(0, 0, 0, 120)
-FlyUpToggle.BackgroundTransparency = 1
-FlyUpToggle.Parent = AntiStunContent
-
-local FlyUpLabel = Instance.new("TextLabel")
-FlyUpLabel.Name = "FlyUpLabel"
-FlyUpLabel.Size = UDim2.new(0.7, 0, 1, 0)
-FlyUpLabel.BackgroundTransparency = 1
-FlyUpLabel.Text = "FlyUp (Angle Adjustment)"
-FlyUpLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyUpLabel.TextSize = 16
-FlyUpLabel.Font = Enum.Font.Gotham
-FlyUpLabel.TextXAlignment = Enum.TextXAlignment.Left
-FlyUpLabel.Parent = FlyUpToggle
-
-local FlyUpButton = Instance.new("TextButton")
-FlyUpButton.Name = "FlyUpButton"
-FlyUpButton.Size = UDim2.new(0.3, -10, 1, -10)
-FlyUpButton.Position = UDim2.new(0.7, 0, 0, 5)
-FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-FlyUpButton.BorderSizePixel = 0
-FlyUpButton.Text = "OFF"
-FlyUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FlyUpButton.TextSize = 14
-FlyUpButton.Font = Enum.Font.GothamSemibold
-FlyUpButton.Parent = FlyUpToggle
-
--- Enhanced Noclip Toggle (360° Wall Penetration)
-local EnhancedNoclipToggle = Instance.new("Frame")
-EnhancedNoclipToggle.Name = "EnhancedNoclipToggle"
-EnhancedNoclipToggle.Size = UDim2.new(1, 0, 0, 30)
-EnhancedNoclipToggle.Position = UDim2.new(0, 0, 0, 160)
-EnhancedNoclipToggle.BackgroundTransparency = 1
-EnhancedNoclipToggle.Parent = AntiStunContent
-
-local EnhancedNoclipLabel = Instance.new("TextLabel")
-EnhancedNoclipLabel.Name = "EnhancedNoclipLabel"
-EnhancedNoclipLabel.Size = UDim2.new(0.7, 0, 1, 0)
-EnhancedNoclipLabel.BackgroundTransparency = 1
-EnhancedNoclipLabel.Text = "360° Wall Penetration"
-EnhancedNoclipLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-EnhancedNoclipLabel.TextSize = 16
-EnhancedNoclipLabel.Font = Enum.Font.Gotham
-EnhancedNoclipLabel.TextXAlignment = Enum.TextXAlignment.Left
-EnhancedNoclipLabel.Parent = EnhancedNoclipToggle
-
-local EnhancedNoclipButton = Instance.new("TextButton")
-EnhancedNoclipButton.Name = "EnhancedNoclipButton"
-EnhancedNoclipButton.Size = UDim2.new(0.3, -10, 1, -10)
-EnhancedNoclipButton.Position = UDim2.new(0.7, 0, 0, 5)
-EnhancedNoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-EnhancedNoclipButton.BorderSizePixel = 0
-EnhancedNoclipButton.Text = "OFF"
-EnhancedNoclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-EnhancedNoclipButton.TextSize = 14
-EnhancedNoclipButton.Font = Enum.Font.GothamSemibold
-EnhancedNoclipButton.Parent = EnhancedNoclipToggle
 
 -- ESP Sub-Menu
 local ESPMenu = Instance.new("Frame")
@@ -1074,12 +897,11 @@ local espUpdateConnection = nil
 local activeSubMenu = nil
 local autoRunEnabled = false
 local flyUpEnabled = false
-local enhancedNoclipEnabled = false
+local wallPenetrationEnabled = false
 local autoRunConnection = nil
-local flyUpConnection = nil
-local enhancedNoclipConnection = nil
-local emergencyPosition = nil
-local isInEmergency = false
+local wallPenetrationConnection = nil
+local originalPosition = nil
+local isEscaping = false
 
 -- Functions
 local function updatePlayerList()
@@ -1157,10 +979,10 @@ local function toggleFly()
                     local speed = tonumber(SpeedInput.Text) or 50
                     flySpeed = math.clamp(speed, 1, 500)
                     
-                    -- Apply FlyUp angle adjustment for long distances
-                    if flyUpEnabled and distance > 50 then
-                        -- Add upward component to direction vector
-                        local upwardBias = 0.2 -- Adjust this value to control the upward angle
+                    -- Apply FlyUp feature - adjust direction to fly slightly upward when far away
+                    if flyUpEnabled and distance > 30 then
+                        -- Add an upward component to the direction vector
+                        local upwardBias = 0.2 -- How much to bias upward
                         direction = (direction + Vector3.new(0, upwardBias, 0)).Unit
                     end
                     
@@ -1375,6 +1197,113 @@ local function toggleAutoTeleport()
     end
 end
 
+local function toggleAutoRun()
+    autoRunEnabled = not autoRunEnabled
+    
+    if autoRunEnabled then
+        AutoRunButton.Text = "ON"
+        AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if autoRunConnection then
+            autoRunConnection:Disconnect()
+        end
+        
+        autoRunConnection = RunService.Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local healthPercent = humanoid.Health / humanoid.MaxHealth * 100
+                    
+                    if healthPercent <= 50 and not isEscaping then
+                        -- Store original position when health drops below 50%
+                        originalPosition = character.HumanoidRootPart.Position
+                        isEscaping = true
+                        
+                        -- Fly up quickly
+                        local upVector = Vector3.new(0, 1, 0)
+                        character.HumanoidRootPart.Velocity = upVector * 200 -- Fast upward velocity
+                    elseif healthPercent > 51 and isEscaping then
+                        -- Return to original position when health goes above 51%
+                        if originalPosition then
+                            character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+                            isEscaping = false
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        AutoRunButton.Text = "OFF"
+        AutoRunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if autoRunConnection then
+            autoRunConnection:Disconnect()
+            autoRunConnection = nil
+        end
+        
+        -- Return to original position when turned off if currently escaping
+        if isEscaping and originalPosition then
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+            end
+            isEscaping = false
+        end
+    end
+end
+
+local function toggleFlyUp()
+    flyUpEnabled = not flyUpEnabled
+    
+    if flyUpEnabled then
+        FlyUpButton.Text = "ON"
+        FlyUpButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+    else
+        FlyUpButton.Text = "OFF"
+        FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    end
+    
+    -- The actual functionality is implemented in the fly function
+end
+
+local function toggleWallPenetration()
+    wallPenetrationEnabled = not wallPenetrationEnabled
+    
+    if wallPenetrationEnabled then
+        WallPenetrationButton.Text = "ON"
+        WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+        
+        if wallPenetrationConnection then
+            wallPenetrationConnection:Disconnect()
+        end
+        
+        wallPenetrationConnection = RunService.Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                -- Get all parts in a sphere around the character
+                local radius = 10 -- Radius for 360° penetration
+                local parts = workspace:GetPartBoundsInRadius(character.HumanoidRootPart.Position, radius)
+                
+                -- Disable collision for all parts in range
+                for _, part in ipairs(parts) do
+                    if part:IsA("BasePart") and part.CanCollide and not part:IsDescendantOf(character) then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        WallPenetrationButton.Text = "OFF"
+        WallPenetrationButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        
+        if wallPenetrationConnection then
+            wallPenetrationConnection:Disconnect()
+            wallPenetrationConnection = nil
+        end
+    end
+end
+
 -- ESP Functions
 local function createESPItem(player)
     -- Create ESP folder for this player
@@ -1497,7 +1426,8 @@ local function toggleESPTarget()
         ESPTargetButton.Text = "ON"
         ESPTargetButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
     else
-        ESPTargetButton.Text = Color3.fromRGB(45, 45, 45)
+        ESPTargetButton.Text = "OFF"
+        ESPTargetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     end
     
     updateESP()
@@ -1559,135 +1489,6 @@ local function toggleESPHitbox()
     updateESP()
 end
 
-local function toggleAutoRun()
-    autoRunEnabled = not autoRunEnabled
-    
-    if autoRunEnabled then
-        AutoRunButton.Text = "ON"
-        AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if autoRunConnection then
-            autoRunConnection:Disconnect()
-        end
-        
-        autoRunConnection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    local healthPercent = humanoid.Health / humanoid.MaxHealth * 100
-                    
-                    if healthPercent <= 50 and not isInEmergency then
-                        -- Store current position for return
-                        if character:FindFirstChild("HumanoidRootPart") then
-                            emergencyPosition = character.HumanoidRootPart.Position
-                            isInEmergency = true
-                            
-                            -- First teleport up 3000 blocks instantly
-                            local currentPos = character.HumanoidRootPart.Position
-                            character.HumanoidRootPart.CFrame = CFrame.new(currentPos.X, currentPos.Y + 3000, currentPos.Z)
-                            
-                            -- Then continue flying up at 200 blocks per second
-                            local upwardVelocity = Vector3.new(0, 200, 0)
-                            character.HumanoidRootPart.Velocity = upwardVelocity
-                        end
-                    elseif healthPercent > 51 and isInEmergency then
-                        -- Return to original position
-                        if character:FindFirstChild("HumanoidRootPart") and emergencyPosition then
-                            character.HumanoidRootPart.CFrame = CFrame.new(emergencyPosition)
-                            isInEmergency = false
-                        end
-                    end
-                    
-                    -- If in emergency mode, keep flying up at 200 blocks per second
-                    if isInEmergency and character:FindFirstChild("HumanoidRootPart") then
-                        character.HumanoidRootPart.Velocity = Vector3.new(0, 200, 0)
-                    end
-                end
-            end
-        end)
-    else
-        AutoRunButton.Text = "OFF"
-        AutoRunButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if autoRunConnection then
-            autoRunConnection:Disconnect()
-            autoRunConnection = nil
-        end
-        
-        -- If we were in emergency mode, return to original position
-        if isInEmergency and emergencyPosition then
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                character.HumanoidRootPart.CFrame = CFrame.new(emergencyPosition)
-            end
-            isInEmergency = false
-        end
-    end
-end
-
-local function toggleFlyUp()
-    flyUpEnabled = not flyUpEnabled
-    
-    if flyUpEnabled then
-        FlyUpButton.Text = "ON"
-        FlyUpButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-    else
-        FlyUpButton.Text = "OFF"
-        FlyUpButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    end
-    
-    -- The actual functionality is integrated into the fly function
-    -- No need for a separate connection
-end
-
-local function toggleEnhancedNoclip()
-    enhancedNoclipEnabled = not enhancedNoclipEnabled
-    
-    if enhancedNoclipEnabled then
-        EnhancedNoclipButton.Text = "ON"
-        EnhancedNoclipButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-        
-        if enhancedNoclipConnection then
-            enhancedNoclipConnection:Disconnect()
-        end
-        
-        enhancedNoclipConnection = RunService.Heartbeat:Connect(function()
-            local character = LocalPlayer.Character
-            if character then
-                -- Get all parts in a radius around the character
-                local hrp = character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    local radius = 10 -- 360° penetration radius
-                    local parts = workspace:GetPartBoundsInRadius(hrp.Position, radius)
-                    
-                    -- Disable collision for all these parts
-                    for _, part in ipairs(parts) do
-                        if part:IsA("BasePart") and part.CanCollide and not part:IsDescendantOf(character) then
-                            part.CanCollide = false
-                        end
-                    end
-                    
-                    -- Also disable collision for character parts
-                    for _, part in pairs(character:GetDescendants()) do
-                        if part:IsA("BasePart") and part.CanCollide then
-                            part.CanCollide = false
-                        end
-                    end
-                end
-            end
-        end)
-    else
-        EnhancedNoclipButton.Text = "OFF"
-        EnhancedNoclipButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        
-        if enhancedNoclipConnection then
-            enhancedNoclipConnection:Disconnect()
-            enhancedNoclipConnection = nil
-        end
-    end
-end
-
 -- Sub-menu management
 local function hideAllSubMenus()
     MovementMenu.Visible = false
@@ -1731,7 +1532,7 @@ CloseButton.MouseButton1Click:Connect(function()
     if autoTeleportConnection then autoTeleportConnection:Disconnect() end
     if espUpdateConnection then espUpdateConnection:Disconnect() end
     if autoRunConnection then autoRunConnection:Disconnect() end
-    if enhancedNoclipConnection then enhancedNoclipConnection:Disconnect() end
+    if wallPenetrationConnection then wallPenetrationConnection:Disconnect() end
     ScreenGui:Destroy()
 end)
 
@@ -1752,13 +1553,13 @@ NoclipButton.MouseButton1Click:Connect(toggleNoclip)
 ContinuousButton.MouseButton1Click:Connect(toggleContinuous)
 TeleportButton.MouseButton1Click:Connect(teleportToPlayer)
 AutoTeleportButton.MouseButton1Click:Connect(toggleAutoTeleport)
+FlyUpButton.MouseButton1Click:Connect(toggleFlyUp)
+WallPenetrationButton.MouseButton1Click:Connect(toggleWallPenetration)
 
 -- Anti-Stun sub-menu buttons
 NoStunButton.MouseButton1Click:Connect(toggleNoStun)
 NoStunV2Button.MouseButton1Click:Connect(toggleNoStunV2)
 AutoRunButton.MouseButton1Click:Connect(toggleAutoRun)
-FlyUpButton.MouseButton1Click:Connect(toggleFlyUp)
-EnhancedNoclipButton.MouseButton1Click:Connect(toggleEnhancedNoclip)
 
 -- ESP sub-menu buttons
 ESPTargetButton.MouseButton1Click:Connect(toggleESPTarget)
@@ -1818,14 +1619,14 @@ makeRounded(NoclipButton, 4)
 makeRounded(ContinuousButton, 4)
 makeRounded(TeleportButton, 4)
 makeRounded(AutoTeleportButton, 4)
+makeRounded(FlyUpButton, 4)
+makeRounded(WallPenetrationButton, 4)
 
 makeRounded(AntiStunMenu, 8)
 makeRounded(AntiStunTitle, 8)
 makeRounded(NoStunButton, 4)
 makeRounded(NoStunV2Button, 4)
 makeRounded(AutoRunButton, 4)
-makeRounded(FlyUpButton, 4)
-makeRounded(EnhancedNoclipButton, 4)
 
 makeRounded(ESPMenu, 8)
 makeRounded(ESPTitle, 8)
@@ -1842,3 +1643,4 @@ makeRounded(YInput, 4)
 makeRounded(ZInput, 4)
 makeRounded(RefreshButton, 4)
 makeRounded(PlayerScrollFrame, 4)
+
