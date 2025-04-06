@@ -1,0 +1,456 @@
+--[[
+    Script: LookAt & Follow GUI
+    Mô tả: Hiển thị giao diện để chọn người chơi, nhìn vào họ (vào bộ phận hoặc từ sau lưng),
+           tự động dịch chuyển theo sau lưng, và các chức năng phụ trợ khác.
+    Ngày cập nhật: 2025-04-06
+]]
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Local Player & Camera
+local Player = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- GUI setup
+local ScreenGui = Instance.new("ScreenGui", Player:WaitForChild("PlayerGui"))
+ScreenGui.Name = "LookFollowGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Frame Configuration
+local frameWidth = 260
+local frameHeight = 380 -- Tăng chiều cao để chứa thêm nút
+local framePosX = 0.02
+local framePosY = 0.15 -- Nâng lên một chút
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, frameWidth, 0, frameHeight)
+Frame.Position = UDim2.new(framePosX, 0, framePosY, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Frame.Active = true
+Frame.Draggable = true
+Frame.BorderSizePixel = 0
+Frame.ClipsDescendants = true
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+
+local UIStroke = Instance.new("UIStroke", Frame)
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(255, 0, 0)
+
+-- Title Bar Elements
+local titleBarHeight = 30
+local controlButtonSize = 24
+local controlButtonPadding = 5
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, -(controlButtonSize * 2 + controlButtonPadding * 3), 0, titleBarHeight)
+Title.Position = UDim2.new(0, controlButtonPadding, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Nhìn & Theo Dõi" -- Đổi tên
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 15
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextYAlignment = Enum.TextYAlignment.Center
+
+local CloseButton = Instance.new("TextButton", Frame)
+CloseButton.Size = UDim2.new(0, controlButtonSize, 0, controlButtonSize)
+CloseButton.Position = UDim2.new(1, -(controlButtonSize + controlButtonPadding), 0, (titleBarHeight - controlButtonSize) / 2)
+CloseButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50); CloseButton.Text = "✕"; CloseButton.TextColor3 = Color3.new(1,1,1); CloseButton.Font = Enum.Font.GothamBold; CloseButton.TextSize = 14
+Instance.new("UICorner", CloseButton).CornerRadius = UDim.new(0, 4)
+
+local MinimizeButton = Instance.new("TextButton", Frame)
+MinimizeButton.Size = UDim2.new(0, controlButtonSize, 0, controlButtonSize); MinimizeButton.Position = UDim2.new(1, -(controlButtonSize * 2 + controlButtonPadding * 2), 0, (titleBarHeight - controlButtonSize) / 2)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100); MinimizeButton.Text = "-"; MinimizeButton.TextColor3 = Color3.new(1,1,1); MinimizeButton.Font = Enum.Font.GothamBold; MinimizeButton.TextSize = 18
+Instance.new("UICorner", MinimizeButton).CornerRadius = UDim.new(0, 4)
+
+-- State Variables
+local looking = false -- Chính: Bật/tắt nhìn chung
+local lookingFromBehind = false -- Phụ: Bật/tắt chế độ nhìn từ sau lưng
+local followingBehind = false -- Phụ: Bật/tắt chế độ theo sau lưng liên tục
+local bodyParts = {"Head", "UpperTorso", "HumanoidRootPart", "LeftFoot", "RightFoot"}
+local partIndex = 1
+local currentTarget = nil
+local buttons = {} -- Dictionary: [Player] = Button
+local targetHumanoidConnection = nil
+local listButtonYOffset = 3
+local followDistance = 4 -- Khoảng cách theo sau lưng
+local lookBehindDistance = 8 -- Khoảng cách nhìn từ sau lưng
+local lookBehindHeightOffset = 3 -- Độ cao camera khi nhìn từ sau lưng
+
+-- Button Colors & Text Constants
+local COLOR_ON = Color3.fromRGB(0, 170, 0)
+local COLOR_OFF = Color3.fromRGB(170, 0, 0)
+local COLOR_NEUTRAL = Color3.fromRGB(80, 80, 80)
+local COLOR_ACTION = Color3.fromRGB(60, 60, 200)
+local COLOR_WARN = Color3.fromRGB(255, 165, 0)
+local COLOR_RIP = Color3.fromRGB(100, 100, 100)
+
+local TEXT_LOOK_ON = "✅ Bật Nhìn"
+local TEXT_LOOK_OFF = "❎ Tắt Nhìn"
+local TEXT_LOOK_RIP = "💀 Rip"
+local TEXT_LOOKBEHIND_ON = "✅ Nhìn Từ Sau"
+local TEXT_LOOKBEHIND_OFF = "❎ Nhìn Từ Sau"
+local TEXT_FOLLOW_ON = "✅ Theo Sau Lưng"
+local TEXT_FOLLOW_OFF = "❎ Theo Sau Lưng"
+
+-- Function Buttons
+local funcButtonHeight = 28
+local funcButtonSpacing = 5
+local currentY = titleBarHeight + funcButtonSpacing * 2
+
+local function CreateFunctionButton(text, color, yPos)
+	local btn = Instance.new("TextButton", Frame)
+	btn.Size = UDim2.new(1, -controlButtonPadding * 2, 0, funcButtonHeight)
+	btn.Position = UDim2.new(0, controlButtonPadding, 0, yPos)
+	btn.BackgroundColor3 = color; btn.Text = text; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.Gotham; btn.TextSize = 14
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+	return btn
+end
+
+-- Create Buttons (Thứ tự quan trọng cho layout)
+local toggleButton = CreateFunctionButton(TEXT_LOOK_OFF, COLOR_OFF, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút nhìn chính
+local lookBehindButton = CreateFunctionButton(TEXT_LOOKBEHIND_OFF, COLOR_NEUTRAL, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút chế độ nhìn từ sau
+local partButton = CreateFunctionButton("Nhìn: " .. bodyParts[partIndex], COLOR_NEUTRAL, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút chọn bộ phận
+local followButton = CreateFunctionButton(TEXT_FOLLOW_OFF, COLOR_ACTION, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút theo sau liên tục
+local teleportButton = CreateFunctionButton("🚶 Dịch Chuyển Sau Lưng (1 lần)", COLOR_ACTION, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút dịch chuyển 1 lần
+local nearestButton = CreateFunctionButton("📍 Chọn Gần Nhất", COLOR_WARN, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút chọn gần nhất
+local reloadButton = CreateFunctionButton("Tải lại danh sách", COLOR_NEUTRAL, currentY); currentY += funcButtonHeight + funcButtonSpacing -- Nút tải lại list
+
+-- Player List Scrolling Frame
+local listHeight = frameHeight - currentY - controlButtonPadding -- Tính chiều cao còn lại
+local playerList = Instance.new("ScrollingFrame", Frame)
+playerList.Position = UDim2.new(0, controlButtonPadding, 0, currentY)
+playerList.Size = UDim2.new(1, -controlButtonPadding * 2, 0, listHeight)
+playerList.BackgroundColor3 = Color3.fromRGB(50, 50, 50); playerList.ScrollBarThickness = 6; playerList.CanvasSize = UDim2.new(0, 0, 0, 0); playerList.BorderSizePixel = 0
+Instance.new("UICorner", playerList).CornerRadius = UDim.new(0, 5)
+
+-- Minimized Icon
+local MinimizedIcon = Instance.new("TextButton", ScreenGui)
+MinimizedIcon.Size = UDim2.new(0, 80, 0, 25); MinimizedIcon.Position = UDim2.new(0, 5, 1, -30) -- Góc dưới trái
+MinimizedIcon.Text = "Mở Nhìn"; MinimizedIcon.BackgroundColor3 = Color3.fromRGB(60, 60, 60); MinimizedIcon.TextColor3 = Color3.new(1,1,1); MinimizedIcon.Font = Enum.Font.Gotham; MinimizedIcon.TextSize = 12
+MinimizedIcon.Visible = false; MinimizedIcon.Active = true; MinimizedIcon.Draggable = true
+Instance.new("UICorner", MinimizedIcon).CornerRadius = UDim.new(0, 4)
+
+-- Rainbow Border Effect Coroutine
+task.spawn(function()
+	local colors = {
+		Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 127, 0), Color3.fromRGB(255, 255, 0),
+		Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 255, 255), Color3.fromRGB(0, 0, 255),
+		Color3.fromRGB(139, 0, 255)
+	}
+	local i = 1
+	while ScreenGui.Parent do
+		if Frame.Visible then -- Chỉ chạy tween khi frame hiển thị
+			local color = colors[i]
+			local tween = TweenService:Create(UIStroke, TweenInfo.new(0.4), {Color = color})
+			tween:Play()
+			tween.Completed:Wait()
+			i = i % #colors + 1
+		else
+			task.wait(0.5) -- Đợi khi frame ẩn
+		end
+	end
+end)
+
+-- Helper Functions
+local function highlightSelectedButton(selectedPlayer)
+    for player, btn in pairs(buttons) do
+        if btn and btn.Parent then
+            local isSelected = (player == selectedPlayer)
+            btn.BackgroundColor3 = isSelected and Color3.fromRGB(120, 120, 120) or Color3.fromRGB(70, 70, 70)
+            local stroke = btn:FindFirstChildOfClass("UIStroke")
+            if stroke then stroke.Enabled = isSelected end
+        end
+    end
+end
+
+local function resetTargetStates()
+    looking = false
+    followingBehind = false
+    lookingFromBehind = false
+    currentTarget = nil
+
+    toggleButton.Text = TEXT_LOOK_OFF
+    toggleButton.BackgroundColor3 = COLOR_OFF
+    followButton.Text = TEXT_FOLLOW_OFF
+    followButton.BackgroundColor3 = COLOR_ACTION -- Reset về màu neutral/action
+    lookBehindButton.Text = TEXT_LOOKBEHIND_OFF
+    lookBehindButton.BackgroundColor3 = COLOR_NEUTRAL -- Reset về màu neutral
+
+    highlightSelectedButton(nil)
+    if targetHumanoidConnection then
+        targetHumanoidConnection:Disconnect()
+        targetHumanoidConnection = nil
+    end
+end
+
+local function setTarget(player)
+	if currentTarget == player then return end -- Không làm gì nếu chọn lại cùng mục tiêu
+
+    -- Ngắt kết nối cũ và reset trạng thái liên quan đến mục tiêu cũ
+	if targetHumanoidConnection then targetHumanoidConnection:Disconnect(); targetHumanoidConnection = nil end
+    -- Không reset looking, followingBehind, lookingFromBehind ở đây, chỉ reset khi mục tiêu chết/rời game
+
+	currentTarget = player
+    print("Đã chọn mục tiêu:", player.Name)
+
+	local char = player.Character
+	local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+
+	if humanoid and humanoid.Health > 0 then -- Chỉ kết nối nếu mục tiêu còn sống
+        -- Reset nút toggle về trạng thái ON/OFF dựa trên trạng thái looking hiện tại
+        if toggleButton.Text == TEXT_LOOK_RIP then -- Nếu trước đó là RIP, bấm chọn người mới sẽ tự bật nhìn
+             looking = true
+        end
+        toggleButton.Text = looking and TEXT_LOOK_ON or TEXT_LOOK_OFF
+        toggleButton.BackgroundColor3 = looking and COLOR_ON or COLOR_OFF
+
+		targetHumanoidConnection = humanoid.Died:Connect(function()
+			print(player.Name, "đã chết.")
+			if currentTarget == player then -- Quan trọng: Chỉ reset nếu mục tiêu chết vẫn là mục tiêu hiện tại
+                -- Đặt trạng thái RIP cho nút nhìn chính
+                toggleButton.Text = TEXT_LOOK_RIP
+                toggleButton.BackgroundColor3 = COLOR_RIP
+                -- Tắt các chế độ phụ và reset nút của chúng
+                followingBehind = false
+                lookingFromBehind = false
+                followButton.Text = TEXT_FOLLOW_OFF; followButton.BackgroundColor3 = COLOR_ACTION
+                lookBehindButton.Text = TEXT_LOOKBEHIND_OFF; lookBehindButton.BackgroundColor3 = COLOR_NEUTRAL
+                -- Reset các biến khác
+				looking = false
+				currentTarget = nil
+				highlightSelectedButton(nil)
+				if targetHumanoidConnection then targetHumanoidConnection:Disconnect(); targetHumanoidConnection = nil end
+			end
+		end)
+	else
+        -- Nếu không tìm thấy humanoid hoặc đã chết, báo lỗi và không đặt làm mục tiêu
+         print("Không thể đặt mục tiêu:", player.Name, "- Không tìm thấy Humanoid hoặc đã chết.")
+         currentTarget = nil -- Không đặt mục tiêu
+         -- Không thay đổi trạng thái looking/following/lookbehind ở đây
+	end
+    highlightSelectedButton(currentTarget) -- Highlight người chơi mới (hoặc nil nếu không đặt được)
+end
+
+local function updateList()
+    -- Clear old buttons
+    for _, btn in pairs(buttons) do if btn and btn.Parent then btn:Destroy() end end
+    buttons = {}
+
+    local yPos = listButtonYOffset
+    local canvasHeight = yPos
+    local targetStillInGame = false
+
+    -- Populate new buttons
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= Player then
+            local btn = Instance.new("TextButton", playerList)
+            btn.Size = UDim2.new(1, -10, 0, 25); btn.Position = UDim2.new(0, 5, 0, yPos)
+            btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70); btn.Text = p.Name; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.Gotham; btn.TextSize = 13
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+            local stroke = Instance.new("UIStroke", btn); stroke.Color = Color3.fromRGB(255, 255, 0); stroke.Thickness = 1; stroke.Enabled = false -- Stroke for highlight
+            buttons[p] = btn
+            btn.MouseButton1Click:Connect(function() setTarget(p) end)
+            yPos += 25 + listButtonYOffset
+            canvasHeight = yPos
+            if currentTarget and p == currentTarget then targetStillInGame = true end
+        end
+    end
+    playerList.CanvasSize = UDim2.new(0, 0, 0, math.max(canvasHeight, playerList.AbsoluteSize.Y))
+
+    -- Handle if current target left
+    if currentTarget and not targetStillInGame then
+        print("Mục tiêu cũ", currentTarget.Name, "đã rời game.")
+        resetTargetStates() -- Reset mọi thứ liên quan đến mục tiêu
+    end
+
+    highlightSelectedButton(currentTarget) -- Highlight lại (có thể là nil)
+end
+
+-- Button Event Connections
+reloadButton.MouseButton1Click:Connect(updateList)
+
+nearestButton.MouseButton1Click:Connect(function()
+	local closestPlayer = nil; local shortestDistance = math.huge
+	local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= Player and p.Character then
+            local targetRoot = p.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+			    local distance = (targetRoot.Position - myRoot.Position).Magnitude
+			    if distance < shortestDistance then closestPlayer = p; shortestDistance = distance end
+            end
+		end
+	end
+	if closestPlayer then print("Người chơi gần nhất:", closestPlayer.Name); setTarget(closestPlayer)
+    else print("Không tìm thấy người chơi nào khác.") end
+end)
+
+-- Teleport Button (Single Use)
+teleportButton.MouseButton1Click:Connect(function()
+	if currentTarget and currentTarget.Character then
+		local targetRoot = currentTarget.Character:FindFirstChild("HumanoidRootPart")
+        local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+		if targetRoot and myRoot and Player.Character.PrimaryPart then
+            local targetLookVector = targetRoot.CFrame.LookVector
+            local teleportPosition = targetRoot.Position - (targetLookVector * followDistance) + Vector3.new(0,0.1,0) -- Dịch chuyển ra sau, cách followDistance
+            local newCFrame = CFrame.new(teleportPosition, targetRoot.Position) -- Nhìn về phía mục tiêu sau khi dịch chuyển
+            Player.Character:SetPrimaryPartCFrame(newCFrame)
+            print("Đã dịch chuyển (1 lần) ra sau lưng", currentTarget.Name)
+        else print("Không thể dịch chuyển (1 lần): Thiếu RootPart.") end
+	else print("Không thể dịch chuyển (1 lần): Chưa chọn mục tiêu.") end
+end)
+
+-- Toggle Look Button (Main)
+toggleButton.MouseButton1Click:Connect(function()
+    if toggleButton.Text == TEXT_LOOK_RIP then
+        looking = true -- Bật lại trạng thái nhìn
+        toggleButton.Text = TEXT_LOOK_ON
+	    toggleButton.BackgroundColor3 = COLOR_ON
+        print("Chế độ nhìn được bật. Hãy chọn mục tiêu.")
+    else
+	    looking = not looking
+	    toggleButton.Text = looking and TEXT_LOOK_ON or TEXT_LOOK_OFF
+	    toggleButton.BackgroundColor3 = looking and COLOR_ON or COLOR_OFF
+        print("Chế độ nhìn:", looking and "Bật" or "Tắt")
+        -- Tự động tắt nhìn từ sau nếu tắt nhìn chính
+        if not looking and lookingFromBehind then
+            lookingFromBehind = false
+            lookBehindButton.Text = TEXT_LOOKBEHIND_OFF
+            lookBehindButton.BackgroundColor3 = COLOR_NEUTRAL
+        end
+    end
+end)
+
+-- Toggle Look From Behind Button
+lookBehindButton.MouseButton1Click:Connect(function()
+    lookingFromBehind = not lookingFromBehind
+    lookBehindButton.Text = lookingFromBehind and TEXT_LOOKBEHIND_ON or TEXT_LOOKBEHIND_OFF
+    lookBehindButton.BackgroundColor3 = lookingFromBehind and COLOR_ON or COLOR_NEUTRAL
+    print("Chế độ nhìn từ sau:", lookingFromBehind and "Bật" or "Tắt")
+    -- Tự động bật nhìn chính nếu bật nhìn từ sau
+    if lookingFromBehind and not looking then
+        looking = true
+        toggleButton.Text = TEXT_LOOK_ON
+        toggleButton.BackgroundColor3 = COLOR_ON
+        print("Chế độ nhìn chính đã được tự động bật.")
+    end
+    -- Tắt chọn bộ phận nếu bật nhìn từ sau (hoặc ngược lại) -> Không cần, chỉ cần ưu tiên trong RenderStep
+    partButton.BackgroundColor3 = lookingFromBehind and COLOR_OFF or COLOR_NEUTRAL -- Đổi màu nút part để báo hiệu bị vô hiệu hóa
+end)
+
+-- Cycle Body Part Button
+partButton.MouseButton1Click:Connect(function()
+    if lookingFromBehind then
+        print("Đang ở chế độ nhìn từ sau, không thể đổi bộ phận.")
+        return -- Không cho đổi bộ phận khi đang nhìn từ sau
+    end
+	partIndex = (partIndex % #bodyParts) + 1
+	partButton.Text = "Nhìn: " .. bodyParts[partIndex]
+    print("Chuyển sang nhìn:", bodyParts[partIndex])
+end)
+
+-- Toggle Follow Behind Button
+followButton.MouseButton1Click:Connect(function()
+    followingBehind = not followingBehind
+    followButton.Text = followingBehind and TEXT_FOLLOW_ON or TEXT_FOLLOW_OFF
+    followButton.BackgroundColor3 = followingBehind and COLOR_ON or COLOR_ACTION
+    print("Chế độ theo sau lưng:", followingBehind and "Bật" or "Tắt")
+end)
+
+-- Minimize/Maximize Buttons
+MinimizeButton.MouseButton1Click:Connect(function() Frame.Visible = false; MinimizedIcon.Visible = true end)
+MinimizedIcon.MouseButton1Click:Connect(function() Frame.Visible = true; MinimizedIcon.Visible = false end)
+
+-- Close Button
+CloseButton.MouseButton1Click:Connect(function() resetTargetStates(); ScreenGui:Destroy() end)
+
+-- Core Logic Loop (RenderStep for Camera, Heartbeat potentially better for Physics/Follow)
+local function CoreLoop(dt) -- dt is delta time, useful for smoothing if needed
+    if not Player.Character or not Player.Character.PrimaryPart then return end -- Thoát nếu người chơi chưa spawn hoàn chỉnh
+
+    local myRoot = Player.Character.PrimaryPart
+    local targetChar = currentTarget and currentTarget.Character
+    local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+
+    -- === Follow Logic ===
+    if followingBehind and targetRoot and myRoot and currentTarget and toggleButton.Text ~= TEXT_LOOK_RIP then -- Chỉ follow khi mục tiêu hợp lệ và không RIP
+        local targetLookVector = targetRoot.CFrame.LookVector
+        -- Tính vị trí mong muốn sau lưng, giữ nguyên hướng nhìn hiện tại của người chơi
+        local desiredPos = targetRoot.Position - (targetLookVector * followDistance) + Vector3.new(0,0.1,0)
+        local currentPos = myRoot.Position
+        local currentLookVector = myRoot.CFrame.LookVector
+
+        -- Chỉ dịch chuyển nếu khoảng cách đủ lớn để tránh rung lắc
+        if (desiredPos - currentPos).Magnitude > 0.5 then
+            -- Giữ hướng nhìn hiện tại của người chơi khi dịch chuyển
+            Player.Character:SetPrimaryPartCFrame(CFrame.new(desiredPos) * CFrame.new(Vector3.zero, currentLookVector).Rotation)
+            -- Hoặc nếu muốn luôn nhìn về mục tiêu khi follow:
+            -- Player.Character:SetPrimaryPartCFrame(CFrame.new(desiredPos, targetRoot.Position))
+        end
+    end
+
+    -- === Camera Logic ===
+    if looking and targetRoot and currentTarget and toggleButton.Text ~= TEXT_LOOK_RIP then -- Chỉ nhìn khi mục tiêu hợp lệ và không RIP
+        local camera = workspace.CurrentCamera
+        local lookFrom = camera.CFrame.Position
+        local lookAt
+
+        if lookingFromBehind then
+            -- Tính toán vị trí camera sau lưng mục tiêu
+            local targetLook = targetRoot.CFrame.LookVector
+            local targetPos = targetRoot.Position
+            local cameraPos = targetPos - (targetLook * lookBehindDistance) + Vector3.new(0, lookBehindHeightOffset, 0)
+            lookAt = targetPos + Vector3.new(0, 1, 0) -- Nhìn vào phần thân trên của mục tiêu
+
+             -- Kiểm tra khoảng cách tránh lỗi CFrame
+            if (cameraPos - lookAt).Magnitude > 0.1 then
+                 -- Sử dụng Lerp để làm mượt camera một chút (tùy chọn)
+                 camera.CFrame = camera.CFrame:Lerp(CFrame.new(cameraPos, lookAt), 0.2) -- 0.2 là tốc độ làm mượt
+                 -- Hoặc đặt trực tiếp nếu không cần làm mượt:
+                 -- camera.CFrame = CFrame.new(cameraPos, lookAt)
+            end
+
+        else
+            -- Logic nhìn vào bộ phận cũ
+            local targetPart = targetChar:FindFirstChild(bodyParts[partIndex])
+            if targetPart then
+                lookAt = targetPart.Position
+                 -- Kiểm tra khoảng cách tránh lỗi CFrame
+                if (lookFrom - lookAt).Magnitude > 0.1 then
+                     -- Sử dụng Lerp để làm mượt camera một chút (tùy chọn)
+                    camera.CFrame = camera.CFrame:Lerp(CFrame.new(lookFrom, lookAt), 0.15) -- Tốc độ làm mượt khác nhau
+                    -- Hoặc đặt trực tiếp:
+                    -- camera.CFrame = CFrame.new(lookFrom, lookAt)
+                end
+            else
+                -- Nếu không thấy bộ phận, nhìn vào RootPart
+                lookAt = targetRoot.Position
+                if (lookFrom - lookAt).Magnitude > 0.1 then
+                    camera.CFrame = camera.CFrame:Lerp(CFrame.new(lookFrom, lookAt), 0.15)
+                    -- camera.CFrame = CFrame.new(lookFrom, lookAt)
+                end
+            end
+        end
+    end
+end
+
+-- Bind to RenderStep
+RunService:BindToRenderStep("LookFollowLoop", Enum.RenderPriority.Camera.Value + 1, CoreLoop)
+
+-- Cleanup when GUI is destroyed
+ScreenGui.Destroying:Connect(function()
+    pcall(function() RunService:UnbindFromRenderStep("LookFollowLoop") end)
+	resetTargetStates() -- Đảm bảo mọi thứ được reset
+    print("LookFollow GUI Destroyed and Unbound.")
+end)
+
+-- Initial setup
+updateList()
+print("LookFollow GUI Loaded.")
