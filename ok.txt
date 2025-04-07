@@ -348,10 +348,28 @@ TargetTitle.Font = Enum.Font.SourceSansBold
 TargetTitle.Text = "Target Selection"
 TargetTitle.Parent = TargetSection
 
+local NearestPlayerButton = Instance.new("TextButton")
+NearestPlayerButton.Name = "NearestPlayerButton"
+NearestPlayerButton.Size = UDim2.new(0.9, 0, 0, 30)
+NearestPlayerButton.Position = UDim2.new(0.05, 0, 0, 35)
+NearestPlayerButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+NearestPlayerButton.BorderSizePixel = 0
+NearestPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NearestPlayerButton.TextSize = 14
+NearestPlayerButton.Font = Enum.Font.SourceSansBold
+NearestPlayerButton.Text = "Select Nearest Player"
+NearestPlayerButton.Parent = TargetSection
+NearestPlayerButton.Position = UDim2.new(0.05, 0, 0, 35)
+
+-- Add UICorner for nearest player button
+local NearestPlayerCorner = Instance.new("UICorner")
+NearestPlayerCorner.CornerRadius = UDim.new(0, 6)
+NearestPlayerCorner.Parent = NearestPlayerButton
+
 local TargetDropdown = Instance.new("TextButton")
 TargetDropdown.Name = "TargetDropdown"
 TargetDropdown.Size = UDim2.new(0.6, 0, 0, 30)
-TargetDropdown.Position = UDim2.new(0.05, 0, 0, 35)
+TargetDropdown.Position = UDim2.new(0.05, 0, 0, 75)
 TargetDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 TargetDropdown.BorderSizePixel = 0
 TargetDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -368,7 +386,7 @@ TargetDropdownCorner.Parent = TargetDropdown
 local ReloadButton = Instance.new("TextButton")
 ReloadButton.Name = "ReloadButton"
 ReloadButton.Size = UDim2.new(0.25, 0, 0, 30)
-ReloadButton.Position = UDim2.new(0.7, 0, 0, 35)
+ReloadButton.Position = UDim2.new(0.7, 0, 0, 75)
 ReloadButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ReloadButton.BorderSizePixel = 0
 ReloadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -385,7 +403,7 @@ ReloadCorner.Parent = ReloadButton
 local FollowButton = Instance.new("TextButton")
 FollowButton.Name = "FollowButton"
 FollowButton.Size = UDim2.new(0.45, 0, 0, 35)
-FollowButton.Position = UDim2.new(0.05, 0, 0, 75)
+FollowButton.Position = UDim2.new(0.05, 0, 0, 115)
 FollowButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
 FollowButton.BorderSizePixel = 0
 FollowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -402,7 +420,7 @@ FollowCorner.Parent = FollowButton
 local NextButton = Instance.new("TextButton")
 NextButton.Name = "NextButton"
 NextButton.Size = UDim2.new(0.45, 0, 0, 35)
-NextButton.Position = UDim2.new(0.5, 0, 0, 75)
+NextButton.Position = UDim2.new(0.5, 0, 0, 115)
 NextButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 NextButton.BorderSizePixel = 0
 NextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -420,7 +438,7 @@ NextCorner.Parent = NextButton
 local DropdownFrame = Instance.new("Frame")
 DropdownFrame.Name = "DropdownFrame"
 DropdownFrame.Size = UDim2.new(0.6, 0, 0, 200) -- Increased height for more players
-DropdownFrame.Position = UDim2.new(0.05, 0, 0, 65)
+DropdownFrame.Position = UDim2.new(0.05, 0, 0, 105)
 DropdownFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 DropdownFrame.BorderSizePixel = 0
 DropdownFrame.Visible = false
@@ -884,14 +902,24 @@ local DeleteCorner = Instance.new("UICorner")
 DeleteCorner.CornerRadius = UDim.new(0, 8)
 DeleteCorner.Parent = DeleteButton
 
--- Icon for minimized state
+-- Icon for minimized state (randomly selected)
 local MinimizedIcon = Instance.new("ImageButton")
 MinimizedIcon.Name = "MinimizedIcon"
 MinimizedIcon.Size = UDim2.new(0, 50, 0, 50)
 MinimizedIcon.Position = UDim2.new(0, 10, 0, 10)
 MinimizedIcon.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 MinimizedIcon.BorderSizePixel = 0
-MinimizedIcon.Image = "rbxassetid://6034684949" -- Generic script icon
+
+-- Randomly select one of three images (1/3 probability each)
+local randomChoice = math.random(1, 3)
+if randomChoice == 1 then
+    MinimizedIcon.Image = "rbxassetid://6034684949" -- Original flame icon
+elseif randomChoice == 2 then
+    MinimizedIcon.Image = "rbxassetid://11162773217" -- Anime girl icon
+else
+    MinimizedIcon.Image = "rbxassetid://7734010488" -- Dragon icon
+end
+
 MinimizedIcon.Visible = false
 MinimizedIcon.Active = true -- Enable interaction
 MinimizedIcon.Draggable = true -- Enable built-in dragging
@@ -1687,6 +1715,27 @@ if SubMenuFrame.AbsolutePosition.X ~= newX or SubMenuFrame.AbsolutePosition.Y ~=
 end
 end
 
+-- Function to find the nearest player
+local function FindNearestPlayer()
+    local nearestPlayer = nil
+    local shortestDistance = math.huge
+    
+    if Character and Character:FindFirstChild("HumanoidRootPart") then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    nearestPlayer = player
+                end
+            end
+        end
+    end
+    
+    return nearestPlayer
+end
+
 -- Event Connections
 CloseButton.MouseButton1Click:Connect(function()
 ScreenGui:Destroy()
@@ -1922,6 +1971,17 @@ if value then
 else
     HorizontalMaxInput.Text = tostring(SafePositionMax.X)
 end
+end)
+
+-- Connect the nearest player button
+NearestPlayerButton.MouseButton1Click:Connect(function()
+    local nearest = FindNearestPlayer()
+    if nearest then
+        TargetPlayer = nearest
+        TargetDropdown.Text = nearest.Name
+    else
+        TargetDropdown.Text = "No players nearby"
+    end
 end)
 
 -- Check expiration on a timer
