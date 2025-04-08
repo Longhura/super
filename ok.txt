@@ -35,13 +35,6 @@ local FollowingTarget = false
 local AutoNextTarget = false
 local AutoCheckPosition = false
 local SubMenuVisible = false
-local ViewingTarget = false
-local ESPEnabled = false
-local HitboxEnabled = false
-local GlowEnabled = false
-local ESPHPEnabled = false
-local ESPPositionEnabled = false
-local AutoDisableViewOnDeath = true
 
 -- Distance Settings
 local DistanceBehind = 5
@@ -58,11 +51,6 @@ local SavedPosition = nil
 -- Target Variables
 local TargetPlayer = nil
 local PlayerList = {}
-local TargetHumanoidConnection = nil
-local ViewBodyPart = "Head" -- Default body part to view
-
--- ESP Variables
-local ESPObjects = {}
 
 -- Create GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -89,7 +77,7 @@ MainCorner.Parent = MainFrame
 -- Add UIStroke for rainbow border
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Thickness = 2
-MainStroke.Color = Color3.fromRGB(255, 0, 0),
+MainStroke.Color = Color3.fromRGB(255, 0, 0)
 MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 MainStroke.Parent = MainFrame
 
@@ -340,7 +328,7 @@ TeleportToSavedCorner.Parent = TeleportToSavedButton
 -- Section: Player Targeting
 local TargetSection = Instance.new("Frame")
 TargetSection.Name = "TargetSection"
-TargetSection.Size = UDim2.new(0.95, 0, 0, 160) -- Increased height for new buttons
+TargetSection.Size = UDim2.new(0.95, 0, 0, 120)
 TargetSection.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TargetSection.BorderSizePixel = 0
 TargetSection.Parent = ScrollFrame
@@ -371,6 +359,7 @@ NearestPlayerButton.TextSize = 14
 NearestPlayerButton.Font = Enum.Font.SourceSansBold
 NearestPlayerButton.Text = "Select Nearest Player"
 NearestPlayerButton.Parent = TargetSection
+NearestPlayerButton.Position = UDim2.new(0.05, 0, 0, 35)
 
 -- Add UICorner for nearest player button
 local NearestPlayerCorner = Instance.new("UICorner")
@@ -411,46 +400,10 @@ local ReloadCorner = Instance.new("UICorner")
 ReloadCorner.CornerRadius = UDim.new(0, 6)
 ReloadCorner.Parent = ReloadButton
 
--- View Target Button
-local ViewTargetButton = Instance.new("TextButton")
-ViewTargetButton.Name = "ViewTargetButton"
-ViewTargetButton.Size = UDim2.new(0.45, 0, 0, 35)
-ViewTargetButton.Position = UDim2.new(0.05, 0, 0, 115)
-ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-ViewTargetButton.BorderSizePixel = 0
-ViewTargetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ViewTargetButton.TextSize = 14
-ViewTargetButton.Font = Enum.Font.SourceSansBold
-ViewTargetButton.Text = "View Target: OFF"
-ViewTargetButton.Parent = TargetSection
-
--- Add UICorner for view target button
-local ViewTargetCorner = Instance.new("UICorner")
-ViewTargetCorner.CornerRadius = UDim.new(0, 6)
-ViewTargetCorner.Parent = ViewTargetButton
-
--- ESP Button
-local ESPButton = Instance.new("TextButton")
-ESPButton.Name = "ESPButton"
-ESPButton.Size = UDim2.new(0.45, 0, 0, 35)
-ESPButton.Position = UDim2.new(0.5, 0, 0, 115)
-ESPButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-ESPButton.BorderSizePixel = 0
-ESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPButton.TextSize = 14
-ESPButton.Font = Enum.Font.SourceSansBold
-ESPButton.Text = "ESP: OFF"
-ESPButton.Parent = TargetSection
-
--- Add UICorner for ESP button
-local ESPCorner = Instance.new("UICorner")
-ESPCorner.CornerRadius = UDim.new(0, 6)
-ESPCorner.Parent = ESPButton
-
 local FollowButton = Instance.new("TextButton")
 FollowButton.Name = "FollowButton"
 FollowButton.Size = UDim2.new(0.45, 0, 0, 35)
-FollowButton.Position = UDim2.new(0.05, 0, 0, 155)
+FollowButton.Position = UDim2.new(0.05, 0, 0, 115)
 FollowButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
 FollowButton.BorderSizePixel = 0
 FollowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -467,7 +420,7 @@ FollowCorner.Parent = FollowButton
 local NextButton = Instance.new("TextButton")
 NextButton.Name = "NextButton"
 NextButton.Size = UDim2.new(0.45, 0, 0, 35)
-NextButton.Position = UDim2.new(0.5, 0, 0, 155)
+NextButton.Position = UDim2.new(0.5, 0, 0, 115)
 NextButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 NextButton.BorderSizePixel = 0
 NextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -518,119 +471,6 @@ local PlayerListLayout = Instance.new("UIListLayout")
 PlayerListLayout.Padding = UDim.new(0, 5)
 PlayerListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 PlayerListLayout.Parent = PlayerScrollFrame
-
--- Section: ESP Settings
-local ESPSection = Instance.new("Frame")
-ESPSection.Name = "ESPSection"
-ESPSection.Size = UDim2.new(0.95, 0, 0, 150)
-ESPSection.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ESPSection.BorderSizePixel = 0
-ESPSection.Parent = ScrollFrame
-
--- Add UICorner for ESP section
-local ESPSectionCorner = Instance.new("UICorner")
-ESPSectionCorner.CornerRadius = UDim.new(0, 8)
-ESPSectionCorner.Parent = ESPSection
-
-local ESPTitle = Instance.new("TextLabel")
-ESPTitle.Name = "ESPTitle"
-ESPTitle.Size = UDim2.new(1, 0, 0, 30)
-ESPTitle.BackgroundTransparency = 1
-ESPTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPTitle.TextSize = 16
-ESPTitle.Font = Enum.Font.SourceSansBold
-ESPTitle.Text = "ESP Settings"
-ESPTitle.Parent = ESPSection
-
--- ESP Name Button
-local ESPNameButton = Instance.new("TextButton")
-ESPNameButton.Name = "ESPNameButton"
-ESPNameButton.Size = UDim2.new(0.45, 0, 0, 35)
-ESPNameButton.Position = UDim2.new(0.05, 0, 0, 40)
-ESPNameButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-ESPNameButton.BorderSizePixel = 0
-ESPNameButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPNameButton.TextSize = 14
-ESPNameButton.Font = Enum.Font.SourceSansBold
-ESPNameButton.Text = "ESP Name: OFF"
-ESPNameButton.Parent = ESPSection
-
--- Add UICorner for ESP name button
-local ESPNameCorner = Instance.new("UICorner")
-ESPNameCorner.CornerRadius = UDim.new(0, 6)
-ESPNameCorner.Parent = ESPNameButton
-
--- Hitbox Button
-local HitboxButton = Instance.new("TextButton")
-HitboxButton.Name = "HitboxButton"
-HitboxButton.Size = UDim2.new(0.45, 0, 0, 35)
-HitboxButton.Position = UDim2.new(0.5, 0, 0, 40)
-HitboxButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-HitboxButton.BorderSizePixel = 0
-HitboxButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-HitboxButton.TextSize = 14
-HitboxButton.Font = Enum.Font.SourceSansBold
-HitboxButton.Text = "Hitbox: OFF"
-HitboxButton.Parent = ESPSection
-
--- Add UICorner for Hitbox button
-local HitboxCorner = Instance.new("UICorner")
-HitboxCorner.CornerRadius = UDim.new(0, 6)
-HitboxCorner.Parent = HitboxButton
-
--- Glow Button
-local GlowButton = Instance.new("TextButton")
-GlowButton.Name = "GlowButton"
-GlowButton.Size = UDim2.new(0.45, 0, 0, 35)
-GlowButton.Position = UDim2.new(0.05, 0, 0, 85)
-GlowButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-GlowButton.BorderSizePixel = 0
-GlowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-GlowButton.TextSize = 14
-GlowButton.Font = Enum.Font.SourceSansBold
-GlowButton.Text = "Glow: OFF"
-GlowButton.Parent = ESPSection
-
--- Add UICorner for Glow button
-local GlowCorner = Instance.new("UICorner")
-GlowCorner.CornerRadius = UDim.new(0, 6)
-GlowCorner.Parent = GlowButton
-
--- ESP HP Button
-local ESPHPButton = Instance.new("TextButton")
-ESPHPButton.Name = "ESPHPButton"
-ESPHPButton.Size = UDim2.new(0.45, 0, 0, 35)
-ESPHPButton.Position = UDim2.new(0.5, 0, 0, 85)
-ESPHPButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-ESPHPButton.BorderSizePixel = 0
-ESPHPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPHPButton.TextSize = 14
-ESPHPButton.Font = Enum.Font.SourceSansBold
-ESPHPButton.Text = "ESP HP: OFF"
-ESPHPButton.Parent = ESPSection
-
--- Add UICorner for ESP HP button
-local ESPHPCorner = Instance.new("UICorner")
-ESPHPCorner.CornerRadius = UDim.new(0, 6)
-ESPHPCorner.Parent = ESPHPButton
-
--- ESP Position Button
-local ESPPositionButton = Instance.new("TextButton")
-ESPPositionButton.Name = "ESPPositionButton"
-ESPPositionButton.Size = UDim2.new(0.45, 0, 0, 35)
-ESPPositionButton.Position = UDim2.new(0.05, 0, 0, 130)
-ESPPositionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-ESPPositionButton.BorderSizePixel = 0
-ESPPositionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ESPPositionButton.TextSize = 14
-ESPPositionButton.Font = Enum.Font.SourceSansBold
-ESPPositionButton.Text = "ESP Position: OFF"
-ESPPositionButton.Parent = ESPSection
-
--- Add UICorner for ESP Position button
-local ESPPositionCorner = Instance.new("UICorner")
-ESPPositionCorner.CornerRadius = UDim.new(0, 6)
-ESPPositionCorner.Parent = ESPPositionButton
 
 -- Section: Distance Controls
 local DistanceSection = Instance.new("Frame")
@@ -1896,135 +1736,6 @@ local function FindNearestPlayer()
     return nearestPlayer
 end
 
--- Function to toggle view target
-local function ToggleViewTarget()
-    ViewingTarget = not ViewingTarget
-
-    if ViewingTarget then
-        if not TargetPlayer or not TargetPlayer.Character then
-            ViewingTarget = false
-            ViewTargetButton.Text = "View Target: OFF"
-            ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-            return
-        end
-
-        ViewTargetButton.Text = "View Target: ON"
-        ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-
-        -- Function to update camera CFrame
-        local function UpdateCamera()
-            if ViewingTarget and TargetPlayer and TargetPlayer.Character then
-                local targetHumanoid = TargetPlayer.Character:FindFirstChild("Humanoid")
-                if targetHumanoid and targetHumanoid.Health > 0 then
-                    local targetPart = TargetPlayer.Character:FindFirstChild(ViewBodyPart)
-                    if targetPart then
-                        Camera.CFrame = CFrame.new(targetPart.Position, HumanoidRootPart.Position)
-                    end
-                else
-                    -- Target is dead, disable viewing if AutoDisableViewOnDeath is true
-                    if AutoDisableViewOnDeath then
-                        ToggleViewTarget()
-                    end
-                end
-            else
-                -- Stop viewing
-                ViewingTarget = false
-                ViewTargetButton.Text = "View Target: OFF"
-                ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-            end
-        end
-
-        -- Connect to heartbeat
-        TargetHumanoidConnection = RunService.Heartbeat:Connect(UpdateCamera)
-    else
-        ViewTargetButton.Text = "View Target: OFF"
-        ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-
-        -- Disconnect from heartbeat
-        if TargetHumanoidConnection then
-            TargetHumanoidConnection:Disconnect()
-            TargetHumanoidConnection = nil
-        end
-    end
-end
-
--- Function to toggle ESP
-local function ToggleESP()
-    ESPEnabled = not ESPEnabled
-
-    if ESPEnabled then
-        ESPButton.Text = "ESP: ON"
-        ESPButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        UpdateESP()
-    else
-        ESPButton.Text = "ESP: OFF"
-        ESPButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-        ClearESP()
-    end
-end
-
--- Function to update ESP
-local function UpdateESP()
-    ClearESP()
-
-    if ESPEnabled then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local character = player.Character
-                local head = character:FindFirstChild("Head")
-                if head then
-                    -- Create BillboardGui
-                    local billboardGui = Instance.new("BillboardGui")
-                    billboardGui.Name = "ESPInfo"
-                    billboardGui.Adornee = head
-                    billboardGui.Size = UDim2.new(0, 100, 0, 50)
-                    billboardGui.StudsOffsetWorldSpace = Vector3.new(0, 2, 0)
-                    billboardGui.Parent = character
-
-                    -- Create TextLabel for player name
-                    local nameLabel = Instance.new("TextLabel")
-                    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-                    nameLabel.BackgroundTransparency = 1
-                    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    nameLabel.TextSize = 14
-                    nameLabel.Font = Enum.Font.SourceSansBold
-                    nameLabel.Text = player.Name
-                    nameLabel.Parent = billboardGui
-
-                    -- Create TextLabel for player health
-                    local healthLabel = Instance.new("TextLabel")
-                    healthLabel.Size = UDim2.new(1, 0, 0.5, 0)
-                    healthLabel.Position = UDim2.new(0, 0, 0.5, 0)
-                    healthLabel.BackgroundTransparency = 1
-                    healthLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    healthLabel.TextSize = 14
-                    healthLabel.Font = Enum.Font.SourceSans
-                    healthLabel.Text = "Health: " .. tostring(player.Character.Humanoid.Health)
-                    healthLabel.Parent = billboardGui
-
-                    -- Store ESP objects
-                    ESPObjects[player] = {
-                        BillboardGui = billboardGui,
-                        NameLabel = nameLabel,
-                        HealthLabel = healthLabel
-                    }
-                end
-            end
-        end
-    end
-end
-
--- Function to clear ESP
-local function ClearESP()
-    for player, objects in pairs(ESPObjects) do
-        if objects.BillboardGui and objects.BillboardGui.Parent then
-            objects.BillboardGui:Destroy()
-        end
-        ESPObjects[player] = nil
-    end
-    ESPObjects = {}
-end
-
 -- Event Connections
 CloseButton.MouseButton1Click:Connect(function()
 ScreenGui:Destroy()
@@ -2044,12 +1755,6 @@ if RunningAway then
 end
 if AutoCheckPosition then
     ToggleAutoCheckPosition()
-end
-if ViewingTarget then
-    ToggleViewTarget()
-end
-if ESPEnabled then
-    ToggleESP()
 end
 end)
 
@@ -2141,14 +1846,6 @@ end)
 
 ApplySettingsButton.MouseButton1Click:Connect(function()
 ApplySafetySettings()
-end)
-
-ViewTargetButton.MouseButton1Click:Connect(function()
-    ToggleViewTarget()
-end)
-
-ESPButton.MouseButton1Click:Connect(function()
-    ToggleESP()
 end)
 
 -- Distance control buttons
@@ -2332,18 +2029,6 @@ if AutoCheckPosition then
     task.wait(0.5)
     ToggleAutoCheckPosition()
 end
-
-if ViewingTarget then
-    ToggleViewTarget()
-    task.wait(0.5)
-    ToggleViewTarget()
-end
-
-if ESPEnabled then
-    ToggleESP()
-    task.wait(0.5)
-    ToggleESP()
-end
 end)
 
 -- Player joining/leaving handling
@@ -2375,3 +2060,4 @@ StartRainbowEffect()
 
 -- Initial expiration check
 CheckExpiration()
+
