@@ -35,6 +35,15 @@ local FollowingTarget = false
 local AutoNextTarget = false
 local AutoCheckPosition = false
 local SubMenuVisible = false
+local PositionSubMenuVisible = false
+local ESPEnabled = false
+local HitboxEnabled = false
+local GlowEnabled = false
+local ESPHPEnabled = false
+local ESPPositionEnabled = false
+local AutoDisableOnTargetDeath = false
+local AutoRunEnabled = false
+local ViewingTarget = false
 
 -- Distance Settings
 local DistanceBehind = 5
@@ -51,6 +60,16 @@ local SavedPosition = nil
 -- Target Variables
 local TargetPlayer = nil
 local PlayerList = {}
+
+-- Auto Run Settings
+local LowHealthThreshold = 50 -- Default 50%
+local HighHealthThreshold = 51 -- Default 51%
+local AutoRunHeight = 500 -- Default 500 blocks up
+local PositionBeforeAutoRun = nil
+
+-- Position Follow Settings
+local FollowPosition = nil
+local FollowingPosition = false
 
 -- Create GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -124,6 +143,24 @@ SubMenuButton.Parent = TitleBar
 local SubMenuCorner = Instance.new("UICorner")
 SubMenuCorner.CornerRadius = UDim.new(0, 8)
 SubMenuCorner.Parent = SubMenuButton
+
+-- Position SubMenu Button
+local PositionSubMenuButton = Instance.new("TextButton")
+PositionSubMenuButton.Name = "PositionSubMenuButton"
+PositionSubMenuButton.Size = UDim2.new(0, 30, 0, 30)
+PositionSubMenuButton.Position = UDim2.new(1, -120, 0, 0)
+PositionSubMenuButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+PositionSubMenuButton.BorderSizePixel = 0
+PositionSubMenuButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+PositionSubMenuButton.TextSize = 16
+PositionSubMenuButton.Font = Enum.Font.SourceSansBold
+PositionSubMenuButton.Text = "📍"
+PositionSubMenuButton.Parent = TitleBar
+
+-- Add UICorner for position submenu button
+local PositionSubMenuCorner = Instance.new("UICorner")
+PositionSubMenuCorner.CornerRadius = UDim.new(0, 8)
+PositionSubMenuCorner.Parent = PositionSubMenuButton
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
@@ -255,7 +292,7 @@ ScrollFrame.Position = UDim2.new(0, 5, 0, 5)
 ScrollFrame.BackgroundTransparency = 1
 ScrollFrame.BorderSizePixel = 0
 ScrollFrame.ScrollBarThickness = 6
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 850) -- Increased canvas size for more scrolling space
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 950) -- Increased canvas size for more scrolling space
 ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y -- Automatically adjust canvas size based on content
 ScrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y -- Only allow vertical scrolling
 ScrollFrame.ScrollingEnabled = true -- Ensure scrolling is enabled
@@ -328,7 +365,7 @@ TeleportToSavedCorner.Parent = TeleportToSavedButton
 -- Section: Player Targeting
 local TargetSection = Instance.new("Frame")
 TargetSection.Name = "TargetSection"
-TargetSection.Size = UDim2.new(0.95, 0, 0, 120)
+TargetSection.Size = UDim2.new(0.95, 0, 0, 160) -- Increased height for more buttons
 TargetSection.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 TargetSection.BorderSizePixel = 0
 TargetSection.Parent = ScrollFrame
@@ -348,10 +385,28 @@ TargetTitle.Font = Enum.Font.SourceSansBold
 TargetTitle.Text = "Target Selection"
 TargetTitle.Parent = TargetSection
 
+-- Target Info Display
+local TargetInfoDisplay = Instance.new("TextLabel")
+TargetInfoDisplay.Name = "TargetInfoDisplay"
+TargetInfoDisplay.Size = UDim2.new(0.9, 0, 0, 25)
+TargetInfoDisplay.Position = UDim2.new(0.05, 0, 0, 30)
+TargetInfoDisplay.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TargetInfoDisplay.BorderSizePixel = 0
+TargetInfoDisplay.TextColor3 = Color3.fromRGB(255, 255, 255)
+TargetInfoDisplay.TextSize = 14
+TargetInfoDisplay.Font = Enum.Font.SourceSans
+TargetInfoDisplay.Text = "No Target Selected"
+TargetInfoDisplay.Parent = TargetSection
+
+-- Add UICorner for target info display
+local TargetInfoDisplayCorner = Instance.new("UICorner")
+TargetInfoDisplayCorner.CornerRadius = UDim.new(0, 6)
+TargetInfoDisplayCorner.Parent = TargetInfoDisplay
+
 local NearestPlayerButton = Instance.new("TextButton")
 NearestPlayerButton.Name = "NearestPlayerButton"
 NearestPlayerButton.Size = UDim2.new(0.9, 0, 0, 30)
-NearestPlayerButton.Position = UDim2.new(0.05, 0, 0, 35)
+NearestPlayerButton.Position = UDim2.new(0.05, 0, 0, 65)
 NearestPlayerButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
 NearestPlayerButton.BorderSizePixel = 0
 NearestPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -359,7 +414,6 @@ NearestPlayerButton.TextSize = 14
 NearestPlayerButton.Font = Enum.Font.SourceSansBold
 NearestPlayerButton.Text = "Select Nearest Player"
 NearestPlayerButton.Parent = TargetSection
-NearestPlayerButton.Position = UDim2.new(0.05, 0, 0, 35)
 
 -- Add UICorner for nearest player button
 local NearestPlayerCorner = Instance.new("UICorner")
@@ -369,7 +423,7 @@ NearestPlayerCorner.Parent = NearestPlayerButton
 local TargetDropdown = Instance.new("TextButton")
 TargetDropdown.Name = "TargetDropdown"
 TargetDropdown.Size = UDim2.new(0.6, 0, 0, 30)
-TargetDropdown.Position = UDim2.new(0.05, 0, 0, 75)
+TargetDropdown.Position = UDim2.new(0.05, 0, 0, 105)
 TargetDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 TargetDropdown.BorderSizePixel = 0
 TargetDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -386,7 +440,7 @@ TargetDropdownCorner.Parent = TargetDropdown
 local ReloadButton = Instance.new("TextButton")
 ReloadButton.Name = "ReloadButton"
 ReloadButton.Size = UDim2.new(0.25, 0, 0, 30)
-ReloadButton.Position = UDim2.new(0.7, 0, 0, 75)
+ReloadButton.Position = UDim2.new(0.7, 0, 0, 105)
 ReloadButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 ReloadButton.BorderSizePixel = 0
 ReloadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -400,10 +454,28 @@ local ReloadCorner = Instance.new("UICorner")
 ReloadCorner.CornerRadius = UDim.new(0, 6)
 ReloadCorner.Parent = ReloadButton
 
+-- View Target Button
+local ViewTargetButton = Instance.new("TextButton")
+ViewTargetButton.Name = "ViewTargetButton"
+ViewTargetButton.Size = UDim2.new(0.45, 0, 0, 35)
+ViewTargetButton.Position = UDim2.new(0.05, 0, 0, 145)
+ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+ViewTargetButton.BorderSizePixel = 0
+ViewTargetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ViewTargetButton.TextSize = 14
+ViewTargetButton.Font = Enum.Font.SourceSansBold
+ViewTargetButton.Text = "View Target: OFF"
+ViewTargetButton.Parent = TargetSection
+
+-- Add UICorner for view target button
+local ViewTargetCorner = Instance.new("UICorner")
+ViewTargetCorner.CornerRadius = UDim.new(0, 6)
+ViewTargetCorner.Parent = ViewTargetButton
+
 local FollowButton = Instance.new("TextButton")
 FollowButton.Name = "FollowButton"
 FollowButton.Size = UDim2.new(0.45, 0, 0, 35)
-FollowButton.Position = UDim2.new(0.05, 0, 0, 115)
+FollowButton.Position = UDim2.new(0.5, 0, 0, 145)
 FollowButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
 FollowButton.BorderSizePixel = 0
 FollowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -420,7 +492,7 @@ FollowCorner.Parent = FollowButton
 local NextButton = Instance.new("TextButton")
 NextButton.Name = "NextButton"
 NextButton.Size = UDim2.new(0.45, 0, 0, 35)
-NextButton.Position = UDim2.new(0.5, 0, 0, 115)
+NextButton.Position = UDim2.new(0.5, 0, 0, 190)
 NextButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 NextButton.BorderSizePixel = 0
 NextButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -434,11 +506,37 @@ local NextCorner = Instance.new("UICorner")
 NextCorner.CornerRadius = UDim.new(0, 6)
 NextCorner.Parent = NextButton
 
+-- Auto Disable on Target Death Checkbox
+local AutoDisableCheck = Instance.new("Frame")
+AutoDisableCheck.Name = "AutoDisableCheck"
+AutoDisableCheck.Size = UDim2.new(0.05, 0, 0, 20)
+AutoDisableCheck.Position = UDim2.new(0.05, 0, 0, 197.5)
+AutoDisableCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+AutoDisableCheck.BorderSizePixel = 0
+AutoDisableCheck.Parent = TargetSection
+
+-- Add UICorner for auto disable check
+local AutoDisableCheckCorner = Instance.new("UICorner")
+AutoDisableCheckCorner.CornerRadius = UDim.new(0, 4)
+AutoDisableCheckCorner.Parent = AutoDisableCheck
+
+local AutoDisableLabel = Instance.new("TextLabel")
+AutoDisableLabel.Name = "AutoDisableLabel"
+AutoDisableLabel.Size = UDim2.new(0.35, 0, 0, 35)
+AutoDisableLabel.Position = UDim2.new(0.15, 0, 0, 190)
+AutoDisableLabel.BackgroundTransparency = 1
+AutoDisableLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoDisableLabel.TextSize = 14
+AutoDisableLabel.Font = Enum.Font.SourceSans
+AutoDisableLabel.Text = "Auto Disable on Death"
+AutoDisableLabel.TextXAlignment = Enum.TextXAlignment.Left
+AutoDisableLabel.Parent = TargetSection
+
 -- Dropdown Frame for player selection
 local DropdownFrame = Instance.new("Frame")
 DropdownFrame.Name = "DropdownFrame"
 DropdownFrame.Size = UDim2.new(0.6, 0, 0, 200) -- Increased height for more players
-DropdownFrame.Position = UDim2.new(0.05, 0, 0, 105)
+DropdownFrame.Position = UDim2.new(0.05, 0, 0, 135)
 DropdownFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 DropdownFrame.BorderSizePixel = 0
 DropdownFrame.Visible = false
@@ -454,6 +552,8 @@ DropdownFrameCorner.Parent = DropdownFrame
 local PlayerScrollFrame = Instance.new("ScrollingFrame")
 PlayerScrollFrame.Name = "PlayerScrollFrame"
 PlayerScrollFrame.Size = UDim2.new(1, -10, 1, -10)
+PlayerScrollFrame.Position = UDim2.new(0, 5, 0, 5)
+PlayerScrollFrame.BackgroundTransparency = 1  -10, 1, -10)
 PlayerScrollFrame.Position = UDim2.new(0, 5, 0, 5)
 PlayerScrollFrame.BackgroundTransparency = 1
 PlayerScrollFrame.BorderSizePixel = 0
@@ -471,6 +571,119 @@ local PlayerListLayout = Instance.new("UIListLayout")
 PlayerListLayout.Padding = UDim.new(0, 5)
 PlayerListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 PlayerListLayout.Parent = PlayerScrollFrame
+
+-- Section: ESP Features
+local ESPSection = Instance.new("Frame")
+ESPSection.Name = "ESPSection"
+ESPSection.Size = UDim2.new(0.95, 0, 0, 150)
+ESPSection.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ESPSection.BorderSizePixel = 0
+ESPSection.Parent = ScrollFrame
+
+-- Add UICorner for ESP section
+local ESPSectionCorner = Instance.new("UICorner")
+ESPSectionCorner.CornerRadius = UDim.new(0, 8)
+ESPSectionCorner.Parent = ESPSection
+
+local ESPTitle = Instance.new("TextLabel")
+ESPTitle.Name = "ESPTitle"
+ESPTitle.Size = UDim2.new(1, 0, 0, 30)
+ESPTitle.BackgroundTransparency = 1
+ESPTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPTitle.TextSize = 16
+ESPTitle.Font = Enum.Font.SourceSansBold
+ESPTitle.Text = "ESP Features"
+ESPTitle.Parent = ESPSection
+
+-- ESP Name Button
+local ESPNameButton = Instance.new("TextButton")
+ESPNameButton.Name = "ESPNameButton"
+ESPNameButton.Size = UDim2.new(0.45, 0, 0, 35)
+ESPNameButton.Position = UDim2.new(0.05, 0, 0, 40)
+ESPNameButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+ESPNameButton.BorderSizePixel = 0
+ESPNameButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPNameButton.TextSize = 14
+ESPNameButton.Font = Enum.Font.SourceSansBold
+ESPNameButton.Text = "ESP Name: OFF"
+ESPNameButton.Parent = ESPSection
+
+-- Add UICorner for ESP name button
+local ESPNameCorner = Instance.new("UICorner")
+ESPNameCorner.CornerRadius = UDim.new(0, 6)
+ESPNameCorner.Parent = ESPNameButton
+
+-- Hitbox Button
+local HitboxButton = Instance.new("TextButton")
+HitboxButton.Name = "HitboxButton"
+HitboxButton.Size = UDim2.new(0.45, 0, 0, 35)
+HitboxButton.Position = UDim2.new(0.5, 0, 0, 40)
+HitboxButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+HitboxButton.BorderSizePixel = 0
+HitboxButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+HitboxButton.TextSize = 14
+HitboxButton.Font = Enum.Font.SourceSansBold
+HitboxButton.Text = "Hitbox: OFF"
+HitboxButton.Parent = ESPSection
+
+-- Add UICorner for hitbox button
+local HitboxCorner = Instance.new("UICorner")
+HitboxCorner.CornerRadius = UDim.new(0, 6)
+HitboxCorner.Parent = HitboxButton
+
+-- Glow Button
+local GlowButton = Instance.new("TextButton")
+GlowButton.Name = "GlowButton"
+GlowButton.Size = UDim2.new(0.45, 0, 0, 35)
+GlowButton.Position = UDim2.new(0.05, 0, 0, 85)
+GlowButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+GlowButton.BorderSizePixel = 0
+GlowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+GlowButton.TextSize = 14
+GlowButton.Font = Enum.Font.SourceSansBold
+GlowButton.Text = "Glow: OFF"
+GlowButton.Parent = ESPSection
+
+-- Add UICorner for glow button
+local GlowCorner = Instance.new("UICorner")
+GlowCorner.CornerRadius = UDim.new(0, 6)
+GlowCorner.Parent = GlowButton
+
+-- ESP HP Button
+local ESPHPButton = Instance.new("TextButton")
+ESPHPButton.Name = "ESPHPButton"
+ESPHPButton.Size = UDim2.new(0.45, 0, 0, 35)
+ESPHPButton.Position = UDim2.new(0.5, 0, 0, 85)
+ESPHPButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+ESPHPButton.BorderSizePixel = 0
+ESPHPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPHPButton.TextSize = 14
+ESPHPButton.Font = Enum.Font.SourceSansBold
+ESPHPButton.Text = "ESP HP: OFF"
+ESPHPButton.Parent = ESPSection
+
+-- Add UICorner for ESP HP button
+local ESPHPCorner = Instance.new("UICorner")
+ESPHPCorner.CornerRadius = UDim.new(0, 6)
+ESPHPCorner.Parent = ESPHPButton
+
+-- ESP Position Button
+local ESPPositionButton = Instance.new("TextButton")
+ESPPositionButton.Name = "ESPPositionButton"
+ESPPositionButton.Size = UDim2.new(0.9, 0, 0, 35)
+ESPPositionButton.Position = UDim2.new(0.05, 0, 0, 130)
+ESPPositionButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+ESPPositionButton.BorderSizePixel = 0
+ESPPositionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPPositionButton.TextSize = 14
+ESPPositionButton.Font = Enum.Font.SourceSansBold
+ESPPositionButton.Text = "ESP Position: OFF"
+ESPPositionButton.Parent = ESPSection
+
+-- Add UICorner for ESP position button
+local ESPPositionCorner = Instance.new("UICorner")
+ESPPositionCorner.CornerRadius = UDim.new(0, 6)
+ESPPositionCorner.Parent = ESPPositionButton
 
 -- Section: Distance Controls
 local DistanceSection = Instance.new("Frame")
@@ -764,11 +977,29 @@ local RunCorner = Instance.new("UICorner")
 RunCorner.CornerRadius = UDim.new(0, 6)
 RunCorner.Parent = RunButton
 
+-- Auto Run Button
+local AutoRunButton = Instance.new("TextButton")
+AutoRunButton.Name = "AutoRunButton"
+AutoRunButton.Size = UDim2.new(0.45, 0, 0, 35)
+AutoRunButton.Position = UDim2.new(0.5, 0, 0, 80)
+AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+AutoRunButton.BorderSizePixel = 0
+AutoRunButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoRunButton.TextSize = 14
+AutoRunButton.Font = Enum.Font.SourceSansBold
+AutoRunButton.Text = "Auto Run: OFF"
+AutoRunButton.Parent = FeaturesButtonSection
+
+-- Add UICorner for auto run button
+local AutoRunCorner = Instance.new("UICorner")
+AutoRunCorner.CornerRadius = UDim.new(0, 6)
+AutoRunCorner.Parent = AutoRunButton
+
 -- Auto Next Checkbox
 local AutoNextCheck = Instance.new("Frame")
 AutoNextCheck.Name = "AutoNextCheck"
 AutoNextCheck.Size = UDim2.new(0.05, 0, 0, 20)
-AutoNextCheck.Position = UDim2.new(0.5, 0, 0, 87.5)
+AutoNextCheck.Position = UDim2.new(0.05, 0, 0, 132.5)
 AutoNextCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 AutoNextCheck.BorderSizePixel = 0
 AutoNextCheck.Parent = FeaturesButtonSection
@@ -781,7 +1012,7 @@ AutoNextCheckCorner.Parent = AutoNextCheck
 local AutoNextLabel = Instance.new("TextLabel")
 AutoNextLabel.Name = "AutoNextLabel"
 AutoNextLabel.Size = UDim2.new(0.35, 0, 0, 35)
-AutoNextLabel.Position = UDim2.new(0.6, 0, 0, 80)
+AutoNextLabel.Position = UDim2.new(0.15, 0, 0, 125)
 AutoNextLabel.BackgroundTransparency = 1
 AutoNextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 AutoNextLabel.TextSize = 14
@@ -794,7 +1025,7 @@ AutoNextLabel.Parent = FeaturesButtonSection
 local AutoPlatformCheck = Instance.new("Frame")
 AutoPlatformCheck.Name = "AutoPlatformCheck"
 AutoPlatformCheck.Size = UDim2.new(0.05, 0, 0, 20)
-AutoPlatformCheck.Position = UDim2.new(0.05, 0, 0, 132.5)
+AutoPlatformCheck.Position = UDim2.new(0.5, 0, 0, 132.5)
 AutoPlatformCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 AutoPlatformCheck.BorderSizePixel = 0
 AutoPlatformCheck.Parent = FeaturesButtonSection
@@ -807,7 +1038,7 @@ AutoPlatformCheckCorner.Parent = AutoPlatformCheck
 local AutoPlatformLabel = Instance.new("TextLabel")
 AutoPlatformLabel.Name = "AutoPlatformLabel"
 AutoPlatformLabel.Size = UDim2.new(0.35, 0, 0, 35)
-AutoPlatformLabel.Position = UDim2.new(0.15, 0, 0, 125)
+AutoPlatformLabel.Position = UDim2.new(0.6, 0, 0, 125)
 AutoPlatformLabel.BackgroundTransparency = 1
 AutoPlatformLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 AutoPlatformLabel.TextSize = 14
@@ -815,32 +1046,6 @@ AutoPlatformLabel.Font = Enum.Font.SourceSans
 AutoPlatformLabel.Text = "Auto Platform"
 AutoPlatformLabel.TextXAlignment = Enum.TextXAlignment.Left
 AutoPlatformLabel.Parent = FeaturesButtonSection
-
--- Run Away Checkbox
-local RunAwayCheck = Instance.new("Frame")
-RunAwayCheck.Name = "RunAwayCheck"
-RunAwayCheck.Size = UDim2.new(0.05, 0, 0, 20)
-RunAwayCheck.Position = UDim2.new(0.5, 0, 0, 132.5)
-RunAwayCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-RunAwayCheck.BorderSizePixel = 0
-RunAwayCheck.Parent = FeaturesButtonSection
-
--- Add UICorner for run away check
-local RunAwayCheckCorner = Instance.new("UICorner")
-RunAwayCheckCorner.CornerRadius = UDim.new(0, 4)
-RunAwayCheckCorner.Parent = RunAwayCheck
-
-local RunAwayLabel = Instance.new("TextLabel")
-RunAwayLabel.Name = "RunAwayLabel"
-RunAwayLabel.Size = UDim2.new(0.35, 0, 0, 35)
-RunAwayLabel.Position = UDim2.new(0.6, 0, 0, 125)
-RunAwayLabel.BackgroundTransparency = 1
-RunAwayLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-RunAwayLabel.TextSize = 14
-RunAwayLabel.Font = Enum.Font.SourceSans
-RunAwayLabel.Text = "Run on Detect"
-RunAwayLabel.TextXAlignment = Enum.TextXAlignment.Left
-RunAwayLabel.Parent = FeaturesButtonSection
 
 -- Expiration Info
 local ExpirationSection = Instance.new("Frame")
@@ -902,24 +1107,14 @@ local DeleteCorner = Instance.new("UICorner")
 DeleteCorner.CornerRadius = UDim.new(0, 8)
 DeleteCorner.Parent = DeleteButton
 
--- Icon for minimized state (randomly selected)
+-- Icon for minimized state
 local MinimizedIcon = Instance.new("ImageButton")
 MinimizedIcon.Name = "MinimizedIcon"
 MinimizedIcon.Size = UDim2.new(0, 50, 0, 50)
 MinimizedIcon.Position = UDim2.new(0, 10, 0, 10)
 MinimizedIcon.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 MinimizedIcon.BorderSizePixel = 0
-
--- Randomly select one of three images (1/3 probability each)
-local randomChoice = math.random(1, 3)
-if randomChoice == 1 then
-    MinimizedIcon.Image = "rbxassetid://6034684949" -- Original flame icon
-elseif randomChoice == 2 then
-    MinimizedIcon.Image = "rbxassetid://11162773217" -- Anime girl icon
-else
-    MinimizedIcon.Image = "rbxassetid://7734010488" -- Dragon icon
-end
-
+MinimizedIcon.Image = "rbxassetid://6034684949" -- Keep original flame icon
 MinimizedIcon.Visible = false
 MinimizedIcon.Active = true -- Enable interaction
 MinimizedIcon.Draggable = true -- Enable built-in dragging
@@ -1182,6 +1377,275 @@ local ApplySettingsCorner = Instance.new("UICorner")
 ApplySettingsCorner.CornerRadius = UDim.new(0, 6)
 ApplySettingsCorner.Parent = ApplySettingsButton
 
+-- Position SubMenu Frame (Hidden by default)
+local PositionSubMenuFrame = Instance.new("Frame")
+PositionSubMenuFrame.Name = "PositionSubMenuFrame"
+PositionSubMenuFrame.Size = UDim2.new(0, 250, 0, 300)
+PositionSubMenuFrame.Position = UDim2.new(0.5, -325, 0.5, -150)
+PositionSubMenuFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PositionSubMenuFrame.BorderSizePixel = 0
+PositionSubMenuFrame.Visible = false
+PositionSubMenuFrame.Active = true
+PositionSubMenuFrame.Draggable = true -- Enable built-in dragging
+PositionSubMenuFrame.Parent = ScreenGui
+
+-- Add UICorner for position submenu frame
+local PositionSubMenuCorner = Instance.new("UICorner")
+PositionSubMenuCorner.CornerRadius = UDim.new(0, 8)
+PositionSubMenuCorner.Parent = PositionSubMenuFrame
+
+-- Add UIStroke for position submenu frame
+local PositionSubMenuStroke = Instance.new("UIStroke")
+PositionSubMenuStroke.Thickness = 2
+PositionSubMenuStroke.Color = Color3.fromRGB(255, 0, 0)
+PositionSubMenuStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+PositionSubMenuStroke.Parent = PositionSubMenuFrame
+
+-- Position SubMenu Title Bar
+local PositionSubMenuTitleBar = Instance.new("Frame")
+PositionSubMenuTitleBar.Name = "PositionSubMenuTitleBar"
+PositionSubMenuTitleBar.Size = UDim2.new(1, 0, 0, 30)
+PositionSubMenuTitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+PositionSubMenuTitleBar.BorderSizePixel = 0
+PositionSubMenuTitleBar.Parent = PositionSubMenuFrame
+
+-- Add UICorner for position submenu title bar
+local PositionSubMenuTitleCorner = Instance.new("UICorner")
+PositionSubMenuTitleCorner.CornerRadius = UDim.new(0, 8)
+PositionSubMenuTitleCorner.Parent = PositionSubMenuTitleBar
+
+-- Position SubMenu Title
+local PositionSubMenuTitle = Instance.new("TextLabel")
+PositionSubMenuTitle.Name = "PositionSubMenuTitle"
+PositionSubMenuTitle.Size = UDim2.new(1, -40, 1, 0)
+PositionSubMenuTitle.Position = UDim2.new(0, 10, 0, 0)
+PositionSubMenuTitle.BackgroundTransparency = 1
+PositionSubMenuTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+PositionSubMenuTitle.TextSize = 16
+PositionSubMenuTitle.Font = Enum.Font.SourceSansBold
+PositionSubMenuTitle.Text = "Position Follow Settings"
+PositionSubMenuTitle.TextXAlignment = Enum.TextXAlignment.Left
+PositionSubMenuTitle.Parent = PositionSubMenuTitleBar
+
+-- Position SubMenu Close Button
+local PositionSubMenuCloseButton = Instance.new("TextButton")
+PositionSubMenuCloseButton.Name = "PositionSubMenuCloseButton"
+PositionSubMenuCloseButton.Size = UDim2.new(0, 30, 0, 30)
+PositionSubMenuCloseButton.Position = UDim2.new(1, -30, 0, 0)
+PositionSubMenuCloseButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+PositionSubMenuCloseButton.BorderSizePixel = 0
+PositionSubMenuCloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+PositionSubMenuCloseButton.TextSize = 16
+PositionSubMenuCloseButton.Font = Enum.Font.SourceSansBold
+PositionSubMenuCloseButton.Text = "X"
+PositionSubMenuCloseButton.Parent = PositionSubMenuTitleBar
+
+-- Add UICorner for position submenu close button
+local PositionSubMenuCloseCorner = Instance.new("UICorner")
+PositionSubMenuCloseCorner.CornerRadius = UDim.new(0, 8)
+PositionSubMenuCloseCorner.Parent = PositionSubMenuCloseButton
+
+-- Position SubMenu Content
+local PositionSubMenuContent = Instance.new("Frame")
+PositionSubMenuContent.Name = "PositionSubMenuContent"
+PositionSubMenuContent.Size = UDim2.new(1, 0, 1, -30)
+PositionSubMenuContent.Position = UDim2.new(0, 0, 0, 30)
+PositionSubMenuContent.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PositionSubMenuContent.BorderSizePixel = 0
+PositionSubMenuContent.Parent = PositionSubMenuFrame
+
+-- Position Follow Section
+local PositionFollowLabel = Instance.new("TextLabel")
+PositionFollowLabel.Name = "PositionFollowLabel"
+PositionFollowLabel.Size = UDim2.new(1, 0, 0, 30)
+PositionFollowLabel.Position = UDim2.new(0, 0, 0, 10)
+PositionFollowLabel.BackgroundTransparency = 1
+PositionFollowLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+PositionFollowLabel.TextSize = 16
+PositionFollowLabel.Font = Enum.Font.SourceSansBold
+PositionFollowLabel.Text = "Position Follow"
+PositionFollowLabel.Parent = PositionSubMenuContent
+
+-- X Position Input
+local XPositionLabel = Instance.new("TextLabel")
+XPositionLabel.Name = "XPositionLabel"
+XPositionLabel.Size = UDim2.new(0.2, 0, 0, 30)
+XPositionLabel.Position = UDim2.new(0.05, 0, 0, 50)
+XPositionLabel.BackgroundTransparency = 1
+XPositionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+XPositionLabel.TextSize = 14
+XPositionLabel.Font = Enum.Font.SourceSans
+XPositionLabel.Text = "X:"
+XPositionLabel.TextXAlignment = Enum.TextXAlignment.Left
+XPositionLabel.Parent = PositionSubMenuContent
+
+local XPositionInput = Instance.new("TextBox")
+XPositionInput.Name = "XPositionInput"
+XPositionInput.Size = UDim2.new(0.7, 0, 0, 30)
+XPositionInput.Position = UDim2.new(0.25, 0, 0, 50)
+XPositionInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+XPositionInput.BorderSizePixel = 0
+XPositionInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+XPositionInput.TextSize = 14
+XPositionInput.Font = Enum.Font.SourceSans
+XPositionInput.Text = "0"
+XPositionInput.Parent = PositionSubMenuContent
+
+-- Add UICorner for X position input
+local XPositionInputCorner = Instance.new("UICorner")
+XPositionInputCorner.CornerRadius = UDim.new(0, 6)
+XPositionInputCorner.Parent = XPositionInput
+
+-- Y Position Input
+local YPositionLabel = Instance.new("TextLabel")
+YPositionLabel.Name = "YPositionLabel"
+YPositionLabel.Size = UDim2.new(0.2, 0, 0, 30)
+YPositionLabel.Position = UDim2.new(0.05, 0, 0, 90)
+YPositionLabel.BackgroundTransparency = 1
+YPositionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+YPositionLabel.TextSize = 14
+YPositionLabel.Font = Enum.Font.SourceSans
+YPositionLabel.Text = "Y:"
+YPositionLabel.TextXAlignment = Enum.TextXAlignment.Left
+YPositionLabel.Parent = PositionSubMenuContent
+
+local YPositionInput = Instance.new("TextBox")
+YPositionInput.Name = "YPositionInput"
+YPositionInput.Size = UDim2.new(0.7, 0, 0, 30)
+YPositionInput.Position = UDim2.new(0.25, 0, 0, 90)
+YPositionInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+YPositionInput.BorderSizePixel = 0
+YPositionInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+YPositionInput.TextSize = 14
+YPositionInput.Font = Enum.Font.SourceSans
+YPositionInput.Text = "0"
+YPositionInput.Parent = PositionSubMenuContent
+
+-- Add UICorner for Y position input
+local YPositionInputCorner = Instance.new("UICorner")
+YPositionInputCorner.CornerRadius = UDim.new(0, 6)
+YPositionInputCorner.Parent = YPositionInput
+
+-- Z Position Input
+local ZPositionLabel = Instance.new("TextLabel")
+ZPositionLabel.Name = "ZPositionLabel"
+ZPositionLabel.Size = UDim2.new(0.2, 0, 0, 30)
+ZPositionLabel.Position = UDim2.new(0.05, 0, 0, 130)
+ZPositionLabel.BackgroundTransparency = 1
+ZPositionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ZPositionLabel.TextSize = 14
+ZPositionLabel.Font = Enum.Font.SourceSans
+ZPositionLabel.Text = "Z:"
+ZPositionLabel.TextXAlignment = Enum.TextXAlignment.Left
+ZPositionLabel.Parent = PositionSubMenuContent
+
+local ZPositionInput = Instance.new("TextBox")
+ZPositionInput.Name = "ZPositionInput"
+ZPositionInput.Size = UDim2.new(0.7, 0, 0, 30)
+ZPositionInput.Position = UDim2.new(0.25, 0, 0, 130)
+ZPositionInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ZPositionInput.BorderSizePixel = 0
+ZPositionInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+ZPositionInput.TextSize = 14
+ZPositionInput.Font = Enum.Font.SourceSans
+ZPositionInput.Text = "0"
+ZPositionInput.Parent = PositionSubMenuContent
+
+-- Add UICorner for Z position input
+local ZPositionInputCorner = Instance.new("UICorner")
+ZPositionInputCorner.CornerRadius = UDim.new(0, 6)
+ZPositionInputCorner.Parent = ZPositionInput
+
+-- Follow Position Button
+local FollowPositionButton = Instance.new("TextButton")
+FollowPositionButton.Name = "FollowPositionButton"
+FollowPositionButton.Size = UDim2.new(0.9, 0, 0, 35)
+FollowPositionButton.Position = UDim2.new(0.05, 0, 0, 170)
+FollowPositionButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+FollowPositionButton.BorderSizePixel = 0
+FollowPositionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FollowPositionButton.TextSize = 14
+FollowPositionButton.Font = Enum.Font.SourceSansBold
+FollowPositionButton.Text = "Follow Position: OFF"
+FollowPositionButton.Parent = PositionSubMenuContent
+
+-- Add UICorner for follow position button
+local FollowPositionCorner = Instance.new("UICorner")
+FollowPositionCorner.CornerRadius = UDim.new(0, 6)
+FollowPositionCorner.Parent = FollowPositionButton
+
+-- Auto Run Settings Section
+local AutoRunSettingsLabel = Instance.new("TextLabel")
+AutoRunSettingsLabel.Name = "AutoRunSettingsLabel"
+AutoRunSettingsLabel.Size = UDim2.new(1, 0, 0, 30)
+AutoRunSettingsLabel.Position = UDim2.new(0, 0, 0, 215)
+AutoRunSettingsLabel.BackgroundTransparency = 1
+AutoRunSettingsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoRunSettingsLabel.TextSize = 16
+AutoRunSettingsLabel.Font = Enum.Font.SourceSansBold
+AutoRunSettingsLabel.Text = "Auto Run Settings"
+AutoRunSettingsLabel.Parent = PositionSubMenuContent
+
+-- Low Health Threshold Input
+local LowHealthLabel = Instance.new("TextLabel")
+LowHealthLabel.Name = "LowHealthLabel"
+LowHealthLabel.Size = UDim2.new(0.5, 0, 0, 30)
+LowHealthLabel.Position = UDim2.new(0.05, 0, 0, 245)
+LowHealthLabel.BackgroundTransparency = 1
+LowHealthLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+LowHealthLabel.TextSize = 14
+LowHealthLabel.Font = Enum.Font.SourceSans
+LowHealthLabel.Text = "Low Health %:"
+LowHealthLabel.TextXAlignment = Enum.TextXAlignment.Left
+LowHealthLabel.Parent = PositionSubMenuContent
+
+local LowHealthInput = Instance.new("TextBox")
+LowHealthInput.Name = "LowHealthInput"
+LowHealthInput.Size = UDim2.new(0.3, 0, 0, 30)
+LowHealthInput.Position = UDim2.new(0.65, 0, 0, 245)
+LowHealthInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+LowHealthInput.BorderSizePixel = 0
+LowHealthInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+LowHealthInput.TextSize = 14
+LowHealthInput.Font = Enum.Font.SourceSans
+LowHealthInput.Text = "50"
+LowHealthInput.Parent = PositionSubMenuContent
+
+-- Add UICorner for low health input
+local LowHealthInputCorner = Instance.new("UICorner")
+LowHealthInputCorner.CornerRadius = UDim.new(0, 6)
+LowHealthInputCorner.Parent = LowHealthInput
+
+-- High Health Threshold Input
+local HighHealthLabel = Instance.new("TextLabel")
+HighHealthLabel.Name = "HighHealthLabel"
+HighHealthLabel.Size = UDim2.new(0.5, 0, 0, 30)
+HighHealthLabel.Position = UDim2.new(0.05, 0, 0, 285)
+HighHealthLabel.BackgroundTransparency = 1
+HighHealthLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+HighHealthLabel.TextSize = 14
+HighHealthLabel.Font = Enum.Font.SourceSans
+HighHealthLabel.Text = "High Health %:"
+HighHealthLabel.TextXAlignment = Enum.TextXAlignment.Left
+HighHealthLabel.Parent = PositionSubMenuContent
+
+local HighHealthInput = Instance.new("TextBox")
+HighHealthInput.Name = "HighHealthInput"
+HighHealthInput.Size = UDim2.new(0.3, 0, 0, 30)
+HighHealthInput.Position = UDim2.new(0.65, 0, 0, 285)
+HighHealthInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+HighHealthInput.BorderSizePixel = 0
+HighHealthInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+HighHealthInput.TextSize = 14
+HighHealthInput.Font = Enum.Font.SourceSans
+HighHealthInput.Text = "51"
+HighHealthInput.Parent = PositionSubMenuContent
+
+-- Add UICorner for high health input
+local HighHealthInputCorner = Instance.new("UICorner")
+HighHealthInputCorner.CornerRadius = UDim.new(0, 6)
+HighHealthInputCorner.Parent = HighHealthInput
+
 -- Functions
 local function CheckExpiration()
 local currentTime = os.time()
@@ -1236,10 +1700,12 @@ spawn(function()
         local mainTween = TweenService:Create(MainStroke, tweenInfo, {Color = targetColor})
         local iconTween = TweenService:Create(MinimizedIconStroke, tweenInfo, {Color = targetColor})
         local subMenuTween = TweenService:Create(SubMenuStroke, tweenInfo, {Color = targetColor})
+        local positionSubMenuTween = TweenService:Create(PositionSubMenuStroke, tweenInfo, {Color = targetColor})
         
         mainTween:Play()
         iconTween:Play()
         subMenuTween:Play()
+        positionSubMenuTween:Play()
         
         index = (index % #colors) + 1
         wait(0.5)
@@ -1281,10 +1747,32 @@ for _, player in pairs(Players:GetPlayers()) do
         playerButtonCorner.CornerRadius = UDim.new(0, 4)
         playerButtonCorner.Parent = playerButton
         
+        -- Add UIStroke for highlighting selected player
+        local playerButtonStroke = Instance.new("UIStroke")
+        playerButtonStroke.Thickness = 2
+        playerButtonStroke.Color = Color3.fromRGB(0, 255, 0)
+        playerButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        playerButtonStroke.Enabled = false
+        playerButtonStroke.Parent = playerButton
+        
         playerButton.MouseButton1Click:Connect(function()
             TargetPlayer = player
             TargetDropdown.Text = player.Name
             DropdownFrame.Visible = false
+            UpdateTargetInfo()
+            
+            -- Highlight selected player button
+            for _, btn in pairs(PlayerScrollFrame:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    if btn.Name == player.Name .. "Button" then
+                        btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                        btn:FindFirstChildOfClass("UIStroke").Enabled = true
+                    else
+                        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                        btn:FindFirstChildOfClass("UIStroke").Enabled = false
+                    end
+                end
+            end
         end)
     end
 end
@@ -1292,6 +1780,28 @@ end
 -- Update canvas size based on number of players
 local contentHeight = #PlayerList * 35
 PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
+end
+
+-- Update target info display
+local function UpdateTargetInfo()
+    if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChild("Humanoid") then
+        local humanoid = TargetPlayer.Character:FindFirstChild("Humanoid")
+        local rootPart = TargetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and rootPart then
+            local health = math.floor(humanoid.Health)
+            local maxHealth = math.floor(humanoid.MaxHealth)
+            local healthPercent = math.floor((health / maxHealth) * 100)
+            local position = rootPart.Position
+            local posStr = string.format("%.1f, %.1f, %.1f", position.X, position.Y, position.Z)
+            
+            TargetInfoDisplay.Text = TargetPlayer.Name .. " | HP: " .. health .. "/" .. maxHealth .. " (" .. healthPercent .. "%)"
+        else
+            TargetInfoDisplay.Text = TargetPlayer.Name .. " | No health data"
+        end
+    else
+        TargetInfoDisplay.Text = "No Target Selected"
+    end
 end
 
 -- Toggle noclip function
@@ -1414,6 +1924,7 @@ if FollowingTarget then
                     if player ~= TargetPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
                         TargetPlayer = player
                         TargetDropdown.Text = player.Name
+                        UpdateTargetInfo()
                         foundNext = true
                         break
                     end
@@ -1451,6 +1962,41 @@ else
 end
 end
 
+-- Follow position function
+local function ToggleFollowPosition()
+FollowingPosition = not FollowingPosition
+
+if FollowingPosition then
+    -- Get position values
+    local xPos = tonumber(XPositionInput.Text) or 0
+    local yPos = tonumber(YPositionInput.Text) or 0
+    local zPos = tonumber(ZPositionInput.Text) or 0
+    
+    FollowPosition = Vector3.new(xPos, yPos, zPos)
+    FollowPositionButton.Text = "Follow Position: ON"
+    FollowPositionButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Follow position loop
+    local followPositionConnection = RunService.Heartbeat:Connect(function()
+        if FollowingPosition and Character and Character:FindFirstChild("HumanoidRootPart") then
+            HumanoidRootPart.CFrame = CFrame.new(FollowPosition)
+        end
+    end)
+    
+    -- Store connection
+    FollowPositionButton.FollowPositionConnection = followPositionConnection
+else
+    FollowPositionButton.Text = "Follow Position: OFF"
+    FollowPositionButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Disconnect follow position loop
+    if FollowPositionButton.FollowPositionConnection then
+        FollowPositionButton.FollowPositionConnection:Disconnect()
+        FollowPositionButton.FollowPositionConnection = nil
+    end
+end
+end
+
 -- Run away function
 local function ToggleRunAway()
 RunningAway = not RunningAway
@@ -1458,7 +2004,6 @@ RunningAway = not RunningAway
 if RunningAway then
     RunButton.Text = "Run Away: ON"
     RunButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-    RunAwayCheck.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
     
     -- Get detection radius
     DetectionRadius = tonumber(RadiusInput.Text) or 20
@@ -1490,12 +2035,87 @@ if RunningAway then
 else
     RunButton.Text = "Run Away: OFF"
     RunButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
-    RunAwayCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     
     -- Disconnect run away loop
     if RunButton.RunConnection then
         RunButton.RunConnection:Disconnect()
         RunButton.RunConnection = nil
+    end
+end
+end
+
+-- Auto Run function
+local function ToggleAutoRun()
+AutoRunEnabled = not AutoRunEnabled
+
+if AutoRunEnabled then
+    AutoRunButton.Text = "Auto Run: ON"
+    AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Get health thresholds
+    LowHealthThreshold = tonumber(LowHealthInput.Text) or 50
+    HighHealthThreshold = tonumber(HighHealthInput.Text) or 51
+    
+    -- Auto run loop
+    local autoRunConnection = RunService.Heartbeat:Connect(function()
+        if AutoRunEnabled and Character and Character:FindFirstChild("HumanoidRootPart") and Character:FindFirstChild("Humanoid") then
+            local humanoid = Character:FindFirstChild("Humanoid")
+            local healthPercent = (humanoid.Health / humanoid.MaxHealth) * 100
+            
+            if healthPercent <= LowHealthThreshold and not PositionBeforeAutoRun then
+                -- Save current position before running
+                PositionBeforeAutoRun = HumanoidRootPart.CFrame
+                
+                -- Run upwards
+                local runUpwardsConnection = RunService.Heartbeat:Connect(function()
+                    if AutoRunEnabled and Character and Character:FindFirstChild("HumanoidRootPart") then
+                        local currentPos = HumanoidRootPart.Position
+                        HumanoidRootPart.CFrame = CFrame.new(currentPos.X, currentPos.Y + AutoRunHeight, currentPos.Z)
+                    else
+                        if runUpwardsConnection then
+                            runUpwardsConnection:Disconnect()
+                        end
+                    end
+                end)
+                
+                -- Store connection
+                AutoRunButton.RunUpwardsConnection = runUpwardsConnection
+            elseif healthPercent >= HighHealthThreshold and PositionBeforeAutoRun then
+                -- Return to saved position
+                HumanoidRootPart.CFrame = PositionBeforeAutoRun
+                PositionBeforeAutoRun = nil
+                
+                -- Disconnect run upwards loop
+                if AutoRunButton.RunUpwardsConnection then
+                    AutoRunButton.RunUpwardsConnection:Disconnect()
+                    AutoRunButton.RunUpwardsConnection = nil
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    AutoRunButton.AutoRunConnection = autoRunConnection
+else
+    AutoRunButton.Text = "Auto Run: OFF"
+    AutoRunButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Disconnect auto run loop
+    if AutoRunButton.AutoRunConnection then
+        AutoRunButton.AutoRunConnection:Disconnect()
+        AutoRunButton.AutoRunConnection = nil
+    end
+    
+    -- Disconnect run upwards loop
+    if AutoRunButton.RunUpwardsConnection then
+        AutoRunButton.RunUpwardsConnection:Disconnect()
+        AutoRunButton.RunUpwardsConnection = nil
+    end
+    
+    -- Reset position if needed
+    if PositionBeforeAutoRun and Character and Character:FindFirstChild("HumanoidRootPart") then
+        HumanoidRootPart.CFrame = PositionBeforeAutoRun
+        PositionBeforeAutoRun = nil
     end
 end
 end
@@ -1512,6 +2132,17 @@ else
     NextButton.Text = "Auto Next: OFF"
     NextButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     AutoNextCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+end
+end
+
+-- Toggle auto disable on target death
+local function ToggleAutoDisable()
+AutoDisableOnTargetDeath = not AutoDisableOnTargetDeath
+
+if AutoDisableOnTargetDeath then
+    AutoDisableCheck.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+else
+    AutoDisableCheck.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 end
 end
 
@@ -1666,6 +2297,554 @@ SubMenuVisible = not SubMenuVisible
 SubMenuFrame.Visible = SubMenuVisible
 end
 
+-- Toggle position submenu
+local function TogglePositionSubMenu()
+PositionSubMenuVisible = not PositionSubMenuVisible
+PositionSubMenuFrame.Visible = PositionSubMenuVisible
+end
+
+-- Find nearest player
+local function FindNearestPlayer()
+local nearestPlayer = nil
+local shortestDistance = math.huge
+
+if Character and Character:FindFirstChild("HumanoidRootPart") then
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local distance = (HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            
+            if distance < shortestDistance then
+                shortestDistance = distance
+                nearestPlayer = player
+            end
+        end
+    end
+end
+
+return nearestPlayer
+end
+
+-- Toggle view target
+local function ToggleViewTarget()
+ViewingTarget = not ViewingTarget
+
+if ViewingTarget then
+    if not TargetPlayer or not TargetPlayer.Character then
+        ViewingTarget = false
+        return
+    end
+    
+    ViewTargetButton.Text = "View Target: ON"
+    ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- View target loop
+    local viewConnection = RunService.RenderStepped:Connect(function()
+        if ViewingTarget and TargetPlayer and TargetPlayer.Character then
+            local targetHead = TargetPlayer.Character:FindFirstChild("Head")
+            
+            if targetHead then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetHead.Position)
+            end
+            
+            -- Check if target is dead and auto disable is enabled
+            if AutoDisableOnTargetDeath and TargetPlayer.Character:FindFirstChild("Humanoid") and TargetPlayer.Character.Humanoid.Health <= 0 then
+                ViewingTarget = false
+                ViewTargetButton.Text = "View Target: OFF"
+                ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+                
+                if viewConnection then
+                    viewConnection:Disconnect()
+                    viewConnection = nil
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    ViewTargetButton.ViewConnection = viewConnection
+else
+    ViewTargetButton.Text = "View Target: OFF"
+    ViewTargetButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Disconnect view target loop
+    if ViewTargetButton.ViewConnection then
+        ViewTargetButton.ViewConnection:Disconnect()
+        ViewTargetButton.ViewConnection = nil
+    end
+    
+    -- Reset camera
+    Camera.CameraType = Enum.CameraType.Custom
+end
+end
+
+-- Toggle ESP features
+local function ToggleESP()
+ESPEnabled = not ESPEnabled
+
+if ESPEnabled then
+    ESPNameButton.Text = "ESP Name: ON"
+    ESPNameButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Create ESP for all players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            -- Create ESP name label
+            local nameLabel = Instance.new("BillboardGui")
+            nameLabel.Name = player.Name .. "_ESPName"
+            nameLabel.Size = UDim2.new(0, 200, 0, 50)
+            nameLabel.StudsOffset = Vector3.new(0, 3, 0)
+            nameLabel.AlwaysOnTop = true
+            nameLabel.LightInfluence = 0
+            
+            local nameText = Instance.new("TextLabel")
+            nameText.Size = UDim2.new(1, 0, 1, 0)
+            nameText.BackgroundTransparency = 1
+            nameText.TextColor3 = Color3.fromRGB(255, 255, 255)
+            nameText.TextStrokeTransparency = 0
+            nameText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            nameText.TextSize = 14
+            nameText.Font = Enum.Font.SourceSansBold
+            nameText.Text = player.Name
+            nameText.Parent = nameLabel
+            
+            if player.Character and player.Character:FindFirstChild("Head") then
+                nameLabel.Adornee = player.Character.Head
+                nameLabel.Parent = player.Character.Head
+            end
+            
+            -- Store ESP label
+            if not ESPNameButton.ESPLabels then
+                ESPNameButton.ESPLabels = {}
+            end
+            ESPNameButton.ESPLabels[player.Name] = nameLabel
+        end
+    end
+    
+    -- ESP update loop
+    local espUpdateConnection = RunService.Heartbeat:Connect(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local espLabel = ESPNameButton.ESPLabels and ESPNameButton.ESPLabels[player.Name]
+                
+                if espLabel and player.Character and player.Character:FindFirstChild("Head") then
+                    espLabel.Adornee = player.Character.Head
+                    espLabel.Parent = player.Character.Head
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    ESPNameButton.ESPUpdateConnection = espUpdateConnection
+else
+    ESPNameButton.Text = "ESP Name: OFF"
+    ESPNameButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Remove ESP labels
+    if ESPNameButton.ESPLabels then
+        for _, label in pairs(ESPNameButton.ESPLabels) do
+            if label and label.Parent then
+                label:Destroy()
+            end
+        end
+        ESPNameButton.ESPLabels = {}
+    end
+    
+    -- Disconnect ESP update loop
+    if ESPNameButton.ESPUpdateConnection then
+        ESPNameButton.ESPUpdateConnection:Disconnect()
+        ESPNameButton.ESPUpdateConnection = nil
+    end
+end
+end
+
+-- Toggle hitbox
+local function ToggleHitbox()
+HitboxEnabled = not HitboxEnabled
+
+if HitboxEnabled then
+    HitboxButton.Text = "Hitbox: ON"
+    HitboxButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Create hitbox for all players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            for _, part in pairs(player.Character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    -- Create hitbox box
+                    local hitbox = Instance.new("BoxHandleAdornment")
+                    hitbox.Name = part.Name .. "_Hitbox"
+                    hitbox.Size = part.Size
+                    hitbox.Adornee = part
+                    hitbox.AlwaysOnTop = true
+                    hitbox.ZIndex = 10
+                    hitbox.Transparency = 0.7
+                    hitbox.Color3 = Color3.fromRGB(255, 0, 0)
+                    hitbox.Parent = part
+                    
+                    -- Store hitbox
+                    if not HitboxButton.Hitboxes then
+                        HitboxButton.Hitboxes = {}
+                    end
+                    if not HitboxButton.Hitboxes[player.Name] then
+                        HitboxButton.Hitboxes[player.Name] = {}
+                    end
+                    table.insert(HitboxButton.Hitboxes[player.Name], hitbox)
+                end
+            end
+        end
+    end
+    
+    -- Hitbox update loop
+    local hitboxUpdateConnection = RunService.Heartbeat:Connect(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                -- Remove old hitboxes
+                if HitboxButton.Hitboxes and HitboxButton.Hitboxes[player.Name] then
+                    for _, hitbox in pairs(HitboxButton.Hitboxes[player.Name]) do
+                        if hitbox and hitbox.Parent then
+                            hitbox:Destroy()
+                        end
+                    end
+                    HitboxButton.Hitboxes[player.Name] = {}
+                end
+                
+                -- Create new hitboxes
+                for _, part in pairs(player.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        local hitbox = Instance.new("BoxHandleAdornment")
+                        hitbox.Name = part.Name .. "_Hitbox"
+                        hitbox.Size = part.Size
+                        hitbox.Adornee = part
+                        hitbox.AlwaysOnTop = true
+                        hitbox.ZIndex = 10
+                        hitbox.Transparency = 0.7
+                        hitbox.Color3 = Color3.fromRGB(255, 0, 0)
+                        hitbox.Parent = part
+                        
+                        if not HitboxButton.Hitboxes then
+                            HitboxButton.Hitboxes = {}
+                        end
+                        if not HitboxButton.Hitboxes[player.Name] then
+                            HitboxButton.Hitboxes[player.Name] = {}
+                        end
+                        table.insert(HitboxButton.Hitboxes[player.Name], hitbox)
+                    end
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    HitboxButton.HitboxUpdateConnection = hitboxUpdateConnection
+else
+    HitboxButton.Text = "Hitbox: OFF"
+    HitboxButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Remove hitboxes
+    if HitboxButton.Hitboxes then
+        for _, playerHitboxes in pairs(HitboxButton.Hitboxes) do
+            for _, hitbox in pairs(playerHitboxes) do
+                if hitbox and hitbox.Parent then
+                    hitbox:Destroy()
+                end
+            end
+        end
+        HitboxButton.Hitboxes = {}
+    end
+    
+    -- Disconnect hitbox update loop
+    if HitboxButton.HitboxUpdateConnection then
+        HitboxButton.HitboxUpdateConnection:Disconnect()
+        HitboxButton.HitboxUpdateConnection = nil
+    end
+end
+end
+
+-- Toggle glow
+local function ToggleGlow()
+GlowEnabled = not GlowEnabled
+
+if GlowEnabled then
+    GlowButton.Text = "Glow: ON"
+    GlowButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Create glow for all players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            for _, part in pairs(player.Character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    -- Create glow
+                    local glow = Instance.new("SurfaceLight")
+                    glow.Name = part.Name .. "_Glow"
+                    glow.Brightness = 5
+                    glow.Color = Color3.fromRGB(255, 0, 0)
+                    glow.Range = 10
+                    glow.Parent = part
+                    
+                    -- Store glow
+                    if not GlowButton.Glows then
+                        GlowButton.Glows = {}
+                    end
+                    if not GlowButton.Glows[player.Name] then
+                        GlowButton.Glows[player.Name] = {}
+                    end
+                    table.insert(GlowButton.Glows[player.Name], glow)
+                end
+            end
+        end
+    end
+    
+    -- Glow update loop
+    local glowUpdateConnection = RunService.Heartbeat:Connect(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                -- Check if player has glows
+                if not GlowButton.Glows or not GlowButton.Glows[player.Name] then
+                    -- Create glows for player
+                    for _, part in pairs(player.Character:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            local glow = Instance.new("SurfaceLight")
+                            glow.Name = part.Name .. "_Glow"
+                            glow.Brightness = 5
+                            glow.Color = Color3.fromRGB(255, 0, 0)
+                            glow.Range = 10
+                            glow.Parent = part
+                            
+                            if not GlowButton.Glows then
+                                GlowButton.Glows = {}
+                            end
+                            if not GlowButton.Glows[player.Name] then
+                                GlowButton.Glows[player.Name] = {}
+                            end
+                            table.insert(GlowButton.Glows[player.Name], glow)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    GlowButton.GlowUpdateConnection = glowUpdateConnection
+else
+    GlowButton.Text = "Glow: OFF"
+    GlowButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Remove glows
+    if GlowButton.Glows then
+        for _, playerGlows in pairs(GlowButton.Glows) do
+            for _, glow in pairs(playerGlows) do
+                if glow and glow.Parent then
+                    glow:Destroy()
+                end
+            end
+        end
+        GlowButton.Glows = {}
+    end
+    
+    -- Disconnect glow update loop
+    if GlowButton.GlowUpdateConnection then
+        GlowButton.GlowUpdateConnection:Disconnect()
+        GlowButton.GlowUpdateConnection = nil
+    end
+end
+end
+
+-- Toggle ESP HP
+local function ToggleESPHP()
+ESPHPEnabled = not ESPHPEnabled
+
+if ESPHPEnabled then
+    ESPHPButton.Text = "ESP HP: ON"
+    ESPHPButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Create ESP HP for all players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            -- Create ESP HP label
+            local hpLabel = Instance.new("BillboardGui")
+            hpLabel.Name = player.Name .. "_ESPHP"
+            hpLabel.Size = UDim2.new(0, 200, 0, 50)
+            hpLabel.StudsOffset = Vector3.new(0, 4, 0)
+            hpLabel.AlwaysOnTop = true
+            hpLabel.LightInfluence = 0
+            
+            local hpText = Instance.new("TextLabel")
+            hpText.Size = UDim2.new(1, 0, 1, 0)
+            hpText.BackgroundTransparency = 1
+            hpText.TextColor3 = Color3.fromRGB(0, 255, 0)
+            hpText.TextStrokeTransparency = 0
+            hpText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            hpText.TextSize = 14
+            hpText.Font = Enum.Font.SourceSansBold
+            hpText.Text = "HP: ?"
+            hpText.Parent = hpLabel
+            
+            if player.Character and player.Character:FindFirstChild("Head") then
+                hpLabel.Adornee = player.Character.Head
+                hpLabel.Parent = player.Character.Head
+                
+                -- Update HP text
+                if player.Character:FindFirstChild("Humanoid") then
+                    local health = math.floor(player.Character.Humanoid.Health)
+                    local maxHealth = math.floor(player.Character.Humanoid.MaxHealth)
+                    hpText.Text = "HP: " .. health .. "/" .. maxHealth
+                end
+            end
+            
+            -- Store ESP HP label
+            if not ESPHPButton.ESPHPLabels then
+                ESPHPButton.ESPHPLabels = {}
+            end
+            ESPHPButton.ESPHPLabels[player.Name] = hpLabel
+        end
+    end
+    
+    -- ESP HP update loop
+    local espHPUpdateConnection = RunService.Heartbeat:Connect(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local espHPLabel = ESPHPButton.ESPHPLabels and ESPHPButton.ESPHPLabels[player.Name]
+                
+                if espHPLabel and player.Character and player.Character:FindFirstChild("Head") then
+                    espHPLabel.Adornee = player.Character.Head
+                    espHPLabel.Parent = player.Character.Head
+                    
+                    -- Update HP text
+                    if player.Character:FindFirstChild("Humanoid") then
+                        local health = math.floor(player.Character.Humanoid.Health)
+                        local maxHealth = math.floor(player.Character.Humanoid.MaxHealth)
+                        espHPLabel.TextLabel.Text = "HP: " .. health .. "/" .. maxHealth
+                        
+                        -- Update color based on health percentage
+                        local healthPercent = health / maxHealth
+                        if healthPercent > 0.7 then
+                            espHPLabel.TextLabel.TextColor3 = Color3.fromRGB(0, 255, 0) -- Green
+                        elseif healthPercent > 0.3 then
+                            espHPLabel.TextLabel.TextColor3 = Color3.fromRGB(255, 255, 0) -- Yellow
+                        else
+                            espHPLabel.TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Red
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    ESPHPButton.ESPHPUpdateConnection = espHPUpdateConnection
+else
+    ESPHPButton.Text = "ESP HP: OFF"
+    ESPHPButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Remove ESP HP labels
+    if ESPHPButton.ESPHPLabels then
+        for _, label in pairs(ESPHPButton.ESPHPLabels) do
+            if label and label.Parent then
+                label:Destroy()
+            end
+        end
+        ESPHPButton.ESPHPLabels = {}
+    end
+    
+    -- Disconnect ESP HP update loop
+    if ESPHPButton.ESPHPUpdateConnection then
+        ESPHPButton.ESPHPUpdateConnection:Disconnect()
+        ESPHPButton.ESPHPUpdateConnection = nil
+    end
+end
+end
+
+-- Toggle ESP Position
+local function ToggleESPPosition()
+ESPPositionEnabled = not ESPPositionEnabled
+
+if ESPPositionEnabled then
+    ESPPositionButton.Text = "ESP Position: ON"
+    ESPPositionButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+    
+    -- Create ESP Position for all players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            -- Create ESP Position label
+            local posLabel = Instance.new("BillboardGui")
+            posLabel.Name = player.Name .. "_ESPPosition"
+            posLabel.Size = UDim2.new(0, 200, 0, 50)
+            posLabel.StudsOffset = Vector3.new(0, 5, 0)
+            posLabel.AlwaysOnTop = true
+            posLabel.LightInfluence = 0
+            
+            local posText = Instance.new("TextLabel")
+            posText.Size = UDim2.new(1, 0, 1, 0)
+            posText.BackgroundTransparency = 1
+            posText.TextColor3 = Color3.fromRGB(255, 255, 255)
+            posText.TextStrokeTransparency = 0
+            posText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+            posText.TextSize = 14
+            posText.Font = Enum.Font.SourceSansBold
+            posText.Text = "Pos: ?"
+            posText.Parent = posLabel
+            
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                posLabel.Adornee = player.Character.HumanoidRootPart
+                posLabel.Parent = player.Character.HumanoidRootPart
+                
+                -- Update Position text
+                local position = player.Character.HumanoidRootPart.Position
+                posText.Text = string.format("Pos: %.1f, %.1f, %.1f", position.X, position.Y, position.Z)
+            end
+            
+            -- Store ESP Position label
+            if not ESPPositionButton.ESPPositionLabels then
+                ESPPositionButton.ESPPositionLabels = {}
+            end
+            ESPPositionButton.ESPPositionLabels[player.Name] = posLabel
+        end
+    end
+    
+    -- ESP Position update loop
+    local espPositionUpdateConnection = RunService.Heartbeat:Connect(function()
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local espPosLabel = ESPPositionButton.ESPPositionLabels and ESPPositionButton.ESPPositionLabels[player.Name]
+                
+                if espPosLabel and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    espPosLabel.Adornee = player.Character.HumanoidRootPart
+                    espPosLabel.Parent = player.Character.HumanoidRootPart
+                    
+                    -- Update Position text
+                    local position = player.Character.HumanoidRootPart.Position
+                    espPosLabel.TextLabel.Text = string.format("Pos: %.1f, %.1f, %.1f", position.X, position.Y, position.Z)
+                end
+            end
+        end
+    end)
+    
+    -- Store connection
+    ESPPositionButton.ESPPositionUpdateConnection = espPositionUpdateConnection
+else
+    ESPPositionButton.Text = "ESP Position: OFF"
+    ESPPositionButton.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    
+    -- Remove ESP Position labels
+    if ESPPositionButton.ESPPositionLabels then
+        for _, label in pairs(ESPPositionButton.ESPPositionLabels) do
+            if label and label.Parent then
+                label:Destroy()
+            end
+        end
+        ESPPositionButton.ESPPositionLabels = {}
+    end
+    
+    -- Disconnect ESP Position update loop
+    if ESPPositionButton.ESPPositionUpdateConnection then
+        ESPPositionButton.ESPPositionUpdateConnection:Disconnect()
+        ESPPositionButton.ESPPositionUpdateConnection = nil
+    end
+end
+end
+
 -- Limit dragging to screen bounds
 local function LimitDragging()
 local screenSize = workspace.CurrentCamera.ViewportSize
@@ -1715,25 +2894,20 @@ if SubMenuFrame.AbsolutePosition.X ~= newX or SubMenuFrame.AbsolutePosition.Y ~=
 end
 end
 
--- Function to find the nearest player
-local function FindNearestPlayer()
-    local nearestPlayer = nil
-    local shortestDistance = math.huge
-    
-    if Character and Character:FindFirstChild("HumanoidRootPart") then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    nearestPlayer = player
-                end
-            end
-        end
-    end
-    
-    return nearestPlayer
+local function LimitPositionSubMenuDragging()
+local screenSize = workspace.CurrentCamera.ViewportSize
+local frameSize = PositionSubMenuFrame.AbsoluteSize
+local minX = 0
+local minY = 0
+local maxX = screenSize.X - frameSize.X
+local maxY = screenSize.Y - frameSize.Y
+
+local newX = math.clamp(PositionSubMenuFrame.AbsolutePosition.X, minX, maxX)
+local newY = math.clamp(PositionSubMenuFrame.AbsolutePosition.Y, minY, maxY)
+
+if PositionSubMenuFrame.AbsolutePosition.X ~= newX or PositionSubMenuFrame.AbsolutePosition.Y ~= newY then
+    PositionSubMenuFrame.Position = UDim2.new(0, newX, 0, newY)
+end
 end
 
 -- Event Connections
@@ -1756,6 +2930,30 @@ end
 if AutoCheckPosition then
     ToggleAutoCheckPosition()
 end
+if ViewingTarget then
+    ToggleViewTarget()
+end
+if ESPEnabled then
+    ToggleESP()
+end
+if HitboxEnabled then
+    ToggleHitbox()
+end
+if GlowEnabled then
+    ToggleGlow()
+end
+if ESPHPEnabled then
+    ToggleESPHP()
+end
+if ESPPositionEnabled then
+    ToggleESPPosition()
+end
+if FollowingPosition then
+    ToggleFollowPosition()
+end
+if AutoRunEnabled then
+    ToggleAutoRun()
+end
 end)
 
 MinimizeButton.MouseButton1Click:Connect(function()
@@ -1774,9 +2972,18 @@ SubMenuButton.MouseButton1Click:Connect(function()
 ToggleSubMenu()
 end)
 
+PositionSubMenuButton.MouseButton1Click:Connect(function()
+TogglePositionSubMenu()
+end)
+
 SubMenuCloseButton.MouseButton1Click:Connect(function()
 SubMenuFrame.Visible = false
 SubMenuVisible = false
+end)
+
+PositionSubMenuCloseButton.MouseButton1Click:Connect(function()
+PositionSubMenuFrame.Visible = false
+PositionSubMenuVisible = false
 end)
 
 -- Ensure draggable frames stay within screen bounds
@@ -1789,6 +2996,14 @@ if MinimizedIcon.Visible then
 end
 if SubMenuFrame.Visible then
     LimitSubMenuDragging()
+end
+if PositionSubMenuFrame.Visible then
+    LimitPositionSubMenuDragging()
+end
+
+-- Update target info if target exists
+if TargetPlayer then
+    UpdateTargetInfo()
 end
 end)
 
@@ -1812,6 +3027,32 @@ ReloadButton.MouseButton1Click:Connect(function()
 PopulatePlayerList()
 end)
 
+NearestPlayerButton.MouseButton1Click:Connect(function()
+local nearest = FindNearestPlayer()
+if nearest then
+    TargetPlayer = nearest
+    TargetDropdown.Text = nearest.Name
+    UpdateTargetInfo()
+    
+    -- Highlight selected player button
+    for _, btn in pairs(PlayerScrollFrame:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == nearest.Name .. "Button" then
+                btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                btn:FindFirstChildOfClass("UIStroke").Enabled = true
+            else
+                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                btn:FindFirstChildOfClass("UIStroke").Enabled = false
+            end
+        end
+    end
+end
+end)
+
+ViewTargetButton.MouseButton1Click:Connect(function()
+ToggleViewTarget()
+end)
+
 FollowButton.MouseButton1Click:Connect(function()
 ToggleFollowTarget()
 end)
@@ -1832,6 +3073,10 @@ RunButton.MouseButton1Click:Connect(function()
 ToggleRunAway()
 end)
 
+AutoRunButton.MouseButton1Click:Connect(function()
+ToggleAutoRun()
+end)
+
 SavePositionButton.MouseButton1Click:Connect(function()
 SaveCurrentPosition()
 end)
@@ -1846,6 +3091,37 @@ end)
 
 ApplySettingsButton.MouseButton1Click:Connect(function()
 ApplySafetySettings()
+end)
+
+FollowPositionButton.MouseButton1Click:Connect(function()
+ToggleFollowPosition()
+end)
+
+ESPNameButton.MouseButton1Click:Connect(function()
+ToggleESP()
+end)
+
+HitboxButton.MouseButton1Click:Connect(function()
+ToggleHitbox()
+end)
+
+GlowButton.MouseButton1Click:Connect(function()
+ToggleGlow()
+end)
+
+ESPHPButton.MouseButton1Click:Connect(function()
+ToggleESPHP()
+end)
+
+ESPPositionButton.MouseButton1Click:Connect(function()
+ToggleESPPosition()
+end)
+
+-- Auto disable checkbox
+AutoDisableCheck.InputBegan:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    ToggleAutoDisable()
+end
 end)
 
 -- Distance control buttons
@@ -1863,201 +3139,4 @@ end)
 
 VerticalPlus.MouseButton1Click:Connect(function()
 local currentValue = tonumber(VerticalInput.Text) or 0
-VerticalInput.Text = tostring(currentValue + 0.5)
-DistanceAbove = currentValue + 0.5
-end)
-
-VerticalMinus.MouseButton1Click:Connect(function()
-local currentValue = tonumber(VerticalInput.Text) or 0
-VerticalInput.Text = tostring(currentValue - 0.5)
-DistanceAbove = currentValue - 0.5
-end)
-
-RadiusPlus.MouseButton1Click:Connect(function()
-local currentValue = tonumber(RadiusInput.Text) or 20
-RadiusInput.Text = tostring(currentValue + 5)
-DetectionRadius = currentValue + 5
-end)
-
-RadiusMinus.MouseButton1Click:Connect(function()
-local currentValue = tonumber(RadiusInput.Text) or 20
-RadiusInput.Text = tostring(math.max(5, currentValue - 5))
-DetectionRadius = math.max(5, currentValue - 5)
-end)
-
--- Checkbox toggles
-AutoNextCheck.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 then
-    ToggleAutoNext()
-end
-end)
-
-AutoPlatformCheck.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 then
-    TogglePlatform()
-end
-end)
-
-RunAwayCheck.InputBegan:Connect(function(input)
-if input.UserInputType == Enum.UserInputType.MouseButton1 then
-    ToggleRunAway()
-end
-end)
-
-DeleteButton.MouseButton1Click:Connect(function()
-ScreenGui:Destroy()
-end)
-
--- Text input validation
-HorizontalInput.FocusLost:Connect(function()
-local value = tonumber(HorizontalInput.Text)
-if value then
-    DistanceBehind = value
-else
-    HorizontalInput.Text = tostring(DistanceBehind)
-end
-end)
-
-VerticalInput.FocusLost:Connect(function()
-local value = tonumber(VerticalInput.Text)
-if value then
-    DistanceAbove = value
-else
-    VerticalInput.Text = tostring(DistanceAbove)
-end
-end)
-
-RadiusInput.FocusLost:Connect(function()
-local value = tonumber(RadiusInput.Text)
-if value and value >= 5 then
-    DetectionRadius = value
-else
-    RadiusInput.Text = tostring(DetectionRadius)
-end
-end)
-
--- Safe position input validation
-VerticalMinInput.FocusLost:Connect(function()
-local value = tonumber(VerticalMinInput.Text)
-if value then
-    SafePositionMin = Vector3.new(SafePositionMin.X, value, SafePositionMin.Z)
-else
-    VerticalMinInput.Text = tostring(SafePositionMin.Y)
-end
-end)
-
-VerticalMaxInput.FocusLost:Connect(function()
-local value = tonumber(VerticalMaxInput.Text)
-if value then
-    SafePositionMax = Vector3.new(SafePositionMax.X, value, SafePositionMax.Z)
-else
-    VerticalMaxInput.Text = tostring(SafePositionMax.Y)
-end
-end)
-
-HorizontalMinInput.FocusLost:Connect(function()
-local value = tonumber(HorizontalMinInput.Text)
-if value then
-    SafePositionMin = Vector3.new(value, SafePositionMin.Y, value)
-else
-    HorizontalMinInput.Text = tostring(SafePositionMin.X)
-end
-end)
-
-HorizontalMaxInput.FocusLost:Connect(function()
-local value = tonumber(HorizontalMaxInput.Text)
-if value then
-    SafePositionMax = Vector3.new(value, SafePositionMax.Y, value)
-else
-    HorizontalMaxInput.Text = tostring(SafePositionMax.X)
-end
-end)
-
--- Connect the nearest player button
-NearestPlayerButton.MouseButton1Click:Connect(function()
-    local nearest = FindNearestPlayer()
-    if nearest then
-        TargetPlayer = nearest
-        TargetDropdown.Text = nearest.Name
-    else
-        TargetDropdown.Text = "No players nearby"
-    end
-end)
-
--- Check expiration on a timer
-local expirationChecker = task.spawn(function()
-while task.wait(1) do
-    if CheckExpiration() then
-        break
-    end
-end
-end)
-
--- Character respawn handling
-LocalPlayer.CharacterAdded:Connect(function(newCharacter)
-Character = newCharacter
-Humanoid = Character:WaitForChild("Humanoid")
-HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
--- Reset states if needed
-if NoClipping then
-    ToggleNoclip()
-    task.wait(0.5)
-    ToggleNoclip()
-end
-
-if AutoPlatform then
-    TogglePlatform()
-    task.wait(0.5)
-    TogglePlatform()
-end
-
-if FollowingTarget then
-    ToggleFollowTarget()
-    task.wait(0.5)
-    ToggleFollowTarget()
-end
-
-if RunningAway then
-    ToggleRunAway()
-    task.wait(0.5)
-    ToggleRunAway()
-end
-
-if AutoCheckPosition then
-    ToggleAutoCheckPosition()
-    task.wait(0.5)
-    ToggleAutoCheckPosition()
-end
-end)
-
--- Player joining/leaving handling
-Players.PlayerAdded:Connect(function(player)
-if Authenticated then
-    PopulatePlayerList()
-end
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-if Authenticated then
-    -- Check if removed player was the target
-    if TargetPlayer == player then
-        TargetPlayer = nil
-        TargetDropdown.Text = "Select Target"
-        
-        -- Turn off following if target left
-        if FollowingTarget then
-            ToggleFollowTarget()
-        end
-    end
-    
-    PopulatePlayerList()
-end
-end)
-
--- Start rainbow effect
-StartRainbowEffect()
-
--- Initial expiration check
-CheckExpiration()
-
+VerticalInput.Text = tostring
