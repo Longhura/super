@@ -1,0 +1,774 @@
+-- Lấy các Service cần thiết
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Debris = game:GetService("Debris")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+-- Lấy thông tin Player và Character
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local rootPart = char:WaitForChild("HumanoidRootPart")
+
+-- Tạo GUI chính
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "EntityControlGUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+-- Tạo Frame chính (khung)
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -150)
+Frame.Size = UDim2.new(0, 300, 0, 300) -- Kích thước nhỏ hơn, sẽ điều chỉnh sau
+Frame.Active = true
+Frame.Draggable = true
+Frame.BorderSizePixel = 0
+Frame.ClipsDescendants = true -- Ngăn các phần tử con tràn ra ngoài
+
+-- Tạo viền cầu vồng
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Parent = Frame
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(255, 0, 0)
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Tạo thanh tiêu đề
+local TitleBar = Instance.new("Frame")
+TitleBar.Parent = Frame
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TitleBar.BorderSizePixel = 0
+
+-- Tạo tiêu đề
+local Title = Instance.new("TextLabel")
+Title.Parent = TitleBar
+Title.Size = UDim2.new(1, -50, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 16
+Title.Text = "Entity Control"
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Tạo nút đóng (X)
+local CloseButton = Instance.new("TextButton")
+CloseButton.Parent = TitleBar
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -30, 0, 2.5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 16
+CloseButton.BorderSizePixel = 0
+CloseButton.AutoButtonColor = true
+CloseButton.ZIndex = 2
+
+CloseButton.MouseEnter:Connect(function() CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50) end)
+CloseButton.MouseLeave:Connect(function() CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) end)
+
+-- Tạo nút thu gọn (-)
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Parent = TitleBar
+MinimizeButton.Size = UDim2.new(0, 25, 0, 25)
+MinimizeButton.Position = UDim2.new(1, -60, 0, 2.5)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.Font = Enum.Font.SourceSansBold
+MinimizeButton.TextSize = 16
+MinimizeButton.BorderSizePixel = 0
+MinimizeButton.AutoButtonColor = true
+MinimizeButton.ZIndex = 2
+
+-- Tạo ScrollingFrame để chứa nội dung
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Parent = Frame
+ContentFrame.Size = UDim2.new(1, 0, 1, -30) -- Trừ đi chiều cao của thanh tiêu đề
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.BorderSizePixel = 0
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Sẽ tự động điều chỉnh sau
+
+-- Biến lưu trữ trạng thái thu gọn
+local isMinimized = false
+
+-- Hàm đóng GUI
+local function closeGui()
+    -- Hoàn tác tất cả thay đổi hitbox trước khi đóng GUI
+    if isHitboxActive then
+        toggleHitboxModification(true) -- Gọi hàm tắt, ép buộc hoàn tác
+    end
+    ScreenGui:Destroy()
+end
+
+-- Hàm thu gọn/mở rộng GUI
+local function toggleMinimize()
+    isMinimized = not isMinimized
+    
+    if isMinimized then
+        -- Thu gọn chỉ hiển thị thanh tiêu đề
+        Frame:TweenSize(UDim2.new(0, 300, 0, 30), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.3, true)
+        MinimizeButton.Text = "+"
+    else
+        -- Mở rộng hiển thị đầy đủ
+        Frame:TweenSize(UDim2.new(0, 300, 0, Frame.Size.Y.Offset), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, 0.3, true)
+        MinimizeButton.Text = "-"
+    end
+end
+
+CloseButton.MouseButton1Click:Connect(closeGui)
+MinimizeButton.MouseButton1Click:Connect(toggleMinimize)
+
+-- --- Chức năng chính ---
+
+-- Hàm tìm nhiều Entity/NPC gần nhất
+local function getClosestLivingEntities(count, radius)
+    local entitiesInRange = {}
+    local playerPos = rootPart and rootPart.Position
+    radius = radius or 1000
+    count = count or 1
+
+    if not playerPos then return {} end
+
+    for _, descendant in pairs(workspace:GetDescendants()) do
+        if descendant:IsA("Model") and descendant ~= char then
+            local targetHumanoid = descendant:FindFirstChildOfClass("Humanoid")
+            local entityRoot = descendant:FindFirstChild("HumanoidRootPart") or descendant:FindFirstChild("Torso")
+
+            if targetHumanoid and targetHumanoid.Health > 0 and entityRoot then
+                local dist = (entityRoot.Position - playerPos).Magnitude
+                if dist < radius then
+                    table.insert(entitiesInRange, {distance = dist, entity = descendant, rootPart = entityRoot})
+                end
+            end
+        end
+    end
+
+    table.sort(entitiesInRange, function(a, b)
+        return a.distance < b.distance
+    end)
+
+    local finalEntities = {}
+    for i = 1, math.min(count, #entitiesInRange) do
+        table.insert(finalEntities, entitiesInRange[i].entity)
+    end
+
+    return finalEntities
+end
+
+-- Hàm tìm Entity/NPC gần nhất
+local function getClosestSingleLivingEntity(radius)
+    local closestEntities = getClosestLivingEntities(1, radius)
+    return closestEntities[1]
+end
+
+-- === Chức năng Follow Entity ===
+local isFollowingEntity = false
+local followEntityConnection = nil
+local followEntityButton = nil
+local FOLLOW_DISTANCE_BEHIND = 5
+local FOLLOW_DISTANCE_ABOVE = 2
+
+local function followEntityLoop()
+    if not isFollowingEntity then return end
+    local targetEntity = getClosestSingleLivingEntity()
+    local playerRoot = char and char:FindFirstChild("HumanoidRootPart")
+    local playerHumanoid = char and char:FindFirstChild("Humanoid")
+    local targetRoot = targetEntity and (targetEntity:FindFirstChild("HumanoidRootPart") or targetEntity:FindFirstChild("Torso"))
+
+    if not playerRoot or not playerHumanoid or playerHumanoid.Health <= 0 or not targetRoot then
+        if isFollowingEntity then
+            print("Follow Entity bị dừng tự động (Player/Target không hợp lệ hoặc target biến mất/chết).")
+            isFollowingEntity = false
+            if followEntityConnection then followEntityConnection:Disconnect(); followEntityConnection = nil; end
+            if followEntityButton then
+                followEntityButton.Text = "Follow"
+                followEntityButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            end
+        end
+        return
+    end
+
+    local targetCFrame = targetRoot.CFrame
+    local targetPos = targetCFrame.Position
+    local targetLookVector = targetCFrame.LookVector
+    local offsetPosition = targetPos + Vector3.new(0, FOLLOW_DISTANCE_ABOVE, 0) - (targetLookVector * FOLLOW_DISTANCE_BEHIND)
+    pcall(function() playerRoot.CFrame = CFrame.new(offsetPosition, targetPos) end)
+end
+
+local function toggleFollowEntity()
+    if not isFollowingEntity then
+        local entityToFollow = getClosestSingleLivingEntity()
+        if not entityToFollow then print("Không tìm thấy entity nào còn sống gần đó để follow."); return end
+        print("Bật Follow: " .. entityToFollow.Name)
+        isFollowingEntity = true
+        if followEntityButton then followEntityButton.Text = "Following..."; followEntityButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0); end
+        if followEntityConnection then followEntityConnection:Disconnect() end
+        followEntityConnection = RunService.Heartbeat:Connect(followEntityLoop)
+    else
+        print("Tắt Follow.")
+        isFollowingEntity = false
+        if followEntityConnection then followEntityConnection:Disconnect(); followEntityConnection = nil; end
+        if followEntityButton then followEntityButton.Text = "Follow"; followEntityButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50); end
+    end
+end
+
+-- === Chức năng Bring Entity To Player ===
+local BRING_DISTANCE_FRONT = 5
+
+local function bringEntityToPlayer()
+    local targetEntity = getClosestSingleLivingEntity()
+    local playerRoot = char and char:FindFirstChild("HumanoidRootPart")
+    if not targetEntity then print("Không tìm thấy entity nào còn sống gần đó để đưa đến."); return end
+    if not playerRoot then print("Không tìm thấy HumanoidRootPart của người chơi."); return end
+    local targetRoot = targetEntity:FindFirstChild("HumanoidRootPart") or targetEntity:FindFirstChild("Torso")
+    if not targetRoot then print("Entity mục tiêu không có HumanoidRootPart hoặc Torso."); return end
+
+    local playerCFrame = playerRoot.CFrame
+    local targetPosition = playerCFrame.Position + playerCFrame.LookVector * BRING_DISTANCE_FRONT
+    local lookAtPlayerPosition = playerCFrame.Position
+
+    local success, err = pcall(function()
+        if targetEntity:IsA("Model") and targetEntity.PrimaryPart then
+             targetEntity:SetPrimaryPartCFrame(CFrame.new(targetPosition, lookAtPlayerPosition))
+        elseif targetRoot then
+             targetRoot.CFrame = CFrame.new(targetPosition, lookAtPlayerPosition)
+        else
+             warn("Không thể di chuyển entity:", targetEntity.Name, "- Không có PrimaryPart hoặc Root Part.")
+             return
+        end
+        print("Đã đưa " .. targetEntity.Name .. " đến trước mặt bạn.")
+    end)
+    if not success then warn("Lỗi khi đưa entity:", err) end
+end
+
+-- === Chức năng Hitbox Entity (Cải tiến) ===
+local isHitboxActive = false
+local hitboxModificationConnection = nil
+local hitboxButton = nil
+local currentModifiedEntities = {}
+local originalHRPProperties = {}
+local hitboxCount = 1
+local hitboxSize = 10
+local hitboxTransparency = 0.7
+local hitboxType = "Cube" -- Mặc định là hình khối
+
+-- Định nghĩa các loại hitbox
+local hitboxTypes = {
+    ["Cube"] = {
+        apply = function(hrp, size)
+            hrp.Size = Vector3.new(size, size, size)
+            hrp.Shape = Enum.PartType.Block
+        end,
+        description = "Hình khối vuông, phù hợp với hầu hết các entity"
+    },
+    ["Sphere"] = {
+        apply = function(hrp, size)
+            hrp.Size = Vector3.new(size, size, size)
+            hrp.Shape = Enum.PartType.Ball
+        end,
+        description = "Hình cầu, phù hợp với entity bay hoặc di chuyển nhanh"
+    },
+    ["Cylinder"] = {
+        apply = function(hrp, size)
+            hrp.Size = Vector3.new(size, size * 1.5, size)
+            hrp.Shape = Enum.PartType.Cylinder
+        end,
+        description = "Hình trụ, phù hợp với entity cao"
+    },
+    ["Flat"] = {
+        apply = function(hrp, size)
+            hrp.Size = Vector3.new(size, size * 0.3, size)
+            hrp.Shape = Enum.PartType.Block
+        end,
+        description = "Hình phẳng, phù hợp với entity thấp hoặc bò"
+    }
+}
+
+-- Tạo layout cho ContentFrame
+local contentPadding = 10
+local elementHeight = 30
+local elementSpacing = 5
+local currentYPosition = contentPadding
+
+-- Hàm tạo label
+local function createLabel(text)
+    local label = Instance.new("TextLabel")
+    label.Parent = ContentFrame
+    label.Size = UDim2.new(1, -contentPadding*2, 0, elementHeight)
+    label.Position = UDim2.new(0, contentPadding, 0, currentYPosition)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.Text = text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    currentYPosition = currentYPosition + elementHeight + elementSpacing
+    return label
+end
+
+-- Hàm tạo textbox
+local function createTextbox(defaultText, placeholderText)
+    local textbox = Instance.new("TextBox")
+    textbox.Parent = ContentFrame
+    textbox.Size = UDim2.new(1, -contentPadding*2, 0, elementHeight)
+    textbox.Position = UDim2.new(0, contentPadding, 0, currentYPosition)
+    textbox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    textbox.TextColor3 = Color3.new(1, 1, 1)
+    textbox.Font = Enum.Font.SourceSans
+    textbox.TextSize = 14
+    textbox.Text = defaultText
+    textbox.PlaceholderText = placeholderText
+    textbox.TextXAlignment = Enum.TextXAlignment.Left
+    textbox.BorderSizePixel = 0
+    textbox.ClearTextOnFocus = false
+    
+    currentYPosition = currentYPosition + elementHeight + elementSpacing
+    return textbox
+end
+
+-- Hàm tạo dropdown
+local function createDropdown(options, defaultOption, callback)
+    local dropdownContainer = Instance.new("Frame")
+    dropdownContainer.Parent = ContentFrame
+    dropdownContainer.Size = UDim2.new(1, -contentPadding*2, 0, elementHeight)
+    dropdownContainer.Position = UDim2.new(0, contentPadding, 0, currentYPosition)
+    dropdownContainer.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    dropdownContainer.BorderSizePixel = 0
+    
+    local dropdownButton = Instance.new("TextButton")
+    dropdownButton.Parent = dropdownContainer
+    dropdownButton.Size = UDim2.new(1, 0, 1, 0)
+    dropdownButton.BackgroundTransparency = 1
+    dropdownButton.TextColor3 = Color3.new(1, 1, 1)
+    dropdownButton.Font = Enum.Font.SourceSans
+    dropdownButton.TextSize = 14
+    dropdownButton.Text = defaultOption
+    dropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+    dropdownButton.TextTruncate = Enum.TextTruncate.AtEnd
+    
+    -- Thêm icon mũi tên xuống
+    local arrowIcon = Instance.new("TextLabel")
+    arrowIcon.Parent = dropdownContainer
+    arrowIcon.Size = UDim2.new(0, 20, 0, 20)
+    arrowIcon.Position = UDim2.new(1, -25, 0, 5)
+    arrowIcon.BackgroundTransparency = 1
+    arrowIcon.TextColor3 = Color3.new(1, 1, 1)
+    arrowIcon.Font = Enum.Font.SourceSansBold
+    arrowIcon.TextSize = 14
+    arrowIcon.Text = "▼"
+    arrowIcon.ZIndex = 2
+    
+    -- Tạo menu dropdown
+    local dropdownMenu = Instance.new("Frame")
+    dropdownMenu.Parent = dropdownContainer
+    dropdownMenu.Size = UDim2.new(1, 0, 0, #options * elementHeight)
+    dropdownMenu.Position = UDim2.new(0, 0, 1, 0)
+    dropdownMenu.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    dropdownMenu.BorderSizePixel = 0
+    dropdownMenu.Visible = false
+    dropdownMenu.ZIndex = 10
+    
+    -- Tạo các option trong dropdown
+    local optionYPos = 0
+    for _, option in ipairs(options) do
+        local optionButton = Instance.new("TextButton")
+        optionButton.Parent = dropdownMenu
+        optionButton.Size = UDim2.new(1, 0, 0, elementHeight)
+        optionButton.Position = UDim2.new(0, 0, 0, optionYPos)
+        optionButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        optionButton.TextColor3 = Color3.new(1, 1, 1)
+        optionButton.Font = Enum.Font.SourceSans
+        optionButton.TextSize = 14
+        optionButton.Text = option
+        optionButton.TextXAlignment = Enum.TextXAlignment.Left
+        optionButton.BorderSizePixel = 0
+        optionButton.ZIndex = 11
+        
+        -- Hiệu ứng hover
+        optionButton.MouseEnter:Connect(function()
+            optionButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+        end)
+        
+        optionButton.MouseLeave:Connect(function()
+            optionButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        end)
+        
+        -- Xử lý khi chọn option
+        optionButton.MouseButton1Click:Connect(function()
+            dropdownButton.Text = option
+            dropdownMenu.Visible = false
+            callback(option)
+        end)
+        
+        optionYPos = optionYPos + elementHeight
+    end
+    
+    -- Xử lý hiển thị/ẩn dropdown menu
+    dropdownButton.MouseButton1Click:Connect(function()
+        dropdownMenu.Visible = not dropdownMenu.Visible
+    end)
+    
+    -- Đóng dropdown khi click ra ngoài
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mousePos = UserInputService:GetMouseLocation()
+            local dropdownAbsPos = dropdownContainer.AbsolutePosition
+            local dropdownAbsSize = dropdownContainer.AbsoluteSize
+            local menuAbsPos = dropdownMenu.AbsolutePosition
+            local menuAbsSize = dropdownMenu.AbsoluteSize
+            
+            local isInDropdown = mousePos.X >= dropdownAbsPos.X and mousePos.X <= dropdownAbsPos.X + dropdownAbsSize.X and
+                                mousePos.Y >= dropdownAbsPos.Y and mousePos.Y <= dropdownAbsPos.Y + dropdownAbsSize.Y
+                                
+            local isInMenu = dropdownMenu.Visible and mousePos.X >= menuAbsPos.X and mousePos.X <= menuAbsPos.X + menuAbsSize.X and
+                            mousePos.Y >= menuAbsPos.Y and mousePos.Y <= menuAbsPos.Y + menuAbsSize.Y
+            
+            if dropdownMenu.Visible and not isInDropdown and not isInMenu then
+                dropdownMenu.Visible = false
+            end
+        end
+    end)
+    
+    currentYPosition = currentYPosition + elementHeight + elementSpacing
+    return dropdownButton
+end
+
+-- Hàm tạo button
+local function createButton(text, callback)
+    local button = Instance.new("TextButton")
+    button.Parent = ContentFrame
+    button.Size = UDim2.new(1, -contentPadding*2, 0, elementHeight)
+    button.Position = UDim2.new(0, contentPadding, 0, currentYPosition)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 14
+    button.Text = text
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = true
+    
+    button.MouseButton1Click:Connect(callback)
+    
+    currentYPosition = currentYPosition + elementHeight + elementSpacing
+    return button
+end
+
+-- Hàm tạo divider
+local function createDivider()
+    local divider = Instance.new("Frame")
+    divider.Parent = ContentFrame
+    divider.Size = UDim2.new(1, -contentPadding*2, 0, 1)
+    divider.Position = UDim2.new(0, contentPadding, 0, currentYPosition)
+    divider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    divider.BorderSizePixel = 0
+    
+    currentYPosition = currentYPosition + 1 + elementSpacing*2
+    return divider
+end
+
+-- Tạo tiêu đề phần
+local function createSectionTitle(text)
+    local title = Instance.new("TextLabel")
+    title.Parent = ContentFrame
+    title.Size = UDim2.new(1, -contentPadding*2, 0, elementHeight)
+    title.Position = UDim2.new(0, contentPadding, 0, currentYPosition)
+    title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 14
+    title.Text = "  " .. text
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.BorderSizePixel = 0
+    
+    currentYPosition = currentYPosition + elementHeight + elementSpacing
+    return title
+end
+
+-- Hàm hoàn tác thay đổi HRP về trạng thái gốc
+local function revertHRPChanges(hrp)
+    if originalHRPProperties[hrp] then
+        local props = originalHRPProperties[hrp]
+        local success, err = pcall(function()
+            hrp.Size = props.Size
+            hrp.Transparency = props.Transparency
+            hrp.CanCollide = props.CanCollide
+            hrp.Shape = props.Shape or Enum.PartType.Block
+        end)
+        if not success then warn("Lỗi khi hoàn tác HRP:", err, "cho", hrp:GetFullName()) end
+        originalHRPProperties[hrp] = nil
+    end
+end
+
+-- Hàm áp dụng thay đổi HRP
+local function applyHRPChanges(hrp, size)
+    if not originalHRPProperties[hrp] then
+        originalHRPProperties[hrp] = {
+            Size = hrp.Size,
+            Transparency = hrp.Transparency,
+            CanCollide = hrp.CanCollide,
+            Shape = hrp.Shape
+        }
+    end
+    
+    local success, err = pcall(function()
+        -- Áp dụng loại hitbox được chọn
+        if hitboxTypes[hitboxType] then
+            hitboxTypes[hitboxType].apply(hrp, size)
+        else
+            -- Mặc định nếu không tìm thấy loại
+            hrp.Size = Vector3.new(size, size, size)
+            hrp.Shape = Enum.PartType.Block
+        end
+        
+        hrp.Transparency = hitboxTransparency
+        hrp.CanCollide = false
+    end)
+    
+    if not success then warn("Lỗi khi áp dụng thay đổi HRP:", err, "cho", hrp:GetFullName()) end
+end
+
+-- Hàm cập nhật việc sửa đổi hitbox
+local function updateHitboxModification()
+    if not isHitboxActive then return end
+
+    local playerRoot = char and char:FindFirstChild("HumanoidRootPart")
+    if not playerRoot then return end
+
+    -- Tìm N entity gần nhất còn sống
+    local nearestEntities = getClosestLivingEntities(hitboxCount)
+    local newTargetEntities = {}
+
+    -- Xác định các entity mục tiêu mới và HRP của chúng
+    for _, entity in ipairs(nearestEntities) do
+        local hrp = entity:FindFirstChild("HumanoidRootPart") or entity:FindFirstChild("Torso")
+        if hrp then
+            newTargetEntities[entity] = hrp
+        end
+    end
+
+    -- Hoàn tác cho các entity không còn là mục tiêu hoặc đã chết/biến mất
+    for entity, wasModified in pairs(currentModifiedEntities) do
+        local hrp = entity:FindFirstChild("HumanoidRootPart") or entity:FindFirstChild("Torso")
+        local humanoid = entity:FindFirstChildOfClass("Humanoid")
+
+        if not newTargetEntities[entity] or not hrp or not entity.Parent or (humanoid and humanoid.Health <= 0) then
+            if hrp then revertHRPChanges(hrp) end
+            currentModifiedEntities[entity] = nil
+        end
+    end
+
+    -- Áp dụng hoặc cập nhật cho các entity mục tiêu mới/hiện tại
+    for entity, hrp in pairs(newTargetEntities) do
+        local humanoid = entity:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid.Health > 0 then
+            if not currentModifiedEntities[entity] then
+                applyHRPChanges(hrp, hitboxSize)
+                currentModifiedEntities[entity] = true
+            else
+                -- Kiểm tra xem có cần cập nhật không (kích thước hoặc loại hitbox thay đổi)
+                local needsUpdate = false
+                
+                if hitboxType == "Cube" and (hrp.Size.X ~= hitboxSize or hrp.Shape ~= Enum.PartType.Block) then
+                    needsUpdate = true
+                elseif hitboxType == "Sphere" and (hrp.Size.X ~= hitboxSize or hrp.Shape ~= Enum.PartType.Ball) then
+                    needsUpdate = true
+                elseif hitboxType == "Cylinder" and (hr  then
+                    needsUpdate = true
+                elseif hitboxType == "Cylinder" and (hrp.Size.X ~= hitboxSize or hrp.Size.Y ~= hitboxSize * 1.5 or hrp.Shape ~= Enum.PartType.Cylinder) then
+                    needsUpdate = true
+                elseif hitboxType == "Flat" and (hrp.Size.X ~= hitboxSize or hrp.Size.Y ~= hitboxSize * 0.3 or hrp.Shape ~= Enum.PartType.Block) then
+                    needsUpdate = true
+                end
+                
+                if needsUpdate then
+                    applyHRPChanges(hrp, hitboxSize)
+                end
+            end
+        else
+            if currentModifiedEntities[entity] then
+                revertHRPChanges(hrp)
+                currentModifiedEntities[entity] = nil
+            end
+        end
+    end
+end
+
+-- Hàm bật/tắt toàn bộ chức năng sửa đổi hitbox
+local function toggleHitboxModification(forceOff)
+    if not isHitboxActive or forceOff then
+        if forceOff and not isHitboxActive then return end
+
+        if not forceOff then
+            print("Bật mở rộng Hitbox với loại: " .. hitboxType)
+            isHitboxActive = true
+            if hitboxButton then
+                hitboxButton.Text = "Hitbox: ON"
+                hitboxButton.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+            end
+
+            if hitboxModificationConnection then hitboxModificationConnection:Disconnect() end
+            hitboxModificationConnection = RunService.Heartbeat:Connect(updateHitboxModification)
+            task.defer(updateHitboxModification)
+        else
+            print("Tắt mở rộng Hitbox.")
+            isHitboxActive = false
+
+            if hitboxModificationConnection then
+                hitboxModificationConnection:Disconnect()
+                hitboxModificationConnection = nil
+            end
+
+            for entity, wasModified in pairs(currentModifiedEntities) do
+                local hrp = entity:FindFirstChild("HumanoidRootPart") or entity:FindFirstChild("Torso")
+                if hrp then revertHRPChanges(hrp) end
+            end
+            currentModifiedEntities = {}
+
+            if hitboxButton then
+                hitboxButton.Text = "Hitbox: OFF"
+                hitboxButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            end
+        end
+    else
+        toggleHitboxModification(true)
+    end
+end
+
+-- Tạo giao diện người dùng
+-- Phần 1: Tiêu đề
+createSectionTitle("Cài đặt Hitbox")
+
+-- Phần 2: Cài đặt Hitbox
+createLabel("Số lượng Entity:")
+local countTextbox = createTextbox(tostring(hitboxCount), "Nhập số > 0")
+
+createLabel("Kích thước Hitbox:")
+local sizeTextbox = createTextbox(tostring(hitboxSize), "Nhập số > 0")
+
+createLabel("Loại Hitbox:")
+local hitboxTypeOptions = {}
+for typeName, typeInfo in pairs(hitboxTypes) do
+    table.insert(hitboxTypeOptions, typeName .. " - " .. typeInfo.description)
+end
+
+local hitboxTypeDropdown = createDropdown(hitboxTypeOptions, "Cube - Hình khối vuông, phù hợp với hầu hết các entity", function(selected)
+    -- Lấy tên loại hitbox từ chuỗi được chọn (phần trước dấu -)
+    local selectedType = selected:match("^([^-]+)"):gsub("%s+$", "")
+    hitboxType = selectedType
+    print("Đã chọn loại hitbox:", hitboxType)
+    
+    -- Cập nhật hitbox nếu đang bật
+    if isHitboxActive then
+        for entity, _ in pairs(currentModifiedEntities) do
+            local hrp = entity:FindFirstChild("HumanoidRootPart") or entity:FindFirstChild("Torso")
+            if hrp then
+                applyHRPChanges(hrp, hitboxSize)
+            end
+        end
+    end
+end)
+
+createDivider()
+
+-- Phần 3: Các nút chức năng
+createSectionTitle("Chức năng")
+
+hitboxButton = createButton("Hitbox: OFF", function() toggleHitboxModification(false) end)
+followEntityButton = createButton("Follow", toggleFollowEntity)
+local bringButton = createButton("Bring Entity", bringEntityToPlayer)
+
+-- Xử lý input cho Textbox
+countTextbox.FocusLost:Connect(function(enterPressed)
+    local num = tonumber(countTextbox.Text)
+    if num and num >= 1 then
+        hitboxCount = math.floor(num)
+        print("Số lượng entity áp dụng hitbox được đặt thành:", hitboxCount)
+        countTextbox.Text = tostring(hitboxCount)
+    else
+        print("Số lượng không hợp lệ, sử dụng giá trị cũ:", hitboxCount)
+        countTextbox.Text = tostring(hitboxCount)
+    end
+end)
+
+sizeTextbox.FocusLost:Connect(function(enterPressed)
+    local num = tonumber(sizeTextbox.Text)
+    if num and num > 0 then
+        hitboxSize = num
+        print("Kích thước hitbox được đặt thành:", hitboxSize)
+        sizeTextbox.Text = tostring(hitboxSize)
+        
+        if isHitboxActive then
+            for entity, wasModified in pairs(currentModifiedEntities) do
+                if wasModified then
+                    local hrp = entity:FindFirstChild("HumanoidRootPart") or entity:FindFirstChild("Torso")
+                    if hrp then
+                        applyHRPChanges(hrp, hitboxSize)
+                    end
+                end
+            end
+        end
+    else
+        print("Kích thước không hợp lệ, sử dụng giá trị cũ:", hitboxSize)
+        sizeTextbox.Text = tostring(hitboxSize)
+    end
+end)
+
+-- Hiệu ứng viền cầu vồng
+local colors = {
+    Color3.fromRGB(255, 0, 0), Color3.fromRGB(255, 127, 0), Color3.fromRGB(255, 255, 0),
+    Color3.fromRGB(0, 255, 0), Color3.fromRGB(0, 255, 255), Color3.fromRGB(0, 0, 255),
+    Color3.fromRGB(139, 0, 255)
+}
+
+local function cycleRainbow()
+    local index = 1
+    while ScreenGui.Parent do
+        local nextColor = colors[index]
+        local success, result = pcall(function()
+            if not UIStroke or not UIStroke.Parent then return end
+            local tween = TweenService:Create(UIStroke, TweenInfo.new(0.5, Enum.EasingStyle.Linear), { Color = nextColor })
+            tween:Play()
+            tween.Completed:Wait()
+        end)
+        if not success or not ScreenGui.Parent then
+            if not success then warn("Rainbow cycle stopped due to error:", result) end
+            break
+        end
+        index = index % #colors + 1
+        task.wait(0.1)
+    end
+end
+
+task.spawn(cycleRainbow)
+
+-- Cập nhật kích thước ContentFrame
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, currentYPosition + contentPadding)
+
+-- Thêm xử lý khi người chơi bị reset hoặc chết
+if humanoid then
+    humanoid.Died:Connect(function()
+        if isHitboxActive then
+            toggleHitboxModification(true)
+        end
+        if isFollowingEntity then
+            toggleFollowEntity()
+        end
+    end)
+end
+
+-- Cập nhật kích thước Frame
+Frame.Size = UDim2.new(0, 300, 0, math.min(450, currentYPosition + contentPadding + 30)) -- +30 cho thanh tiêu đề
+
+print("Entity Control GUI đã được tải với chức năng tùy chọn loại hitbox!")
