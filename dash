@@ -13,7 +13,7 @@ local player = Players.LocalPlayer
 -- Config
 local DASH_DISTANCE  = 20       -- chiều dài dash
 local DASH_DURATION  = 0.15     -- thời gian tween
-local COOLDOWN       = 1.25     -- giây
+local COOLDOWN       = 0.25     -- giây
 
 -- Unique GUI name
 local UNIQUE_GUI_NAME = "Adm1n#K3y!XyZ@2025$%aB7qP&cD"
