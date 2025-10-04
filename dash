@@ -1,0 +1,276 @@
+-- LocalScript – StarterGui / StarterPlayerScripts
+-- Dash hướng camera + GUI + lưu phím tắt + chat command + anti duplicate
+
+local Players      = game:GetService("Players")
+local RunService   = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Debris       = game:GetService("Debris")
+local UIS          = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+-------------------------------------------------------------
+-- Config
+local DASH_DISTANCE  = 20       -- chiều dài dash
+local DASH_DURATION  = 0.15     -- thời gian tween
+local COOLDOWN       = 1.25     -- giây
+
+-- Unique GUI name
+local UNIQUE_GUI_NAME = "Adm1n#K3y!XyZ@2025$%aB7qP&cD"
+
+-- Anti duplicate
+if player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild(UNIQUE_GUI_NAME) then
+    warn("[Dash] GUI đã tồn tại, script tự huỷ.")
+    script:Destroy()
+    return
+end
+
+-------------------------------------------------------------
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = UNIQUE_GUI_NAME
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local holder = Instance.new("TextButton")
+holder.Name = "DashButton"
+holder.Size = UDim2.new(0, 70, 0, 70)
+holder.Position = UDim2.new(0.5, -35, 0.8, 0)
+holder.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+holder.BackgroundTransparency = 0.35
+holder.Text = "DASH"
+holder.Font = Enum.Font.GothamBold
+holder.TextScaled = true
+holder.TextColor3 = Color3.new(1, 1, 1)
+holder.Draggable = true
+holder.Active = true
+holder.Parent = screenGui
+
+Instance.new("UICorner", holder).CornerRadius = UDim.new(1, 0)
+local stroke = Instance.new("UIStroke", holder)
+stroke.Color = Color3.fromRGB(30, 30, 30)
+stroke.Thickness = 2
+
+-- Close button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 16, 0, 16)
+closeBtn.Position = UDim2.new(1, -6, 0, -6)
+closeBtn.AnchorPoint = Vector2.new(1, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
+closeBtn.Text = "X"
+closeBtn.TextScaled = true
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextColor3 = Color3.new(1, 1, 1)
+closeBtn.Parent = holder
+Instance.new("UICorner", closeBtn)
+
+-- Cooldown bar
+local bar = Instance.new("Frame", holder)
+bar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+bar.BackgroundTransparency = 0.4
+bar.Size = UDim2.new(1, 0, 0, 4)
+bar.Position = UDim2.new(0, 0, 1, -4)
+bar.BorderSizePixel = 0
+
+local fill = Instance.new("Frame", bar)
+fill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+fill.Size = UDim2.new(1, 0, 1, 0)
+
+local cooldownLabel = Instance.new("TextLabel", holder)
+cooldownLabel.BackgroundTransparency = 1
+cooldownLabel.Size = UDim2.new(1, 0, 1, 0)
+cooldownLabel.Font = Enum.Font.GothamBold
+cooldownLabel.TextColor3 = Color3.new(1, 1, 1)
+cooldownLabel.TextScaled = true
+cooldownLabel.Visible = false
+
+-------------------------------------------------------------
+-- Close
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+    script:Destroy()
+end)
+
+-------------------------------------------------------------
+-- Hotkey + Chat
+local hotkeyCode = nil
+
+local function showHelp()
+    local helpMsg = table.concat({
+        "/? off  - Ẩn GUI",
+        "/? on   - Hiện GUI",
+        "/? end  - Xoá GUI và script",
+        "/? <phím>  - Đặt phím tắt dash",
+        "/? clear - Xoá phím tắt đã lưu",
+        "/? help  - Hiển thị tất cả lệnh"
+    }, "\n")
+    game.StarterGui:SetCore("ChatMakeSystemMessage",{Text=helpMsg,Color=Color3.fromRGB(150,255,255)})
+end
+
+player.Chatted:Connect(function(msg)
+    local text = (msg or ""):lower():gsub("^%s*(.-)%s*$","%1")
+
+    if text == "/? off" then
+        holder.Visible = false
+        game.StarterGui:SetCore("ChatMakeSystemMessage",{Text="[Dash] GUI ẩn!",Color=Color3.fromRGB(200,200,200)})
+    elseif text == "/? on" then
+        holder.Visible = true
+        game.StarterGui:SetCore("ChatMakeSystemMessage",{Text="[Dash] GUI bật!",Color=Color3.fromRGB(200,255,200)})
+    elseif text == "/? end" then
+        screenGui:Destroy()
+        script:Destroy()
+    elseif text == "/? clear" then
+        hotkeyCode = nil
+        screenGui:SetAttribute("Hotkey", nil)
+        game.StarterGui:SetCore("ChatMakeSystemMessage",{Text="[Dash] Phím tắt đã xoá!",Color=Color3.fromRGB(255,150,150)})
+    elseif text == "/? help" then
+        showHelp()
+    else
+        local key = msg:match("^%s*/%?%s*([%a%d])%s*$")
+        if key then
+            local upper = key:upper()
+            for _, code in ipairs(Enum.KeyCode:GetEnumItems()) do
+                if code.Name == upper then
+                    hotkeyCode = code
+                    screenGui:SetAttribute("Hotkey", upper)
+                    game.StarterGui:SetCore("ChatMakeSystemMessage",{Text="[Dash] Phím tắt mới: "..upper,Color=Color3.fromRGB(150,255,150)})
+                    return
+                end
+            end
+            game.StarterGui:SetCore("ChatMakeSystemMessage",{Text="[Dash] Không nhận dạng phím: "..key,Color=Color3.fromRGB(255,150,150)})
+        end
+    end
+end)
+
+-------------------------------------------------------------
+-- Dash logic (camera hướng + tween + particle/beam/afterimage)
+
+local isCooling, renderConn
+
+-- hướng dash theo camera
+local function getDashDir()
+    local cam = workspace.CurrentCamera
+    if not cam then return nil end
+    local look = cam.CFrame.LookVector
+    local dir = Vector3.new(look.X, 0, look.Z)
+    if dir.Magnitude < 0.1 then return nil end
+    return dir.Unit * DASH_DISTANCE
+end
+
+-- afterimage
+local function spawnAfterImage(character)
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            local ghost = part:Clone()
+            ghost.Anchored, ghost.CanCollide = true, false
+            ghost.Transparency = 0.5
+            ghost.Material = Enum.Material.Neon
+            ghost.Color = Color3.fromRGB(30,150,255)
+            ghost.CFrame = part.CFrame
+            ghost.Parent = workspace
+            TweenService:Create(ghost, TweenInfo.new(0.3), {Transparency = 1}):Play()
+            Debris:AddItem(ghost, 0.35)
+        end
+    end
+end
+
+-- particle + beam + âm thanh
+local function playDashEffect(root, dashDir)
+    local particle = Instance.new("ParticleEmitter")
+    particle.Texture = "rbxassetid://241594709"
+    particle.Rate = 0
+    particle.Speed = NumberRange.new(0)
+    particle.Lifetime = NumberRange.new(0.3)
+    particle.Size = NumberSequence.new(0.8)
+    particle.Transparency = NumberSequence.new(0.2)
+    particle.Rotation = NumberRange.new(0, 360)
+    particle.Parent = root
+    particle:Emit(15)
+    Debris:AddItem(particle, 0.5)
+
+    local part = Instance.new("Part")
+    part.Anchored, part.CanCollide, part.Transparency = true, false, 1
+    part.Size = Vector3.new(0.2, 0.2, dashDir.Magnitude)
+    part.CFrame = root.CFrame * CFrame.new(dashDir.Unit * (dashDir.Magnitude/2))
+    part.Parent = workspace
+
+    local att0 = Instance.new("Attachment", part)
+    att0.Position = Vector3.new(0, 0, -dashDir.Magnitude/2)
+    local att1 = Instance.new("Attachment", part)
+    att1.Position = Vector3.new(0, 0, dashDir.Magnitude/2)
+
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = att0
+    beam.Attachment1 = att1
+    beam.FaceCamera = true
+    beam.Color = ColorSequence.new(Color3.fromRGB(30,150,255))
+    beam.Width0, beam.Width1 = 0.2, 0.2
+    beam.Transparency = NumberSequence.new(0)
+    beam.Parent = part
+    Debris:AddItem(part, 0.3)
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://12222216"
+    sound.Volume = 1
+    sound.PlayOnRemove = true
+    sound.Parent = root
+    sound:Destroy()
+end
+
+-- dash chính
+local function dash()
+    if isCooling then return end
+    local character = player.Character or player.CharacterAdded:Wait()
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local dashDir = getDashDir()
+    if not dashDir then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid and (humanoid.Health <= 0 or humanoid:GetState() == Enum.HumanoidStateType.Seated) then return end
+
+    -- UI cooldown
+    isCooling = true
+    holder.Active = false
+    holder.TextTransparency = 0.4
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    cooldownLabel.Visible = true
+    TweenService:Create(fill, TweenInfo.new(COOLDOWN, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+
+    local startTime = tick()
+    renderConn = RunService.RenderStepped:Connect(function()
+        local remain = math.max(0, COOLDOWN - (tick() - startTime))
+        cooldownLabel.Text = string.format("%.2f", remain)
+        if remain <= 0 then
+            renderConn:Disconnect(); renderConn = nil
+            cooldownLabel.Visible = false
+            holder.Active = true
+            holder.TextTransparency = 0
+            isCooling = false
+        end
+    end)
+
+    -- Tween dash
+    TweenService:Create(root, TweenInfo.new(DASH_DURATION, Enum.EasingStyle.Linear), {
+        CFrame = root.CFrame + dashDir
+    }):Play()
+
+    -- Hiệu ứng
+    playDashEffect(root, dashDir)
+    spawnAfterImage(character)
+end
+
+holder.MouseButton1Click:Connect(dash)
+UIS.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if hotkeyCode and input.KeyCode == hotkeyCode then
+        dash()
+    end
+end)
+
+player.CharacterRemoving:Connect(function()
+    if renderConn then renderConn:Disconnect(); renderConn = nil end
+end)
